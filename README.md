@@ -20,11 +20,10 @@ perspective, see the latex-based
 [noweb](http://en.wikipedia.org/wiki/Noweb).
 
 
-## Example
+## Details
 
-This tool looks for [code blocks delimitted with triple back
-ticks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks).
-
+This tool looks for [fenced code
+blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks).
 The blocks are viewed as shell scripts, and shell scripts can make
 files in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
@@ -35,10 +34,11 @@ The tutorial
 [here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md)
 ) has code blocks that write, compile and run a Go program.
 
-The _@labels_ found in the _HTML comments_ directly preceeding code
-blocks identify a code block sequence - a _labelled script_.  The tool
-accepts a label argument and file argument and extracts the matching
-script.
+An _@labels_ found in a _HTML comment_ immediately preceeding a code
+block identify the block as part of a _labelled script_.  
+
+The tool accepts a label argument and file argument and extracts the
+matching script.
 
 If a block has multiple labels, it can be incorporated into multiple
 scripts (e.g. common initialization code).  If a block has no label,
@@ -52,8 +52,9 @@ background, fire up a client to talk to it, then kill both through
 judicious used of process ID variables.
 
 There's no notion of encapsulation or automatic cleanup.  Extracted 
-scripts can do _anything_.  The markdown author can always add cleanup
-code to the final block.
+scripts can do anything that the user can do.
+
+The markdown author can always add cleanup code to the final block.
 
 ## Build
 
