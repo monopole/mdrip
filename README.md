@@ -1,6 +1,4 @@
-# Literate programming for markdown
-
-This tool reads markdown and extracts labelled code blocks.
+This tool extracts labelled code blocks from markdown.
 
 The tool can emit the code to `stdout` for piping to `source
 /dev/stdin`, as if the user had copy/pasted the blocks to their
@@ -22,10 +20,10 @@ perspective, see the latex-based
 
 ## Details
 
-This tool looks for [fenced code
+This tool scans markdown for [fenced code
 blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an _@label_.
 
-A code block holds a shell command or script.  Shell commands can make
+Code blocks must be shell scripts.  Such scripts can make
 files in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
 
@@ -33,7 +31,7 @@ The tutorial
 [here](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
 (raw markdown
 [here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md)
-) has code blocks that write, compile and run a Go program.
+) has _bash_ code blocks that write, compile and run a Go program.
 
 The tool accepts a file argument and a label argument and extracts
 all blocks with that label.
@@ -79,12 +77,12 @@ $MDRIP/go/bin/mdrip \
 The output of the above command can be piped to `source /dev/stdin` to
 evolve the state of the current shell per the tutorial.
 
-For automated testing it's better to pipe to `bash -e`, running the
-code in a subshell leaving the current shell's state unchanged (modulo
-whatever the script does to the computer).
+For automated testing it's better to pipe to `bash -e` (or some other
+shell), running the code in a subshell leaving the current shell's
+state unchanged (modulo whatever the script does to the computer).
 
-Use of the tool's `--subshell` flag does that as well - but does a
-better job of reporting errors.
+Use of the tool's `--subshell` flag does that as well.  It assumes
+bash blocks, but does a better job of reporting errors.
 Run the following to see how the error in the example tutorial
 is reported:
 
