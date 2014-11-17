@@ -2,13 +2,13 @@ This tool is a hacky, markdown-based instance of language-independent
 [literate
 programming](http://en.wikipedia.org/wiki/Literate_programming).  For
 perspective, see the latex-based
-[noweb](http://en.wikipedia.org/wiki/Noweb).
+[noweb](http://en.wikipedia.org/wiki/Noweb).  It's intended to make
+markdown-based coding tutorials more useful.
 
 The tool scans markdown for [fenced code
-blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an embeddded _@label_ and extracts them.
+blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an embedded _@label_ and extracts them.
 
-The tool can emit the code blocks to `stdout` for piping to an
-arbitrary interpreter.  
+The code blocks can then be piped to an arbitrary interpreter.
 
 If the code blocks are in bash syntax, and the tool is itself running
 in a bash shell, then piping the output to `source /dev/stdin` is
@@ -22,11 +22,12 @@ regression test frameworks.
 
 ## Details
 
-The tool has a certainly rough extensibility because shell scripts can
+The tool has a rough extensibility because shell scripts can
 make, build and run programs in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
-The [example
-tutorial](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
+
+For example, this
+[tutorial](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
 (raw markdown
 [here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md))
 has bash code blocks that write, compile and run a Go program.
