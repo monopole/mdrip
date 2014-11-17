@@ -34,7 +34,7 @@ The tutorial
 [here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md)
 ) has code blocks that write, compile and run a Go program.
 
-An _@labels_ found in a _HTML comment_ immediately preceeding a code
+An _@labels_ found in a HTML comment immediately preceeding a code
 block identify the block as part of a _labelled script_.  
 
 The tool accepts a file argument and a label argument and extracts the
@@ -58,7 +58,7 @@ scripts can do anything that the user can do.
 
 ## Build
 
-Install Go then:
+Assuming Go installed:
 
 ```
 export MDRIP=~/mdrip
@@ -67,7 +67,7 @@ GOPATH=$MDRIP/go go test github.com/monopole/mdrip
 $MDRIP/go/bin/mdrip   # Shows usage.
 ```
 
-Extract code from the [example tutorial]
+Send code from the [example tutorial] to stdout:
 (https://github.com/monopole/mdrip/blob/master/example_tutorial.md):
 
 ```
@@ -75,17 +75,17 @@ $MDRIP/go/bin/mdrip \
     $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md lesson1
 ```
 
-## Testing
+## Tutorial Testing
 
 The output of the above command can be piped to `source /dev/stdin` to
 evolve the state of the current shell per the tutorial.
 
-For automated testing, however, it's better to pipe to `bash -e`,
-running the code in a subshell leaving the current shell's state
-unchanged (modulo whatever the script does to the computer).
+For automated testing it's better to pipe to `bash -e`, running the
+code in a subshell leaving the current shell's state unchanged (modulo
+whatever the script does to the computer).
 
-Use of the `--subshell` flag does that as well - but does a better job
-of reporting errors:
+Use of the tool's `--subshell` flag does that as well - but does a
+better job of reporting errors:
 
 ```
 $MDRIP/go/bin/mdrip --subshell \
@@ -93,8 +93,9 @@ $MDRIP/go/bin/mdrip --subshell \
 ```
 
 The above command has no output and exits with status zero if all the
-scripts labelled `@1` in the given markdown succeed.  On any failure,
-however, the command dumps a report and exits with non-zero status.
+scripts labelled `@lesson1` in the given markdown succeed.  On any
+failure, however, the command dumps a report and exits with non-zero
+status.
 
 ## Alteratives
 
