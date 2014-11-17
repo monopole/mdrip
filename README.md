@@ -22,81 +22,47 @@ perspective, see the latex-based
 
 ## Example
 
-Shell scripts can create files in any programming language, via
-[_here_ documents](http://tldp.org/LDP/abs/html/here-docs.html) and
-what not.
+This tool looks for [code blocks delimitted with triple back
+ticks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks).
 
-The following tutorial has shell snippets that write, compile and run
-a Go program.
+The blocks are viewed as shell scripts, and shell scripts can make
+files in any programming language, via [_here_
+documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
 
-> The _markdown inside markdown_ problem skirted here by
-> using single quotes to delimit the scripts rather than backticks.
-> The 'real' version is [here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md),
-> and the rendered version is [here](https://github.com/monopole/mdrip/blob/master/example_tutorial.md).
+The tutorial
+[here](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
+(raw markdown
+[here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md)
+) has code blocks that write, compile and run a Go program.
 
-```
-<!-- @1 @setup -->
-'''
-export GOPATH=/tmp/play/go
-'''
+The _@labels_ found in the _HTML comments_ directly preceeding code
+blocks identify a code block sequence - a _labelled script_.  The tool
+accepts a label argument and file argument and extracts the matching
+script.
 
-Write a *Go* function:
+The number of scripts that can be generated equals the number of
+unique labels.  If a block has multiple labels, it can be incorporated
+into multiple scripts (e.g. common initialization code).  If a block
+has no label, this tool ignores it.
 
-<!-- @1 -->
-'''
-mkdir -p $GOPATH/src/example
- cat - <<EOF >$GOPATH/src/example/add.go
-package main
+A block with a label like `@init` might merely define a few env
+variables.  It might have a second label like `@lesson1` that also
+appears on subsquent blocks that build a server, run it in the
+background, fire up a client to talk to it, then kill both through
+judicious used of process ID variables.
 
-func add(x, y int) (int) { return x + y }
-EOF
-'''
-
-Write a main program to call it:
-
-<!-- @1 -->
-'''
- cat - <<EOF >$GOPATH/src/example/main.go
-package main
-
-import "fmt"
-
-func main() {
-    fmt.Printf("Calling add on 1 and 2 yields %d.\n", add(1, 2))
-}
-EOF
-go install example
-$GOPATH/bin/example
-'''
-Copy-paste the above to build and run your *Go* program.
-```
-
-The _@labels_ found in HTML comments directly preceeding the snippets
-identify alternative 'threads' of execution.  The tool extracts
-snippets with a given label.
-
-The number of full scripts that can be generated equals the number of
-unique labels.  If a snippet has multiple labels, it can be
-incorporated into multiple scripts (e.g. common initialization code).
-If a snippet has no label, it's ignored.
-
-A simple script thread might merely put the user into an appropriate
-shell state - proper environment vars defined, proper files created,
-proper executables in place.
-
-A more complex thread might build a server, run it in the background,
-fire up a client to talk to it, then kill both through judicious used
-of process ID variables.
+There's no notion of cleanup or encapsulation.  Any cleanup needs to
+be done in a final block.
 
 ## Build
 
 Assuming `Go` and `git` are present:
 
 ```
-export MDCHECK=/tmp/mdcheck
-GOPATH=$MDCHECK/go go get github.com/monopole/mdrip
-GOPATH=$MDCHECK/go go test github.com/monopole/mdrip
-$MDCHECK/go/bin/mdrip   # Shows usage.
+export MDRIP=~/mdrip
+GOPATH=$MDRIP/go go get github.com/monopole/mdrip
+GOPATH=$MDRIP/go go test github.com/monopole/mdrip
+$MDRIP/go/bin/mdrip   # Shows usage.
 ```
 
 Extract code from the [example tutorial]
@@ -104,8 +70,8 @@ Extract code from the [example tutorial]
 with this command:
 
 ```
-$MDCHECK/go/bin/mdrip \
-    $MDCHECK/go/src/github.com/monopole/mdrip/example_tutorial.md 1
+$MDRIP/go/bin/mdrip \
+    $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md 1
 ```
 
 ## Testing
@@ -121,8 +87,8 @@ Use of the `--subshell` flag does that as well - but does a better job
 of reporting errors:
 
 ```
-$MDCHECK/go/bin/mdrip --subshell \
-    $MDCHECK/go/src/github.com/monopole/mdrip/example_tutorial.md 1
+$MDRIP/go/bin/mdrip --subshell \
+    $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md 1
 ```
 
 The above command has no output and exits with status zero if all the
