@@ -1,29 +1,29 @@
 First do some setup:
 
-<!-- @1 @setup -->
+<!-- @lesson1 @init -->
 ```
-export GOPATH=/tmp/play/go
+export DEMO_DIR=/tmp/play/go
+mkdir -p $DEMO_DIR/src/example
 ```
 
 Write a *Go* function...
 
-<!-- @1 -->
+<!-- @lesson1 -->
 ```
-mkdir -p $GOPATH/src/example
- cat - <<EOF >$GOPATH/src/example/add.go
+ cat - <<EOF >$DEMO_DIR/src/example/add.go
 package main
 
 func add(x, y int) (int) { return x + y }
 EOF
-echo "the next command meant to fail"
-badCommandToTriggerTestFailure - remove to make it work
+echo "the next command intended to fail"
+badCommandToTriggerTestFailure
 ```
 
 ...and a main program to call it:
 
-<!-- @1 -->
+<!-- @lesson1 -->
 ```
- cat - <<EOF >$GOPATH/src/example/main.go
+ cat - <<EOF >$DEMO_DIR/src/example/main.go
 package main
 
 import "fmt"
@@ -32,8 +32,15 @@ func main() {
     fmt.Printf("Calling add on 1 and 2 yields %d.\n", add(1, 2))
 }
 EOF
-go install example
-$GOPATH/bin/example
+GOPATH=$DEMO_DIR go install example
+$DEMO_DIR/bin/example
 ```
 
 Copy/paste the above into a shell to build and run your *Go* program.
+
+Clean up with this command:
+
+<!-- @lesson1 @cleanup -->
+```
+/bin/rm -rf $DEMO_DIR
+```

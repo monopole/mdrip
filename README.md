@@ -40,10 +40,10 @@ blocks identify a code block sequence - a _labelled script_.  The tool
 accepts a label argument and file argument and extracts the matching
 script.
 
-The number of scripts that can be generated equals the number of
-unique labels.  If a block has multiple labels, it can be incorporated
-into multiple scripts (e.g. common initialization code).  If a block
-has no label, this tool ignores it.
+If a block has multiple labels, it can be incorporated into multiple
+scripts (e.g. common initialization code).  If a block has no label,
+this tool ignores it.  The number of scripts that can be extracted
+from a markdown file equals the number of unique labels.
 
 A block with a label like `@init` might merely define a few env
 variables.  It might have a second label like `@lesson1` that also
@@ -51,8 +51,9 @@ appears on subsquent blocks that build a server, run it in the
 background, fire up a client to talk to it, then kill both through
 judicious used of process ID variables.
 
-There's no notion of cleanup or encapsulation.  Any cleanup needs to
-be done in a final block.
+There's no notion of encapsulation or automatic cleanup.  Extracted 
+scripts can do _anything_.  The markdown author can always add cleanup
+code to the final block.
 
 ## Build
 
