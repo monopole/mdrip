@@ -40,7 +40,7 @@ Copy/paste the above into a shell to build and run your *Go* program.
 
 Clean up with this command:
 
-<!-- @lesson1 @cleanup -->
+<!-- @cleanup -->
 ```
 /bin/rm -rf $DEMO_DIR
 ```

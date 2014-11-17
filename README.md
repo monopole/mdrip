@@ -23,8 +23,9 @@ perspective, see the latex-based
 ## Details
 
 This tool looks for [fenced code
-blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks).
-The blocks are viewed as shell scripts, and shell scripts can make
+blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an _@label_.
+
+A code block holds a shell command or script.  Shell commands can make
 files in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
 
@@ -34,16 +35,13 @@ The tutorial
 [here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md)
 ) has code blocks that write, compile and run a Go program.
 
-An _@labels_ found in a HTML comment immediately preceeding a code
-block identify the block as part of a _labelled script_.  
-
-The tool accepts a file argument and a label argument and extracts the
-matching script.
+The tool accepts a file argument and a label argument and extracts
+all blocks with that label.
 
 If a block has multiple labels, it can be incorporated into multiple
-scripts (e.g. common initialization code).  If a block has no label,
-this tool ignores it.  The number of scripts that can be extracted
-from a markdown file equals the number of unique labels.
+scripts.  If a block has no label, it's ignored.  The number
+of scripts that can be extracted from a markdown file equals the
+number of unique labels.
 
 A block with a label like `@init` might merely define a few env
 variables.  It might have a second label like `@lesson1` that also
@@ -67,8 +65,9 @@ GOPATH=$MDRIP/go go test github.com/monopole/mdrip
 $MDRIP/go/bin/mdrip   # Shows usage.
 ```
 
-Send code from the [example tutorial] to stdout:
-(https://github.com/monopole/mdrip/blob/master/example_tutorial.md):
+Send code from the [example tutorial]
+(https://github.com/monopole/mdrip/blob/master/example_tutorial.md) to
+stdout:
 
 ```
 $MDRIP/go/bin/mdrip \
@@ -85,7 +84,9 @@ code in a subshell leaving the current shell's state unchanged (modulo
 whatever the script does to the computer).
 
 Use of the tool's `--subshell` flag does that as well - but does a
-better job of reporting errors:
+better job of reporting errors.
+Run the following to see how the error in the example tutorial
+is reported:
 
 ```
 $MDRIP/go/bin/mdrip --subshell \
