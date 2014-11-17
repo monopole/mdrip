@@ -26,8 +26,8 @@ blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-b
 Code blocks must be shell scripts.  Such scripts can make files in any
 programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
-The tutorial
-[here](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
+The [example
+tutorial](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
 (raw markdown
 [here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md)
 ) has _bash_ code blocks that write, compile and run a Go program.
