@@ -2,7 +2,7 @@ First do some setup:
 
 <!-- @lesson1 @init -->
 ```
-export DEMO_DIR=/tmp/play/go
+export DEMO_DIR=/tmp/mdrip_example
 mkdir -p $DEMO_DIR/src/example
 ```
 
