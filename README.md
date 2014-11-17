@@ -1,30 +1,29 @@
-This tool scans markdown for [fenced code
-blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an embeddded _@label_ and extracts them
-execution as shell code.
-
-The purpose is to test or otherwise simply run shell code embedded
-in markdown.
 This tool is a hacky, markdown-based instance of language-independent
 [literate
 programming](http://en.wikipedia.org/wiki/Literate_programming).  For
 perspective, see the latex-based
 [noweb](http://en.wikipedia.org/wiki/Noweb).
 
-The tool can emit the code blocks to `stdout` for piping to `source
-/dev/stdin`, as if the user had copy/pasted the blocks to their
-prompt.  This is a way to fast-forward through all or part of
-said code to get into a desired state.
+The tool scans markdown for [fenced code
+blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an embeddded _@label_ and extracts them.
 
-Alternatively, the tool can run extracted code in a subshell with
+The tool can emit the code blocks to `stdout` for piping to an
+arbitrary interpreter.  
+
+If the code blocks are in bash syntax, and the tool is itself running
+in a bash shell, then piping the output to `source /dev/stdin` is
+equivalent to the user copying all the code blocks to their prompt.
+
+Alternatively, the tool can run extracted code in a bash subshell with
 customizable parsing of the subshell's stdout and stderr, allowing
-reporting like _block 5 from script 'foo' in file 'bar' failed
-with error 'baz'_.  This behavior facilitates adding tutorial
-coverage to regression test frameworks.
+reporting like _block 5 from script 'foo' in file 'bar' failed with
+error 'baz'_.  This behavior facilitates adding tutorial coverage to
+regression test frameworks.
 
 ## Details
 
-Since code blocks will be eventually sent to a shell, they must be
-shell scripts.  Such scripts can make files in any programming
+The tool has a certainly rough extensibility because
+shell scripts can make, build and run programs in any programming
 language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
 The [example
