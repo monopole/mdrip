@@ -22,15 +22,14 @@ regression test frameworks.
 
 ## Details
 
-The tool has a certainly rough extensibility because
-shell scripts can make, build and run programs in any programming
-language, via [_here_
+The tool has a certainly rough extensibility because shell scripts can
+make, build and run programs in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
 The [example
 tutorial](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
 (raw markdown
-[here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md)
-) has _bash_ code blocks that write, compile and run a Go program.
+[here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md))
+has bash code blocks that write, compile and run a Go program.
 
 The tool accepts a file argument and a label argument and extracts
 all blocks with that label.
