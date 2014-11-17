@@ -3,7 +3,7 @@ This tool is a hacky, markdown-based instance of language-independent
 programming](http://en.wikipedia.org/wiki/Literate_programming).  For
 perspective, see the latex-based
 [noweb](http://en.wikipedia.org/wiki/Noweb).  It's intended to make
-markdown-based coding tutorials more useful.
+markdown-based coding tutorials executable and testable.
 
 The tool scans markdown for [fenced code
 blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an embedded _@label_ and extracts them.
