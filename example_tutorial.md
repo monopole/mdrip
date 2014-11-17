@@ -1,8 +1,8 @@
 First do some setup:
 
-<!-- @lesson1 @init -->
+<!-- @lesson1 @cleanup -->
 ```
-export DEMO_DIR=/tmp/mdrip_example
+DEMO_DIR=/tmp/mdrip_example
 mkdir -p $DEMO_DIR/src/example
 ```
 
@@ -40,7 +40,7 @@ Copy/paste the above into a shell to build and run your *Go* program.
 
 Clean up with this command:
 
-<!-- @cleanup -->
+<!-- @lesson1 @cleanup -->
 ```
 /bin/rm -rf $DEMO_DIR
 ```
