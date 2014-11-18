@@ -12,9 +12,9 @@ type lexTest struct {
 }
 
 const (
-	snip1 = "echo $PATH\n" +
+	block1 = "echo $PATH\n" +
 		"echo $GOPATH"
-	snip2 = "kill -9 $pid"
+	block2 = "kill -9 $pid"
 )
 
 var (
@@ -28,21 +28,21 @@ var lexTests = []lexTest{
 	{"comment1", "<!-- -->", []item{tEOF}},
 	{"comment2", "a <!-- --> b", []item{tEOF}},
 	{"block1", "aa <!-- @1 -->\n" +
-		"```\n" + snip1 + "```\n bbb",
-		[]item{{itemThreadLabel, "1"},
-			{itemSnippet, snip1},
+		"```\n" + block1 + "```\n bbb",
+		[]item{{itemBlockLabel, "1"},
+			{itemCodeBlock, block1},
 			tEOF}},
 	{"block2", "aa <!-- @1 @2-->\n" +
-		"```\n" + snip1 + "```\n bb cc\n" +
+		"```\n" + block1 + "```\n bb cc\n" +
 		"dd <!-- @3 @4-->\n" +
-		"```\n" + snip2 + "```\n ee ff\n",
+		"```\n" + block2 + "```\n ee ff\n",
 		[]item{
-			{itemThreadLabel, "1"},
-			{itemThreadLabel, "2"},
-			{itemSnippet, snip1},
-			{itemThreadLabel, "3"},
-			{itemThreadLabel, "4"},
-			{itemSnippet, snip2},
+			{itemBlockLabel, "1"},
+			{itemBlockLabel, "2"},
+			{itemCodeBlock, block1},
+			{itemBlockLabel, "3"},
+			{itemBlockLabel, "4"},
+			{itemCodeBlock, block2},
 			tEOF}},
 }
 

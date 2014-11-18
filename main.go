@@ -9,24 +9,26 @@ import (
 	"strings"
 )
 
-func dump(fileName, label string, scripts []string) {
-	fmt.Printf("#\n# Script @%s from %s\n#\n", label, fileName)
-	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d\n"
-	for i, script := range scripts {
-		fmt.Printf(delimFmt, "Start", i+1)
-		fmt.Print(script)
-		fmt.Printf(delimFmt, "End", i+1)
-		fmt.Println()
+func dump(label blockLabel, scriptBuckets []*ScriptBucket) {
+	for _, bucket := range scriptBuckets {
+		fmt.Printf("#\n# Script @%s from %s\n#\n", label, bucket.fileName)
+		delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d\n"
+		for i, block := range bucket.script {
+			fmt.Printf(delimFmt, "Start", i+1)
+			fmt.Print(block)
+			fmt.Printf(delimFmt, "End", i+1)
+			fmt.Println()
+		}
 	}
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "\nUsage:  %s {fileName} {label}\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "\nUsage:  %s {label} {fileName}...\n", os.Args[0])
 	flag.PrintDefaults()
 	fmt.Fprintf(os.Stderr,
 		`
-Reads a markdown file, extracts scripts with a given @label,
-and either runs them in a subshell or emits them to stdout.
+Reads markdown files, extracts code blocks with a given @label, and
+either runs them in a subshell or emits them to stdout.
 
 If the markdown file contains
 
@@ -38,32 +40,34 @@ If the markdown file contains
   Blah blah blah.
   <!-- @bar @apple -->
   '''
-  echo "I am script bar"
+  echo "I am block bar"
   '''
   Blah blah blah.
   <!-- @foo @baz -->
   '''
-  echo "I am script foo"
+  echo "I am block foo"
   '''
   Blah blah blah.
 
-then the command '{thisProgram} {fileName} foo' emits: 
+then the command '{this} foo {fileName}' emits: 
 
   cd $HOME
-  echo "I am script foo."
+  echo "I am block foo."
 
 Pipe output to 'source /dev/stdin' to run it directly.
 
-Use --subshell to run it in a subshell leaving your current shell env
-vars and pwd unchanged (the scripts can, however, do anything to your
-computer, file system, etc.).
+Use --subshell to run the blocks in a subshell leaving your current
+shell env vars and pwd unchanged.  The code blocks can, however, do
+anything to your computer that you can.
 `)
 }
 
 func main() {
 	flag.Usage = usage
-	subshell := flag.Bool("subshell", false, "Run extracted scripts in subshell (leaves your env vars and pwd unchanged).")
-	swallow := flag.Bool("swallow", false, "Swallow errors from subshell (non-zero exit only on problems in driver code).")
+	subshell := flag.Bool("subshell", false,
+		"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
+	swallow := flag.Bool("swallow", false,
+		"Swallow errors from subshell (non-zero exit only on problems in driver code).")
 	flag.Parse()
 	if *swallow && !*subshell {
 		fmt.Fprintf(os.Stderr, "Makes no sense to specify --swallow but not --subshell.\n")
@@ -74,28 +78,34 @@ func main() {
 		usage()
 		os.Exit(1)
 	}
-	fileName := flag.Arg(0)
-	label := flag.Arg(1)
-	contents, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to read %q\n", fileName)
-		usage()
-		os.Exit(2)
+	label := blockLabel(flag.Arg(0))
+	scriptBuckets := make([]*ScriptBucket, flag.NArg()-1)
+
+	for i := 1; i < flag.NArg(); i++ {
+		fileName := flag.Arg(i)
+		contents, err := ioutil.ReadFile(fileName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to read %q\n", fileName)
+			usage()
+			os.Exit(2)
+		}
+		m := Parse(string(contents))
+		script, ok := m[label]
+		if !ok {
+			fmt.Fprintf(os.Stderr, "Unable to find a block labelled %q in file %q.\n", label, fileName)
+			os.Exit(3)
+		}
+		scriptBuckets[i-1] = &ScriptBucket{fileName, script}
 	}
 
-	m := Parse(string(contents))
-	scripts, ok := m[label]
-	if !ok {
-		fmt.Fprintf(os.Stderr, "Unable to find a script labelled %q.\n", label)
-		os.Exit(3)
-	}
 	if !*subshell {
-		dump(fileName, label, scripts)
+		dump(label, scriptBuckets)
 		return
 	}
-	result := RunInSubShell(scripts)
+
+	result := RunInSubShell(scriptBuckets)
 	if result.err != nil {
-		Complain(result, label, fileName)
+		Complain(result, label)
 		if !*swallow {
 			log.Fatal(result.err)
 		}

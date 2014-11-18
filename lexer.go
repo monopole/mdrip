@@ -13,6 +13,9 @@ import (
 
 type Pos int
 
+type codeBlock string
+type blockLabel string
+
 type item struct {
 	typ itemType // Type of this item.
 	val string   // The value of this item.
@@ -24,9 +27,9 @@ func (i item) String() string {
 		return "EOF"
 	case i.typ == itemError:
 		return i.val
-	case i.typ == itemThreadLabel:
-		return string(threadMarker) + i.val
-	case i.typ == itemSnippet:
+	case i.typ == itemBlockLabel:
+		return string(labelMarker) + i.val
+	case i.typ == itemCodeBlock:
 		return "--------\n" + i.val + "--------\n"
 	case len(i.val) > 10:
 		return fmt.Sprintf("%.30s...", i.val)
@@ -37,14 +40,14 @@ func (i item) String() string {
 type itemType int
 
 const (
-	itemError       itemType = iota
-	itemThreadLabel          // Label for a thread of execution.
-	itemSnippet              // All lines between code block marks
+	itemError      itemType = iota
+	itemBlockLabel          // Label for a code block
+	itemCodeBlock           // All lines between code block marks
 	itemEOF
 )
 
 const (
-	threadMarker  = '@'
+	labelMarker   = '@'
 	commentOpen   = "<!--"
 	commentClose  = "-->"
 	codeBlockMark = "```\n"
@@ -167,18 +170,17 @@ func lexText(l *lexer) stateFn {
 	}
 }
 
-// Move to lexing a code block intended for a
-// particular thread, or to lexing a simple comment.
-// Comment opener known to be present.
+// Move to lexing a code block intended for a particular script, or to
+// lexing a simple comment.  Comment opener known to be present.
 func lexPutativeComment(l *lexer) stateFn {
 	l.pos += Pos(len(commentOpen))
 	for {
 		switch r := l.next(); {
 		case isSpace(r):
 			l.ignore()
-		case r == threadMarker:
+		case r == labelMarker:
 			l.backup()
-			return lexThreadLabels
+			return lexBlockLabels
 		default:
 			l.backup()
 			return lexCommentRemainder
@@ -198,27 +200,26 @@ func lexCommentRemainder(l *lexer) stateFn {
 	return lexText
 }
 
-// lexThreadLabels scans a string like "@1 @hey" emitting
-// the labels "1" and "hey".
-// ThreadMarker known to be present.
-func lexThreadLabels(l *lexer) stateFn {
+// lexBlockLabels scans a string like "@1 @hey" emitting the labels
+// "1" and "hey".  LabelMarker known to be present.
+func lexBlockLabels(l *lexer) stateFn {
 	for {
 		switch r := l.next(); {
 		case r == eof || isEndOfLine(r):
-			return l.errorf("unclosed thread label sequence")
+			return l.errorf("unclosed block label sequence")
 		case isSpace(r):
 			l.ignore()
-		case r == threadMarker:
+		case r == labelMarker:
 			l.ignore()
 			l.acceptWord()
 			if l.width == 0 {
-				return l.errorf("empty thread label")
+				return l.errorf("empty block label")
 			}
-			l.emit(itemThreadLabel)
+			l.emit(itemBlockLabel)
 		default:
 			l.backup()
 			if !strings.HasPrefix(l.input[l.pos:], commentClose) {
-				return l.errorf("improperly closed thread label sequence")
+				return l.errorf("improperly closed block label sequence")
 			}
 			l.pos += Pos(len(commentClose))
 			l.ignore()
@@ -245,7 +246,7 @@ func lexCodeBlock(l *lexer) stateFn {
 	for {
 		if strings.HasPrefix(l.input[l.pos:], codeBlockMark) {
 			if l.pos > l.start {
-				l.emit(itemSnippet)
+				l.emit(itemCodeBlock)
 			}
 			l.pos += Pos(len(codeBlockMark))
 			l.ignore()
@@ -257,36 +258,36 @@ func lexCodeBlock(l *lexer) stateFn {
 	}
 }
 
-// Parse lexes the incoming string into a mapping from label to string
-// array.  The labels are the strings after a threadMarker in snippet
-// comments.  The arrays hold script snippets (corresponding to the
-// marker) in the order they appeared in the input.
-func Parse(s string) (result map[string][]string) {
-	result = make(map[string][]string)
-	currentLabels := make([]string, 0, 10)
+// Parse lexes the incoming string into a mapping from blockLabel to
+// codeBlock array.  The labels are the strings after a labelMarker in
+// a comment preceding a code block.  Array hold code blocks in the
+// order they appeared in the input.
+func Parse(s string) (result map[blockLabel][]codeBlock) {
+	result = make(map[blockLabel][]codeBlock)
+	currentLabels := make([]blockLabel, 0, 10)
 	l := newLex(s)
 	for {
 		item := l.nextItem()
 		switch {
 		case item.typ == itemEOF || item.typ == itemError:
 			return
-		case item.typ == itemThreadLabel:
-			currentLabels = append(currentLabels, item.val)
-		case item.typ == itemSnippet:
+		case item.typ == itemBlockLabel:
+			currentLabels = append(currentLabels, blockLabel(item.val))
+		case item.typ == itemCodeBlock:
 			if len(currentLabels) == 0 {
-				fmt.Println("Have an unlabelled snippet:\n " + item.val)
+				fmt.Println("Have an unlabelled code block:\n " + item.val)
 				os.Exit(1)
 			}
 			for _, label := range currentLabels {
-				programs, ok := result[label]
+				blocks, ok := result[label]
 				if ok {
-					programs = append(programs, item.val)
+					blocks = append(blocks, codeBlock(item.val))
 				} else {
-					programs = []string{item.val}
+					blocks = []codeBlock{codeBlock(item.val)}
 				}
-				result[label] = programs
+				result[label] = blocks
 			}
-			currentLabels = make([]string, 0, 10)
+			currentLabels = make([]blockLabel, 0, 10)
 		}
 	}
 }

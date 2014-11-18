@@ -63,32 +63,42 @@ func scanOut(stdOut io.ReadCloser, results chan *textBucket) {
 
 type ErrorBucket struct {
 	textBucket
-	index   int
-	script  string
-	err     error
-	message string
+	fileName string
+	index    int
+	block    codeBlock
+	err      error
+	message  string
+}
+
+type ScriptBucket struct {
+	fileName string
+	script   []codeBlock
 }
 
 // userBehavior writes N scripts to shell and looks at the result.
-func userBehavior(stdIn io.Writer, scripts []string, chOut, chErr chan *textBucket) (errResult *ErrorBucket) {
-	errResult = &ErrorBucket{textBucket{false, ""}, -1, "", nil, ""}
-	for i, script := range scripts {
-		_, err := stdIn.Write([]byte(script))
-		check("write script", err)
-		_, err = stdIn.Write([]byte("\necho " + signal + "\n"))
-		check("write signal", err)
-		result := <-chOut
-		if result == nil || !result.success {
-			errResult.index = i
-			errResult.script = script
-			if result != nil {
-				errResult.output = result.output
+func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket,
+	chOut, chErr chan *textBucket) (errResult *ErrorBucket) {
+	errResult = &ErrorBucket{textBucket{false, ""}, "", -1, "", nil, ""}
+	for _, bucket := range scriptBuckets {
+		for i, block := range bucket.script {
+			_, err := stdIn.Write([]byte(block))
+			check("write script", err)
+			_, err = stdIn.Write([]byte("\necho " + signal + "\n"))
+			check("write signal", err)
+			result := <-chOut
+			if result == nil || !result.success {
+				errResult.fileName = bucket.fileName
+				errResult.index = i
+				errResult.block = block
+				if result != nil {
+					errResult.output = result.output
+				}
+				result = <-chErr
+				if result != nil {
+					errResult.message = result.output
+				}
+				return
 			}
-			result = <-chErr
-			if result != nil {
-				errResult.message = result.output
-			}
-			return
 		}
 	}
 	_, err := stdIn.Write([]byte("exit\n"))
@@ -96,36 +106,37 @@ func userBehavior(stdIn io.Writer, scripts []string, chOut, chErr chan *textBuck
 	return
 }
 
-func Complain(result *ErrorBucket, label, fileName string) {
-	delim := strings.Repeat("-", 70) + "\n"
-	fmt.Fprintf(os.Stderr, "Error in script %d from thread label %q of file %q:\n", result.index+1, label, fileName)
+func complain(name, delim, output string) {
+	fmt.Fprintf(os.Stderr, "\n%s capture:\n", name)
 	fmt.Fprintf(os.Stderr, delim)
-	fmt.Fprintf(os.Stderr, result.script)
-	fmt.Fprintf(os.Stderr, delim)
-	fmt.Fprintf(os.Stderr, "\nStdout capture:\n")
-	fmt.Fprintf(os.Stderr, delim)
-	fmt.Fprintf(os.Stderr, result.output)
+	fmt.Fprintf(os.Stderr, output)
 	fmt.Fprintf(os.Stderr, "\n")
 	fmt.Fprintf(os.Stderr, delim)
+}
+
+func Complain(result *ErrorBucket, label blockLabel) {
+	delim := strings.Repeat("-", 70) + "\n"
+	fmt.Fprintf(os.Stderr, "Error in block %d from label %q of file %q:\n",
+		result.index+1, label, result.fileName)
+	fmt.Fprintf(os.Stderr, delim)
+	fmt.Fprintf(os.Stderr, string(result.block))
+	fmt.Fprintf(os.Stderr, delim)
+	complain("Stdout", delim, result.output)
 	if len(result.message) > 0 {
-		fmt.Fprintf(os.Stderr, "\nStderr capture:\n")
-		fmt.Fprintf(os.Stderr, delim)
-		fmt.Fprintf(os.Stderr, result.message)
-		fmt.Fprintf(os.Stderr, "\n")
-		fmt.Fprintf(os.Stderr, delim)
+		complain("Stderr", delim, result.message)
 	}
 }
 
-// Runs N scripts in subprocess, reporting failure if any.
+// Runs code blocks in a subprocess, reporting failure if any.
 //
-// The 'scripts' are strings holding opaque shell code.  The strings
-// may be more complex than single commands delimitted by linefeeds -
-// e.g. scripts that operate on HERE documents, or multi-line commands
+// Code blocks are strings holding opaque shell code.  The strings may
+// be more complex than single commands delimitted by linefeeds -
+// e.g. blocks that operate on HERE documents, or multi-line commands
 // using line continuation via '\', quotes or curly brackets.  This
 // code is not a shell interpreter, so the 'atom' of success or
-// failure is an entire script (any one of the N scripts).  The atom
-// won't be a 'line' since lines won't be parsed or known.
-func RunInSubShell(scripts []string) (result *ErrorBucket) {
+// failure is an entire code block.  The atom won't be a 'line' since
+// lines won't be parsed or known.
+func RunInSubShell(scriptBuckets []*ScriptBucket) (result *ErrorBucket) {
 	// Add "-e" to have shell die on any error.
 	shell := exec.Command("bash", "-e")
 
@@ -147,7 +158,7 @@ func RunInSubShell(scripts []string) (result *ErrorBucket) {
 	chErr := make(chan *textBucket)
 	go scanErr(stdErr, chErr)
 
-	result = userBehavior(stdIn, scripts, chOut, chErr)
+	result = userBehavior(stdIn, scriptBuckets, chOut, chErr)
 	result.err = shell.Wait()
 	return
 }

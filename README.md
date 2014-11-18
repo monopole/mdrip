@@ -7,7 +7,6 @@ markdown-based coding tutorials executable and testable.
 
 The tool scans markdown for [fenced code
 blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an embedded _@label_ and extracts them.
-
 The code blocks can then be piped to an arbitrary interpreter.
 
 If the code blocks are in bash syntax, and the tool is itself running
@@ -22,7 +21,7 @@ regression test frameworks.
 
 ## Details
 
-The tool has a rough extensibility because shell scripts can
+The tool has a simple extensibility because shell scripts can
 make, build and run programs in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
 
@@ -32,12 +31,12 @@ For example, this
 [here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md))
 has bash code blocks that write, compile and run a Go program.
 
-The tool accepts a file argument and a label argument and extracts
-all blocks with that label.
+The tool accepts a label argument and any number of file name
+arguments then extracts all blocks with that label from those files.
 
 If a block has multiple labels, it can be incorporated into multiple
-scripts.  If a block has no label, it's ignored.  The number
-of scripts that can be extracted from a markdown file equals the
+scripts.  If a block has no label, it's ignored.  The number of
+scripts that can be extracted from a set of markdown files equals the
 number of unique labels.
 
 A block with a label like `@init` might merely define a few env
@@ -67,8 +66,8 @@ Send code from the [example tutorial]
 stdout:
 
 ```
-$MDRIP/go/bin/mdrip \
-    $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md lesson1
+$MDRIP/go/bin/mdrip lesson1 \
+    $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md
 ```
 
 ## Tutorial Testing
@@ -86,8 +85,8 @@ Run the following to see how the error in the example tutorial
 is reported:
 
 ```
-$MDRIP/go/bin/mdrip --subshell \
-    $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md lesson1
+$MDRIP/go/bin/mdrip --subshell lesson1 \
+    $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md
 ```
 
 The above command has no output and exits with status zero if all the

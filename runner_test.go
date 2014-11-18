@@ -5,16 +5,16 @@ import (
 )
 
 func TestRunnerWithNothing(t *testing.T) {
-	if RunInSubShell([]string{}).err != nil {
+	if RunInSubShell([]*ScriptBucket{}).err != nil {
 		t.Fail()
 	}
 }
 
 func TestRunnerWithGoodStuff(t *testing.T) {
-	result := RunInSubShell([]string{
+	result := RunInSubShell([]*ScriptBucket{&ScriptBucket{"iAmFileName", []codeBlock{
 		"ls\ndate\n",
 		"echo beans\necho cheese\n",
-		"echo hasta\necho la vista\n"})
+		"echo hasta\necho la vista\n"}}})
 	if result.err != nil {
 		t.Fail()
 	}
@@ -36,28 +36,29 @@ func checkFail(t *testing.T, got, want *ErrorBucket) {
 func TestWithBadStuff1(t *testing.T) {
 	want := &ErrorBucket{
 		textBucket{false, "dunno"},
+		"iAmAFileName",
 		0,
 		"",
 		nil,
 		"bash: line 1: notagoodcommand: command not found"}
 
-	got := RunInSubShell([]string{
-		"notagoodcommand\n"})
+	got := RunInSubShell([]*ScriptBucket{&ScriptBucket{"iAmFileName", []codeBlock{"notagoodcommand\n"}}})
 	checkFail(t, got, want)
 }
 
 func TestWithBadStuff2(t *testing.T) {
 	want := &ErrorBucket{
 		textBucket{false, "dunno"},
+		"iAmAFileName",
 		2,
 		"",
 		nil,
 		"bash: line 9: lochNessMonster: command not found"}
 
-	got := RunInSubShell([]string{
-		"ls\ndate\n",
-		"echo beans\necho cheese\n",
-		"lochNessMonster\n",
-		"echo hasta\necho la vista\n"})
+	got := RunInSubShell([]*ScriptBucket{&ScriptBucket{"iAmFileName",
+		[]codeBlock{"ls\ndate\n",
+			"echo beans\necho cheese\n",
+			"lochNessMonster\n",
+			"echo hasta\necho la vista\n"}}})
 	checkFail(t, got, want)
 }
