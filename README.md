@@ -1,9 +1,9 @@
 This tool is a hacky, markdown-based instance of language-independent
 [literate
-programming](http://en.wikipedia.org/wiki/Literate_programming).  For
-perspective, see the latex-based
-[noweb](http://en.wikipedia.org/wiki/Noweb).  It's intended to make
-markdown-based coding tutorials executable and testable.
+programming](http://en.wikipedia.org/wiki/Literate_programming).  It's
+intended to make markdown-based coding tutorials executable and
+testable.  For perspective, see the latex-based
+[noweb](http://en.wikipedia.org/wiki/Noweb).
 
 The tool scans markdown for [fenced code
 blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an embedded _@label_ and extracts them.
@@ -11,7 +11,8 @@ The code blocks can then be piped to an arbitrary interpreter.
 
 If the code blocks are in bash syntax, and the tool is itself running
 in a bash shell, then piping the output to `source /dev/stdin` is
-equivalent to the user copying all the code blocks to their prompt.
+equivalent to a human copy/pasting all the code blocks to their shell
+prompt.
 
 Alternatively, the tool can run extracted code in a bash subshell with
 customizable parsing of the subshell's stdout and stderr, allowing
@@ -32,12 +33,13 @@ For example, this
 has bash code blocks that write, compile and run a Go program.
 
 The tool accepts a label argument and any number of file name
-arguments then extracts all blocks with that label from those files.
+arguments then extracts all blocks with that label from those files,
+retaining the block order.
 
-If a block has multiple labels, it can be incorporated into multiple
-scripts.  If a block has no label, it's ignored.  The number of
-scripts that can be extracted from a set of markdown files equals the
-number of unique labels.
+A _script_ is a sequence of code blocks.  If a block has multiple
+labels, it can be incorporated into multiple scripts.  If a block has
+no label, it's ignored.  The number of scripts that can be extracted
+from a set of markdown files equals the number of unique labels.
 
 A block with a label like `@init` might merely define a few env
 variables.  It might have a second label like `@lesson1` that also
