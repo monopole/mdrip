@@ -13,8 +13,10 @@ import (
 
 type Pos int
 
-type codeBlock string
-type blockLabel string
+type codeBlock struct {
+	labels   []string
+	codeText string
+}
 
 type item struct {
 	typ itemType // Type of this item.
@@ -258,13 +260,13 @@ func lexCodeBlock(l *lexer) stateFn {
 	}
 }
 
-// Parse lexes the incoming string into a mapping from blockLabel to
+// Parse lexes the incoming string into a mapping from block label to
 // codeBlock array.  The labels are the strings after a labelMarker in
-// a comment preceding a code block.  Array hold code blocks in the
+// a comment preceding a code block.  Arrays hold code blocks in the
 // order they appeared in the input.
-func Parse(s string) (result map[blockLabel][]codeBlock) {
-	result = make(map[blockLabel][]codeBlock)
-	currentLabels := make([]blockLabel, 0, 10)
+func Parse(s string) (result map[string][]*codeBlock) {
+	result = make(map[string][]*codeBlock)
+	currentLabels := make([]string, 0, 10)
 	l := newLex(s)
 	for {
 		item := l.nextItem()
@@ -272,22 +274,23 @@ func Parse(s string) (result map[blockLabel][]codeBlock) {
 		case item.typ == itemEOF || item.typ == itemError:
 			return
 		case item.typ == itemBlockLabel:
-			currentLabels = append(currentLabels, blockLabel(item.val))
+			currentLabels = append(currentLabels, item.val)
 		case item.typ == itemCodeBlock:
 			if len(currentLabels) == 0 {
 				fmt.Println("Have an unlabelled code block:\n " + item.val)
 				os.Exit(1)
 			}
+			newBlock := &codeBlock{currentLabels, item.val}
 			for _, label := range currentLabels {
 				blocks, ok := result[label]
 				if ok {
-					blocks = append(blocks, codeBlock(item.val))
+					blocks = append(blocks, newBlock)
 				} else {
-					blocks = []codeBlock{codeBlock(item.val)}
+					blocks = []*codeBlock{newBlock}
 				}
 				result[label] = blocks
 			}
-			currentLabels = make([]blockLabel, 0, 10)
+			currentLabels = make([]string, 0, 10)
 		}
 	}
 }

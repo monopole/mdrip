@@ -65,23 +65,27 @@ type ErrorBucket struct {
 	textBucket
 	fileName string
 	index    int
-	block    codeBlock
+	block    *codeBlock
 	err      error
 	message  string
 }
 
 type ScriptBucket struct {
 	fileName string
-	script   []codeBlock
+	script   []*codeBlock
 }
+
+var emptyArray []string = []string{}
+var emptyCodeBlock *codeBlock = &codeBlock{emptyArray, ""}
 
 // userBehavior writes N scripts to shell and looks at the result.
 func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket,
 	chOut, chErr chan *textBucket) (errResult *ErrorBucket) {
-	errResult = &ErrorBucket{textBucket{false, ""}, "", -1, "", nil, ""}
+	emptyArray := []string{}
+	errResult = &ErrorBucket{textBucket{false, ""}, "", -1, &codeBlock{emptyArray, ""}, nil, ""}
 	for _, bucket := range scriptBuckets {
 		for i, block := range bucket.script {
-			_, err := stdIn.Write([]byte(block))
+			_, err := stdIn.Write([]byte(block.codeText))
 			check("write script", err)
 			_, err = stdIn.Write([]byte("\necho " + signal + "\n"))
 			check("write signal", err)
@@ -114,12 +118,12 @@ func complain(name, delim, output string) {
 	fmt.Fprintf(os.Stderr, delim)
 }
 
-func Complain(result *ErrorBucket, label blockLabel) {
+func Complain(result *ErrorBucket, label string) {
 	delim := strings.Repeat("-", 70) + "\n"
 	fmt.Fprintf(os.Stderr, "Error in block %d from label %q of file %q:\n",
 		result.index+1, label, result.fileName)
 	fmt.Fprintf(os.Stderr, delim)
-	fmt.Fprintf(os.Stderr, string(result.block))
+	fmt.Fprintf(os.Stderr, string(result.block.codeText))
 	fmt.Fprintf(os.Stderr, delim)
 	complain("Stdout", delim, result.output)
 	if len(result.message) > 0 {

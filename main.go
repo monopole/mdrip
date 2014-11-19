@@ -9,13 +9,17 @@ import (
 	"strings"
 )
 
-func dump(label blockLabel, scriptBuckets []*ScriptBucket) {
+func dump(label string, scriptBuckets []*ScriptBucket) {
+	dashes := strings.Repeat("-", 70)
 	for _, bucket := range scriptBuckets {
-		fmt.Printf("#\n# Script @%s from %s\n#\n", label, bucket.fileName)
-		delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d\n"
+
+		fmt.Printf("#\n# Script @%s from %q \n#\n", label, bucket.fileName)
+		delimFmt := "#" + dashes + "#  %s %d\n"
 		for i, block := range bucket.script {
+			allLabels := strings.Join(block.labels, " ")
 			fmt.Printf(delimFmt, "Start", i+1)
-			fmt.Print(block)
+			fmt.Printf("echo \"Block %d (%s) %s\"\n####\n", i+1, allLabels, bucket.fileName)
+			fmt.Print(block.codeText)
 			fmt.Printf(delimFmt, "End", i+1)
 			fmt.Println()
 		}
@@ -78,7 +82,7 @@ func main() {
 		usage()
 		os.Exit(1)
 	}
-	label := blockLabel(flag.Arg(0))
+	label := flag.Arg(0)
 	scriptBuckets := make([]*ScriptBucket, flag.NArg()-1)
 
 	for i := 1; i < flag.NArg(); i++ {
