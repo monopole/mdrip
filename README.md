@@ -1,22 +1,25 @@
 This tool is a hacky, markdown-based instance of language-independent
 [literate
-programming](http://en.wikipedia.org/wiki/Literate_programming).  It's
-intended to make markdown-based coding tutorials executable and
-testable.  For perspective, see the latex-based
+programming](http://en.wikipedia.org/wiki/Literate_programming).  It
+makes markdown-based coding tutorials executable and testable.  For
+perspective, see the latex-based
 [noweb](http://en.wikipedia.org/wiki/Noweb).
 
 The tool scans markdown for [fenced code
-blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks) immediately preceded by an HTML comment with an embedded _@label_ and extracts them.
-The code blocks can then be piped to an arbitrary interpreter.
+blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks)
+immediately preceded by an HTML comment with embedded _@label_s and
+extracts the labels and blocks.  The code blocks can then be piped to
+an arbitrary interpreter.  The labels are used for block selection and
+logging.
 
 If the code blocks are in bash syntax, and the tool is itself running
-in a bash shell, then piping the output to `source /dev/stdin` is
+in a bash shell, then piping `mdrip` output to `source /dev/stdin` is
 equivalent to a human copy/pasting all the code blocks to their shell
 prompt.
 
 Alternatively, the tool can run extracted code in a bash subshell with
 customizable parsing of the subshell's stdout and stderr, allowing
-reporting like _block 5 from script 'foo' in file 'bar' failed with
+reporting like _block 'nesbit' from script 'foo' in file 'bar' failed with
 error 'baz'_.  This behavior facilitates adding tutorial coverage to
 regression test frameworks.
 
@@ -32,21 +35,19 @@ For example, this
 [here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md))
 has bash code blocks that write, compile and run a Go program.
 
-The tool accepts a label argument and any number of file name
+The tool accepts a _label_ argument and any number of _file name_
 arguments then extracts all blocks with that label from those files,
 retaining the block order.
 
-A _script_ is a sequence of code blocks.  If a block has multiple
-labels, it can be incorporated into multiple scripts.  If a block has
-no label, it's ignored.  The number of scripts that can be extracted
-from a set of markdown files equals the number of unique labels.
+A _script_ is a sequence of code blocks with a common label.  If a
+block has multiple labels, it can be incorporated into multiple
+scripts.  If a block has no label, it's ignored.  The number of
+scripts that can be extracted from a set of markdown files equals the
+number of unique labels.
 
-A block with a label like `@init` might merely define a few env
-variables.  It might have a second label like `@lesson1` that also
-appears on subsquent blocks that build a server, run it in the
-background, fire up a client to talk to it, then kill both through
-judicious used of process ID variables.  A final code block might
-do cleanup, and have the label `@cleanup` so it can be run alone.
+The first label on a block is slightly special, in that it's
+reported as the block name for logging.  But like any label
+it can be used for selection too.
 
 There's no notion of encapsulation or automatic cleanup.  Extracted 
 scripts can do anything that the user can do.

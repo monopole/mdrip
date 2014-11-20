@@ -85,6 +85,8 @@ func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket,
 	errResult = &ErrorBucket{textBucket{false, ""}, "", -1, &codeBlock{emptyArray, ""}, nil, ""}
 	for _, bucket := range scriptBuckets {
 		for i, block := range bucket.script {
+			fmt.Printf("Running %s (%d/%d) from %s\n",
+				block.labels[0], i+1, len(bucket.script), bucket.fileName)
 			_, err := stdIn.Write([]byte(block.codeText))
 			check("write script", err)
 			_, err = stdIn.Write([]byte("\necho " + signal + "\n"))
@@ -107,6 +109,7 @@ func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket,
 	}
 	_, err := stdIn.Write([]byte("exit\n"))
 	check("trouble ending shell", err)
+	fmt.Printf("All done, no errors triggered.\n")
 	return
 }
 
@@ -120,8 +123,8 @@ func complain(name, delim, output string) {
 
 func Complain(result *ErrorBucket, label string) {
 	delim := strings.Repeat("-", 70) + "\n"
-	fmt.Fprintf(os.Stderr, "Error in block %d from label %q of file %q:\n",
-		result.index+1, label, result.fileName)
+	fmt.Fprintf(os.Stderr, "Error in block '%s' (#%d of script '%s') in %s:\n",
+		result.block.labels[0], result.index+1, label, result.fileName)
 	fmt.Fprintf(os.Stderr, delim)
 	fmt.Fprintf(os.Stderr, string(result.block.codeText))
 	fmt.Fprintf(os.Stderr, delim)

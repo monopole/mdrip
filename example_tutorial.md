@@ -1,6 +1,6 @@
 First do some setup:
 
-<!-- @lesson1 @cleanup -->
+<!-- @init @lesson1 @cleanup -->
 ```
 DEMO_DIR=/tmp/mdrip_example
 mkdir -p $DEMO_DIR/src/example
@@ -8,7 +8,7 @@ mkdir -p $DEMO_DIR/src/example
 
 Write a *Go* function...
 
-<!-- @lesson1 -->
+<!-- @makeAdder @lesson1 -->
 ```
  cat - <<EOF >$DEMO_DIR/src/example/add.go
 package main
@@ -16,12 +16,12 @@ package main
 func add(x, y int) (int) { return x + y }
 EOF
 echo "the next command intended to fail"
-badCommandToTriggerTestFailure
+# badCommandToTriggerTestFailure
 ```
 
 ...and a main program to call it:
 
-<!-- @lesson1 -->
+<!-- @makeMain @lesson1 -->
 ```
  cat - <<EOF >$DEMO_DIR/src/example/main.go
 package main
@@ -29,9 +29,11 @@ package main
 import "fmt"
 
 func main() {
+    comment this line to avoid compiler error
     fmt.Printf("Calling add on 1 and 2 yields %d.\n", add(1, 2))
 }
 EOF
+echo "The following compile should fail."
 GOPATH=$DEMO_DIR go install example
 $DEMO_DIR/bin/example
 ```
@@ -40,7 +42,7 @@ Copy/paste the above into a shell to build and run your *Go* program.
 
 Clean up with this command:
 
-<!-- @lesson1 @cleanup -->
+<!-- @cleanup @lesson1 -->
 ```
 /bin/rm -rf $DEMO_DIR
 ```

@@ -12,13 +12,12 @@ import (
 func dump(label string, scriptBuckets []*ScriptBucket) {
 	dashes := strings.Repeat("-", 70)
 	for _, bucket := range scriptBuckets {
-
-		fmt.Printf("#\n# Script @%s from %q \n#\n", label, bucket.fileName)
+		fmt.Printf("#\n# Script @%s from %s \n#\n", label, bucket.fileName)
 		delimFmt := "#" + dashes + "#  %s %d\n"
 		for i, block := range bucket.script {
-			allLabels := strings.Join(block.labels, " ")
 			fmt.Printf(delimFmt, "Start", i+1)
-			fmt.Printf("echo \"Block %d (%s) %s\"\n####\n", i+1, allLabels, bucket.fileName)
+			fmt.Printf("echo \"Block '%s' (%d/%d in %s) of %s\"\n####\n",
+				block.labels[0], i+1, len(bucket.script), label, bucket.fileName)
 			fmt.Print(block.codeText)
 			fmt.Printf(delimFmt, "End", i+1)
 			fmt.Println()
@@ -37,26 +36,26 @@ either runs them in a subshell or emits them to stdout.
 If the markdown file contains
 
   Blah blah blah.
-  <!-- @foo -->
+  <!-- @goHome @foo -->
   '''
   cd $HOME
   '''
   Blah blah blah.
-  <!-- @bar @apple -->
+  <!-- @echoApple @apple -->
   '''
-  echo "I am block bar"
+  echo "an apple a day keeps the doctor away"
   '''
   Blah blah blah.
-  <!-- @foo @baz -->
+  <!-- @echoCloseStar @foo @baz -->
   '''
-  echo "I am block foo"
+  echo "Proxima Centauri"
   '''
   Blah blah blah.
 
 then the command '{this} foo {fileName}' emits: 
 
   cd $HOME
-  echo "I am block foo."
+  echo "Proxima Centauri"
 
 Pipe output to 'source /dev/stdin' to run it directly.
 
@@ -96,7 +95,7 @@ func main() {
 		m := Parse(string(contents))
 		script, ok := m[label]
 		if !ok {
-			fmt.Fprintf(os.Stderr, "Unable to find a block labelled %q in file %q.\n", label, fileName)
+			fmt.Fprintf(os.Stderr, "No block labelled %q in file %q.\n", label, fileName)
 			os.Exit(3)
 		}
 		scriptBuckets[i-1] = &ScriptBucket{fileName, script}
