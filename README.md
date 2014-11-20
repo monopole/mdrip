@@ -1,13 +1,14 @@
-This tool is a hacky, markdown-based instance of language-independent
-[literate
-programming](http://en.wikipedia.org/wiki/Literate_programming).  It
-makes markdown-based coding tutorials executable and testable.  For
+
+This tool makes markdown-based coding tutorials executable and
+testable.  It's a hacky, markdown-based instance of
+language-independent [literate
+programming](http://en.wikipedia.org/wiki/Literate_programming) (for
 perspective, see the latex-based
-[noweb](http://en.wikipedia.org/wiki/Noweb).
+[noweb](http://en.wikipedia.org/wiki/Noweb)).
 
 The tool scans markdown for [fenced code
 blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks)
-immediately preceded by an HTML comment with embedded _@label_s and
+immediately preceded by an HTML comment with embedded _@labels_ and
 extracts the labels and blocks.  The code blocks can then be piped to
 an arbitrary interpreter.  The labels are used for block selection and
 logging.
@@ -49,9 +50,9 @@ The first label on a block is slightly special, in that it's
 reported as the block name for logging.  But like any label
 it can be used for selection too.
 
-There's no notion of encapsulation or automatic cleanup.  Extracted 
-scripts can do anything that the user can do.
-
+Beware that extracted scripts can do anything that the user can do.
+There's no notion of encapsulation or automatic cleanup.  Blocks to do
+clean can be added to the markdown.
 
 ## Build
 
