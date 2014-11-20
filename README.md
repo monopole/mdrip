@@ -16,7 +16,8 @@ logging.
 If the code blocks are in bash syntax, and the tool is itself running
 in a bash shell, then piping `mdrip` output to `source /dev/stdin` is
 equivalent to a human copy/pasting all the code blocks to their shell
-prompt.
+prompt (the human's env vars may change).  Pipe to `bash -e` to force
+an error on failure.
 
 Alternatively, the tool can run extracted code in a bash subshell with
 customizable parsing of the subshell's stdout and stderr, allowing
@@ -50,9 +51,9 @@ The first label on a block is slightly special, in that it's
 reported as the block name for logging.  But like any label
 it can be used for selection too.
 
-Beware that extracted scripts can do anything that the user can do.
-There's no notion of encapsulation or automatic cleanup.  Blocks to do
-clean can be added to the markdown.
+Beware that extracted blocks execute as if the user typed them.
+There's no notion of encapsulation.  Also, there's no automatic
+cleanup.  A block that does cleanup can be added to the markdown.
 
 ## Build
 

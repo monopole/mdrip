@@ -16,7 +16,7 @@ package main
 func add(x, y int) (int) { return x + y }
 EOF
 echo "the next command intended to fail"
-# badCommandToTriggerTestFailure
+badCommandToTriggerTestFailure
 ```
 
 ...and a main program to call it:
