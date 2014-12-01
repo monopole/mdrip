@@ -9,21 +9,21 @@ perspective, see the latex-based
 The tool scans markdown for [fenced code
 blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks)
 immediately preceded by an HTML comment with embedded _@labels_ and
-extracts the labels and blocks.  The code blocks can then be piped to
-an arbitrary interpreter.  The labels are used for block selection and
-logging.
+extracts the labels and blocks.  The labels are used to _select_ blocks
+for further processing.
 
 If the code blocks are in bash syntax, and the tool is itself running
 in a bash shell, then piping `mdrip` output to `source /dev/stdin` is
-equivalent to a human copy/pasting all the code blocks to their shell
-prompt (the human's env vars may change).  Pipe to `bash -e` to force
-an error on failure.
+equivalent to a human copy/pasting code blocks to their own shell
+prompt.  In this scenario, an error in block _N_ will not stop
+execution of block _N+1_.  To instead stop on error, pipe the output
+to `bash -e`.
 
 Alternatively, the tool can run extracted code in a bash subshell with
 customizable parsing of the subshell's stdout and stderr, allowing
-reporting like _block 'nesbit' from script 'foo' in file 'bar' failed with
-error 'baz'_.  This behavior facilitates adding tutorial coverage to
-regression test frameworks.
+reporting like _block 'foo' from file 'bar' failed with error 'baz'_.
+This behavior facilitates adding tutorial coverage to regression test
+frameworks.
 
 ## Details
 
