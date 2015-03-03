@@ -9,15 +9,6 @@ import (
 	"strings"
 )
 
-func shouldSleep(labels []string) bool {
-	for _, label := range labels {
-		if label == "sleep" {
-			return true
-		}
-	}
-	return false
-}
-
 func dump(label string, scriptBuckets []*ScriptBucket) {
 	dashes := strings.Repeat("-", 70)
 	for _, bucket := range scriptBuckets {
@@ -28,11 +19,6 @@ func dump(label string, scriptBuckets []*ScriptBucket) {
 			fmt.Printf("echo \"Block '%s' (%d/%d in %s) of %s\"\n####\n",
 				block.labels[0], i+1, len(bucket.script), label, bucket.fileName)
 			fmt.Print(block.codeText)
-			// If the code block has a 'sleep' label, add a brief sleep at the end.
-			// This is hack to give servers placed in the background time to start.
-			if shouldSleep(block.labels) {
-				fmt.Print("sleep 2s\n")
-			}
 			fmt.Printf(delimFmt, "End", i+1)
 			fmt.Println()
 		}

@@ -260,6 +260,15 @@ func lexCodeBlock(l *lexer) stateFn {
 	}
 }
 
+func shouldSleep(labels []string) bool {
+	for _, label := range labels {
+		if label == "sleep" {
+			return true
+		}
+	}
+	return false
+}
+
 // Parse lexes the incoming string into a mapping from block label to
 // codeBlock array.  The labels are the strings after a labelMarker in
 // a comment preceding a code block.  Arrays hold code blocks in the
@@ -279,6 +288,12 @@ func Parse(s string) (result map[string][]*codeBlock) {
 			if len(currentLabels) == 0 {
 				fmt.Println("Have an unlabelled code block:\n " + item.val)
 				os.Exit(1)
+			}
+			// If the code block has a 'sleep' label, add a brief sleep at
+			// the end.  This is hack to give servers placed in the
+			// background time to start.
+			if shouldSleep(currentLabels) {
+				item.val = item.val + "sleep 2s # Added by mdrip\n"
 			}
 			newBlock := &codeBlock{currentLabels, item.val}
 			for _, label := range currentLabels {
