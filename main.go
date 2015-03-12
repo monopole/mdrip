@@ -23,6 +23,7 @@ func dump(label string, scriptBuckets []*ScriptBucket) {
 			fmt.Println()
 		}
 	}
+	fmt.Printf("echo \"All done.  No errors.\"\n")
 }
 
 func usage() {
