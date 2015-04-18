@@ -9,21 +9,53 @@ import (
 	"strings"
 )
 
-func dump(label string, scriptBuckets []*ScriptBucket) {
-	dashes := strings.Repeat("-", 70)
+func dumpBucket(label string, bucket *ScriptBucket) {
+	fmt.Printf("#\n# Script @%s from %s \n#\n", label, bucket.fileName)
+	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d\n"
+	for i, block := range bucket.script {
+		fmt.Printf(delimFmt, "Start", i+1)
+		fmt.Printf("echo \"Block '%s' (%d/%d in %s) of %s\"\n####\n",
+			block.labels[0], i+1, len(bucket.script), label, bucket.fileName)
+		fmt.Print(block.codeText)
+		fmt.Printf(delimFmt, "End", i+1)
+		fmt.Println()
+	}
+}
+
+func emitStraightScript(label string, scriptBuckets []*ScriptBucket) {
 	for _, bucket := range scriptBuckets {
-		fmt.Printf("#\n# Script @%s from %s \n#\n", label, bucket.fileName)
-		delimFmt := "#" + dashes + "#  %s %d\n"
-		for i, block := range bucket.script {
-			fmt.Printf(delimFmt, "Start", i+1)
-			fmt.Printf("echo \"Block '%s' (%d/%d in %s) of %s\"\n####\n",
-				block.labels[0], i+1, len(bucket.script), label, bucket.fileName)
-			fmt.Print(block.codeText)
-			fmt.Printf(delimFmt, "End", i+1)
-			fmt.Println()
-		}
+		dumpBucket(label, bucket)
 	}
 	fmt.Printf("echo \"All done.  No errors.\"\n")
+}
+
+// Emit the first script normally, but emit the remaining scripts so
+// that they run in a subshell.
+//
+// This allows the aggregrate script to be structured as 1) a preamble
+// initialization script that impacts the environment of the active
+// shell, followed by 2) a script that executes as a subshell with
+// error handling.
+//
+// This makes it possible to both modify the active shell (the shell
+// running the aggregrate script) and allow exit on error *without*
+// exiting the active shell.
+//
+// The first script must be able to complete without error, i.e. it
+// should just define environment, because its not running as a
+// subshell.  Anything that checks the environment can go in the
+// subshell.
+func emitPreambledScript(label string, scriptBuckets []*ScriptBucket) {
+	dumpBucket(label, scriptBuckets[0])
+	delim := "HANDLED_SCRIPT"
+	fmt.Printf(" bash -e <<'%s'\n", delim)
+	fmt.Printf("function superTrouble() { echo \"Unable to continue!\"; exit 1; }\n")
+	fmt.Printf("trap superTrouble INT TERM EXIT\n")
+	for i := 1; i < len(scriptBuckets); i++ {
+		dumpBucket(label, scriptBuckets[i])
+	}
+	fmt.Printf("echo \"All done.  No errors.\"\n")
+	fmt.Printf("%s\n", delim)
 }
 
 func usage() {
@@ -68,6 +100,8 @@ anything to your computer that you can.
 
 func main() {
 	flag.Usage = usage
+	preambled := flag.Bool("preambled", false,
+		"Place all scripts but first script into a subshell program.")
 	subshell := flag.Bool("subshell", false,
 		"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
 	swallow := flag.Bool("swallow", false,
@@ -102,8 +136,16 @@ func main() {
 		scriptBuckets[i-1] = &ScriptBucket{fileName, script}
 	}
 
+	if len(scriptBuckets) < 1 {
+		return
+	}
+
 	if !*subshell {
-		dump(label, scriptBuckets)
+		if *preambled {
+			emitPreambledScript(label, scriptBuckets)
+		} else {
+			emitStraightScript(label, scriptBuckets)
+		}
 		return
 	}
 
