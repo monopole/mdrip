@@ -26,35 +26,33 @@ func emitStraightScript(label string, scriptBuckets []*ScriptBucket) {
 	for _, bucket := range scriptBuckets {
 		dumpBucket(label, bucket)
 	}
+	fmt.Printf("echo \" \"\n")
 	fmt.Printf("echo \"All done.  No errors.\"\n")
 }
 
-// Emit the first script normally, but emit the remaining scripts so
-// that they run in a subshell.
+// Emit the first script normally, then emit it again, as well as the
+// the remaining scripts, so that they run in a subshell.
 //
 // This allows the aggregrate script to be structured as 1) a preamble
 // initialization script that impacts the environment of the active
-// shell, followed by 2) a script that executes as a subshell with
-// error handling.
+// shell, followed by 2) a script that executes as a subshell that
+// exits on error.  An exit in (2) won't cause the active shell (most
+// likely a terminal) to close.
 //
-// This makes it possible to both modify the active shell (the shell
-// running the aggregrate script) and allow exit on error *without*
-// exiting the active shell.
-//
-// The first script must be able to complete without error, i.e. it
-// should just define environment, because its not running as a
-// subshell.  Anything that checks the environment can go in the
-// subshell.
+// The first script must be able to complete without exit on error
+// because its not running as a subshell.  So it should just set
+// environment variables and/or define shell funtions.
 func emitPreambledScript(label string, scriptBuckets []*ScriptBucket) {
 	dumpBucket(label, scriptBuckets[0])
 	delim := "HANDLED_SCRIPT"
 	fmt.Printf(" bash -e <<'%s'\n", delim)
-	fmt.Printf("function superTrouble() { echo \"Unable to continue!\"; exit 1; }\n")
-	fmt.Printf("trap superTrouble INT TERM EXIT\n")
-	for i := 1; i < len(scriptBuckets); i++ {
-		dumpBucket(label, scriptBuckets[i])
-	}
-	fmt.Printf("echo \"All done.  No errors.\"\n")
+	fmt.Printf("function handledTrouble() {\n")
+	fmt.Printf("  echo \" \"\n")
+	fmt.Printf("  echo \"Unable to continue!\"\n")
+	fmt.Printf("  exit 1\n")
+	fmt.Printf("}\n")
+	fmt.Printf("trap handledTrouble INT TERM\n")
+	emitStraightScript(label, scriptBuckets)
 	fmt.Printf("%s\n", delim)
 }
 
@@ -101,7 +99,7 @@ anything to your computer that you can.
 func main() {
 	flag.Usage = usage
 	preambled := flag.Bool("preambled", false,
-		"Place all scripts but first script into a subshell program.")
+		"Place all scripts in a subshell, preambled by the first script.")
 	subshell := flag.Bool("subshell", false,
 		"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
 	swallow := flag.Bool("swallow", false,
