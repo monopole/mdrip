@@ -9,10 +9,16 @@ import (
 	"strings"
 )
 
-func dumpBucket(label string, bucket *ScriptBucket) {
+// If n <= 0, dump everything, else only dump the first n blocks.
+// n is 1 relative, i.e., if you want the first two blocks dumped, pass
+// n==2, not n==1.
+func dumpBucket(label string, bucket *ScriptBucket, n int) {
 	fmt.Printf("#\n# Script @%s from %s \n#\n", label, bucket.fileName)
 	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d\n"
 	for i, block := range bucket.script {
+		if n > 0 && i >= n {
+			break
+		}
 		fmt.Printf(delimFmt, "Start", i+1)
 		fmt.Printf("echo \"Block '%s' (%d/%d in %s) of %s\"\n####\n",
 			block.labels[0], i+1, len(bucket.script), label, bucket.fileName)
@@ -24,7 +30,7 @@ func dumpBucket(label string, bucket *ScriptBucket) {
 
 func emitStraightScript(label string, scriptBuckets []*ScriptBucket) {
 	for _, bucket := range scriptBuckets {
-		dumpBucket(label, bucket)
+		dumpBucket(label, bucket, 0)
 	}
 	fmt.Printf("echo \" \"\n")
 	fmt.Printf("echo \"All done.  No errors.\"\n")
@@ -42,8 +48,8 @@ func emitStraightScript(label string, scriptBuckets []*ScriptBucket) {
 // The first script must be able to complete without exit on error
 // because its not running as a subshell.  So it should just set
 // environment variables and/or define shell funtions.
-func emitPreambledScript(label string, scriptBuckets []*ScriptBucket) {
-	dumpBucket(label, scriptBuckets[0])
+func emitPreambledScript(label string, scriptBuckets []*ScriptBucket, n int) {
+	dumpBucket(label, scriptBuckets[0], n)
 	delim := "HANDLED_SCRIPT"
 	fmt.Printf(" bash -e <<'%s'\n", delim)
 	fmt.Printf("function handledTrouble() {\n")
@@ -100,6 +106,8 @@ func main() {
 	flag.Usage = usage
 	preambled := flag.Bool("preambled", false,
 		"Place all scripts in a subshell, preambled by the first script.")
+	monkey := flag.Int("monkey", -1,
+		"Place all scripts in a subshell, preambled by the first {n} blocks in the first script.")
 	subshell := flag.Bool("subshell", false,
 		"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
 	swallow := flag.Bool("swallow", false,
@@ -138,9 +146,23 @@ func main() {
 		return
 	}
 
+	// Plan
+	// 1) Leave existing behavior, but push a new mdrip binary with a
+	//	  new flag "monkey".  Existing Makefile and tests pass.
+	// 2) modify Makefile to use the new "monkey" flag
+	//    everything still works.  push new website, using the new flag only.
+	// 3) Modify the old (unused) "preambled" flag to work just like the new flag.
+	// 4) modify Makefile to use the "preambled" flag in the new way.
+	//    Everything still works.  push new website.
+	// 5) remove the "monkey" flag from mdrip
 	if !*subshell {
+		n := *monkey
 		if *preambled {
-			emitPreambledScript(label, scriptBuckets)
+			// Trumps for now
+			n = 0
+		}
+		if *preambled || n >= 0 {
+			emitPreambledScript(label, scriptBuckets, n)
 		} else {
 			emitStraightScript(label, scriptBuckets)
 		}
