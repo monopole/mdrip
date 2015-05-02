@@ -106,8 +106,6 @@ func main() {
 	flag.Usage = usage
 	preambled := flag.Int("preambled", -1,
 		"Place all scripts in a subshell, preambled by the first {n} blocks in the first script.")
-	monkey := flag.Int("monkey", -2,
-		"Place all scripts in a subshell, preambled by the first {n} blocks in the first script.")
 	subshell := flag.Bool("subshell", false,
 		"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
 	swallow := flag.Bool("swallow", false,
@@ -146,23 +144,9 @@ func main() {
 		return
 	}
 
-	// Plan
-	// DONE 1) Leave existing behavior, but push a new mdrip binary with a
-	//	  new flag "monkey".  Existing Makefile and tests pass.
-	// DONE 2) modify Makefile to use the new "monkey" flag
-	//    everything still works.  push new website, using the new flag only.
-	// 3) Modify the old (now unused) "preambled" flag to work just like the new flag.
-	// 4) modify Makefile to use the "preambled" flag in the new way.
-	//    Everything still works.  push new website.
-	// 5) remove the "monkey" flag from mdrip
 	if !*subshell {
-		n := *preambled
-		if *monkey != -2 {
-			// monkey trumps for now
-			n = *monkey
-		}
-		if n >= 0 {
-			emitPreambledScript(label, scriptBuckets, n)
+		if *preambled >= 0 {
+			emitPreambledScript(label, scriptBuckets, *preambled)
 		} else {
 			emitStraightScript(label, scriptBuckets)
 		}
