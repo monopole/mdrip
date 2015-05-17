@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+// Should switch to a logging package that supports levels,
+// e.g. https://github.com/golang/glog
+var debug = flag.Bool("debug", false,
+	"If true, dump more information during run.")
+
 // If n <= 0, dump everything, else only dump the first n blocks.
 // n is 1 relative, i.e., if you want the first two blocks dumped, pass
 // n==2, not n==1.
