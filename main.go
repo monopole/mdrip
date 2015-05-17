@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 // Should switch to a logging package that supports levels,
@@ -14,8 +15,8 @@ import (
 var debug = flag.Bool("debug", false,
 	"If true, dump more information during run.")
 
-var sleepCount = flag.Int("sleepCount", 500,
-	"The number of 100ms increments used in waiting for command block completion.")
+var blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
+	"The max amount of time to wait for a command block to exit.")
 
 // If n <= 0, dump everything, else only dump the first n blocks.
 // n is 1 relative, i.e., if you want the first two blocks dumped, pass
