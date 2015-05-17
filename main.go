@@ -109,6 +109,8 @@ anything to your computer that you can.
 
 func main() {
 	flag.Usage = usage
+	sleepCount := flag.Int("sleepCount", 500,
+		"The number of 100ms increments used in waiting for command block completion.")
 	preambled := flag.Int("preambled", -1,
 		"Place all scripts in a subshell, preambled by the first {n} blocks in the first script.")
 	subshell := flag.Bool("subshell", false,

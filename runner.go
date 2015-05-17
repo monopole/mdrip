@@ -102,12 +102,11 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *textBucket {
 
 func supplyTimeout(ch1, ch2 chan string, label string, doneCh <-chan bool) {
 	stepSize := 100 * time.Millisecond
-	limit := 50
 	if *debug {
-		totalTime := time.Duration(limit) * stepSize
+		totalTime := time.Duration(*sleepCount) * stepSize
 		fmt.Printf("DEBUG: Timeout countdown of %v (step %s) starting for %s\n", totalTime, stepSize, label)
 	}
-	for i := 0; i < limit; i++ {
+	for i := 0; i < *sleepCount; i++ {
 		time.Sleep(stepSize)
 		select {
 		case <-doneCh:
