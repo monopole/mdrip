@@ -14,6 +14,9 @@ import (
 var debug = flag.Bool("debug", false,
 	"If true, dump more information during run.")
 
+var sleepCount = flag.Int("sleepCount", 500,
+	"The number of 100ms increments used in waiting for command block completion.")
+
 // If n <= 0, dump everything, else only dump the first n blocks.
 // n is 1 relative, i.e., if you want the first two blocks dumped, pass
 // n==2, not n==1.
@@ -109,8 +112,6 @@ anything to your computer that you can.
 
 func main() {
 	flag.Usage = usage
-	sleepCount := flag.Int("sleepCount", 500,
-		"The number of 100ms increments used in waiting for command block completion.")
 	preambled := flag.Int("preambled", -1,
 		"Place all scripts in a subshell, preambled by the first {n} blocks in the first script.")
 	subshell := flag.Bool("subshell", false,
