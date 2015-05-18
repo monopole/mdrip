@@ -27,9 +27,9 @@ type textBucket struct {
 }
 
 // Special strings that might appear in shell output.
-const msgHappy = "MDRIP HAPPY!"
-const msgTimeout = "MDRIP TIMEOUT!"
-const msgError = "MDRIP ERROR!"
+const msgHappy = "MDRIP_HAPPY_Completed_command_block"
+const msgError = "MDRIP_ERROR_Problem_while_executing_command_block"
+const msgTimeout = "MDRIP_TIMEOUT_Command_block_did_not_finish_in_allotted_time"
 
 // An uninterruptable stream scanner.
 // If Scan hangs for some reason, so will this.
@@ -61,15 +61,12 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *textBucket {
 	go func() {
 		defer close(out)
 		for line := range in {
-			if *debug {
-				fmt.Printf("DEBUG: %s: %s\n", prefix, line)
-			}
 			if strings.HasPrefix(line, msgTimeout) {
 				accum.WriteString("\n" + line + "\n")
 				accum.WriteString("A subprocess might still be running.\n")
 				out <- &textBucket{false, accum.String()}
 				if *debug {
-					fmt.Printf("DEBUG: %s: Timeout return.\n", prefix)
+					fmt.Printf("DEBUG %s: Timeout return.\n", prefix)
 				}
 				return
 			}
@@ -77,13 +74,16 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *textBucket {
 				accum.WriteString(line + "\n")
 				out <- &textBucket{false, accum.String()}
 				if *debug {
-					fmt.Printf("DEBUG: %s Error return.\n", prefix)
+					fmt.Printf("DEBUG %s: Error return.\n", prefix)
 				}
 				return
 			}
 			if strings.HasPrefix(line, msgHappy) {
 				out <- &textBucket{true, accum.String()}
 				accum.Reset()
+				if *debug {
+					fmt.Printf("DEBUG %s: %s\n", prefix, line)
+				}
 			} else {
 				accum.WriteString(line + "\n")
 			}
@@ -94,33 +94,33 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *textBucket {
 			out <- &textBucket{false, accum.String()}
 		}
 	}()
-	if *debug {
-		fmt.Printf("DEBUG: %s Done with accumulateOutput.\n", prefix)
-	}
 	return out
 }
 
-const stepSize = 100 * time.Millisecond
+const stepSize = 200 * time.Millisecond
 
 func supplyTimeout(ch1, ch2 chan string, label string, doneCh <-chan bool) {
 	count := int(((*blockTimeOut).Seconds() / stepSize.Seconds()) + 0.5)
 	if *debug {
 		totalTime := time.Duration(count) * stepSize
-		fmt.Printf("DEBUG: Timeout countdown of %v (step %s) starting for %s\n", totalTime, stepSize, label)
+		fmt.Printf("DEBUG Timeout countdown of %v (step %s) starting for %s\n", totalTime, stepSize, label)
 	}
 	for i := 0; i < count; i++ {
+		if *debug {
+			fmt.Printf("DEBUG Sleep step %d waiting for %s\n", i, label)
+		}
 		time.Sleep(stepSize)
 		select {
 		case <-doneCh:
 			if *debug {
-				fmt.Printf("DEBUG: Timeout cancelled for %s\n", label)
+				fmt.Printf("DEBUG Timeout cancelled for %s\n", label)
 			}
 			return
 		default:
 		}
 	}
 	if *debug {
-		fmt.Printf("DEBUG: Timeout expired on %s, punching in face.\n", label)
+		fmt.Printf("DEBUG Timeout expired on %s, punching in face.\n", label)
 	}
 	ch1 <- msgTimeout
 	ch2 <- msgTimeout
@@ -159,7 +159,7 @@ func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket,
 				block.labels[0], i+1, len(bucket.script), bucket.fileName)
 			_, err := stdIn.Write([]byte(block.codeText))
 			check("write script", err)
-			_, err = stdIn.Write([]byte("\necho " + msgHappy + "\n"))
+			_, err = stdIn.Write([]byte("\necho " + msgHappy + " " + block.labels[0] + "\n"))
 			check("write msgHappy", err)
 			doneCh := make(chan bool, 1)
 			go supplyTimeout(chOut, chErr, block.labels[0], doneCh)
@@ -167,37 +167,48 @@ func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket,
 			result := <-chAccOut
 			doneCh <- true
 			if result == nil || !result.success {
+				// A nil result likely means an attempt to read from a closed
+				// channel after all previously enqueued items have been
+				// pulled.
 				errResult.fileName = bucket.fileName
 				errResult.index = i
 				errResult.block = block
 				if result != nil {
 					errResult.output = result.output
 					if *debug {
-						fmt.Printf("DEBUG: stdout Result: %s\n", result.output)
+						fmt.Printf("DEBUG stdout Result: %s\n", result.output)
 					}
 				} else {
 					if *debug {
-						fmt.Printf("DEBUG: stdout Result == nil.\n")
+						fmt.Printf("DEBUG stdout Result == nil.\n")
 					}
 				}
-				result = <-chAccErr
+				select {
+				case result = <-chAccErr:
+					if *debug {
+						fmt.Printf("DEBUG Pulled result from chAccErr.\n")
+					}
+				default:
+					result = nil
+				}
 				if result != nil {
 					errResult.err = errors.New(result.output)
 					errResult.message = result.output
 					if *debug {
-						fmt.Printf("DEBUG: stderr Result: %s\n", result.output)
+						fmt.Printf("DEBUG stderr Result: %s\n", result.output)
 					}
 				} else {
 					errResult.err = errors.New("unknown")
 					if *debug {
-						fmt.Printf("DEBUG: stderr Result == nil.\n")
+						fmt.Printf("DEBUG stderr Result == nil.\n")
 					}
 				}
 				if *debug {
-					fmt.Printf("DEBUG: exitting subshell.\n")
+					fmt.Printf("DEBUG exiting subshell.\n")
 				}
-				// The shell is likely stalled, but send an exit anyway.
-				exitShell(stdIn)
+				// The shell is likely stalled or dead due to error.
+				// Consider sending an exit?
+				// exitShell(stdIn)
 				return
 			}
 		}
@@ -209,7 +220,7 @@ func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket,
 
 func exitShell(stdIn io.Writer) {
 	_, err := stdIn.Write([]byte("exit\n"))
-	check("trouble ending shell", err)
+	check("ending shell", err)
 }
 
 func dumpCapturedOutput(name, delim, output string) {
@@ -289,26 +300,26 @@ func RunInSubShell(scriptBuckets []*ScriptBucket) (result *ErrorBucket) {
 
 	pid := shell.Process.Pid
 	if *debug {
-		fmt.Printf("DEBUG: pid = %d\n", pid)
+		fmt.Printf("DEBUG pid = %d\n", pid)
 	}
 	pgid, err := getProcesssGroupId(pid)
 	if err == nil {
 		if *debug {
-			fmt.Printf("DEBUG: pgid = %d\n", pgid)
+			fmt.Printf("DEBUG pgid = %d\n", pgid)
 		}
 	}
 
 	result = userBehavior(stdIn, scriptBuckets, chOut, chErr)
 
 	if *debug {
-		fmt.Printf("DEBUG: Waiting for shell to end.\n")
+		fmt.Printf("DEBUG Waiting for shell to end.\n")
 	}
 	waitError := shell.Wait()
 	if result.err == nil {
 		result.err = waitError
 	}
 	if *debug {
-		fmt.Printf("DEBUG: Shell done.\n")
+		fmt.Printf("DEBUG Shell done.\n")
 	}
 
 	// killProcesssGroup(pgid)
