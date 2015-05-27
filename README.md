@@ -1,59 +1,23 @@
+# mdrip
 
-This tool makes markdown-based coding tutorials executable and
-testable.  It's a hacky, markdown-based instance of
-language-independent [literate
-programming](http://en.wikipedia.org/wiki/Literate_programming) (for
-perspective, see the latex-based
+`mdrip` rips labeled command blocks from markdown files for execution.
+
+`mdrip` accepts one _label_ argument and any number of _file name_
+arguments, where the files are assumed to contain markdown.  It scans
+the files for
+[fenced code blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks)
+immediately preceded by an HTML comment with embedded _@labels_.
+
+If one of the block labels matches the label argument to the command line, the associated block is extracted.  Extracted blocks are emitted to `stdout`, or, if `--subshell` is specified, concatenated to run as a subprocess.
+
+This is a markdown-based instance of language-independent
+[literate programming](http://en.wikipedia.org/wiki/Literate_programming)
+(for perspective, see the latex-based
 [noweb](http://en.wikipedia.org/wiki/Noweb)).
-
-The tool scans markdown for [fenced code
-blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks)
-immediately preceded by an HTML comment with embedded _@labels_ and
-extracts the labels and blocks.  The labels are used to _select_ blocks
-for further processing.
-
-If the code blocks are in bash syntax, and the tool is itself running
-in a bash shell, then piping `mdrip` output to `source /dev/stdin` is
-equivalent to a human copy/pasting code blocks to their own shell
-prompt.  In this scenario, an error in block _N_ will not stop
-execution of block _N+1_.  To instead stop on error, pipe the output
-to `bash -e`.
-
-Alternatively, the tool can run extracted code in a bash subshell with
-customizable parsing of the subshell's stdout and stderr, allowing
-reporting like _block 'foo' from file 'bar' failed with error 'baz'_.
-This behavior facilitates adding tutorial coverage to regression test
-frameworks.
-
-## Details
-
-The tool has a simple extensibility because shell scripts can
+It's language independent because shell scripts can
 make, build and run programs in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
 
-For example, this
-[tutorial](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
-(raw markdown
-[here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md))
-has bash code blocks that write, compile and run a Go program.
-
-The tool accepts a _label_ argument and any number of _file name_
-arguments then extracts all blocks with that label from those files,
-retaining the block order.
-
-A _script_ is a sequence of code blocks with a common label.  If a
-block has multiple labels, it can be incorporated into multiple
-scripts.  If a block has no label, it's ignored.  The number of
-scripts that can be extracted from a set of markdown files equals the
-number of unique labels.
-
-The first label on a block is slightly special, in that it's
-reported as the block name for logging.  But like any label
-it can be used for selection too.
-
-Beware that extracted blocks execute as if the user typed them.
-There's no notion of encapsulation.  Also, there's no automatic
-cleanup.  A block that does cleanup can be added to the markdown.
 
 ## Build
 
@@ -66,29 +30,21 @@ GOPATH=$MDRIP/go go test github.com/monopole/mdrip
 $MDRIP/go/bin/mdrip   # Shows usage.
 ```
 
-Send code from the [example tutorial]
-(https://github.com/monopole/mdrip/blob/master/example_tutorial.md) to
-stdout:
+## Example
+
+This [markdown coding tutorial](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
+(raw markdown
+[here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md))
+has bash code blocks that write, compile and run a Go program.
+
+Send code from that file to `stdout`:
 
 ```
 $MDRIP/go/bin/mdrip lesson1 \
     $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md
 ```
 
-## Tutorial Testing
-
-The output of the above command can be piped to `source /dev/stdin` to
-evolve the state of the current shell per the tutorial.
-
-For automated testing it's better to pipe to `bash -e` (or some other
-shell), running the code in a subshell leaving the current shell's
-state unchanged (modulo whatever the script does to the computer).
-
-Use of the tool's `--subshell` flag does that as well.  It assumes
-bash blocks, but does a better job of reporting errors.
-Run the following to see how the error in the example tutorial
-is reported:
-
+Alternatively, run it's code in a subshell:
 ```
 $MDRIP/go/bin/mdrip --subshell lesson1 \
     $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md
@@ -99,19 +55,37 @@ scripts labelled `@lesson1` in the given markdown succeed.  On any
 failure, however, the command dumps a report and exits with non-zero
 status.
 
-## Alteratives
+This is one way to cover documentation with feature tests.
+Keeping code and documentation describing the code in the same file makes it much easier to keep them in sync.
 
-Another approach to testing or otherwise making code available to a user
-shards the tutorial.
 
-Code is placed in individual files in source control where it can be
-tested via the usual mechanisms, then a server retrieves the code from
-its canonical source and injects it into the markdown at serving time.
-To make changes, one has to edit both the markdown file (the
-discussion) and the various code files, plus maintain the injection
-system.  A strictly worse approach uses a human as the injection
-system - 'real' code (in some repository) and code in the discussion
-(e.g.  on a wiki page) are distinct and have to be kept in sync
-manually.
+## Details
 
-Nobody has time for either approach, so the code rots.
+A _script_ is a sequence of code blocks with a common label.  If a
+block has multiple labels, it can be incorporated into multiple
+scripts.  If a block has no label, it's ignored.  The number of
+scripts that can be extracted from a set of markdown files equals the
+number of unique labels.
+
+If code blocks are in bash syntax, and the tool is itself running
+in a bash shell, then piping `mdrip` output to `source /dev/stdin` is
+equivalent to a human copy/pasting code blocks to their own shell
+prompt.  In this scenario, an error in block _N_ will not stop
+execution of block _N+1_.  To instead stop on error, pipe the output
+to `bash -e`.
+
+Alternatively, the tool can itself run extracted code in a bash subshell like this
+
+> `mdrip --subshell someLabel file1.md file2.md ...`
+
+If that command fails, so did something in a command block.  `mdrip` reports which block failed and what it's `stdout` and `stderr` saw, while otherwise capturing and discarding subshell output.
+
+There's no notion of encapsulation.  Also, there's no automatic cleanup.  A block that does cleanup can be added to the markdown.
+
+### Special labels
+
+ * The first label on a block is slightly special, in that it's
+reported as the block name for logging.  But like any label
+it can be used for selection too.
+
+ * The @sleep label causes mdrip to insert a `sleep 2` command after the block.  Appropriate if one is starting a server in the background in that block.
