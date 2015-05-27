@@ -1,3 +1,6 @@
+# mdrip
+
+[![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip)
 
 This tool makes markdown-based coding tutorials executable and
 testable.  It's a hacky, markdown-based instance of
