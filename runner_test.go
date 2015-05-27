@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -29,7 +30,7 @@ func checkFail(t *testing.T, got, want *ErrorBucket) {
 	if got.index != want.index {
 		t.Errorf("%s got\n\t%v\nwant\n\t%v", "script", got.index, want.index)
 	}
-	if got.message != want.message {
+	if strings.TrimSpace(got.message) != want.message {
 		t.Errorf("%s got\n\t%v\nwant\n\t%v", "message", got.message, want.message)
 	}
 }
@@ -41,7 +42,7 @@ func TestWithBadStuff1(t *testing.T) {
 		0,
 		emptyCodeBlock,
 		nil,
-		"bash: line 1: notagoodcommand: command not found\n"}
+		"bash: line 1: notagoodcommand: command not found"}
 
 	labels := []string{"foo", "bar"}
 	blocks := []*codeBlock{&codeBlock{labels, "notagoodcommand\n"}}
@@ -56,7 +57,7 @@ func TestWithBadStuff2(t *testing.T) {
 		2,
 		emptyCodeBlock,
 		nil,
-		"bash: line 9: lochNessMonster: command not found\n"}
+		"bash: line 9: lochNessMonster: command not found"}
 
 	labels := []string{"foo", "bar"}
 
