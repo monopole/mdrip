@@ -41,7 +41,7 @@ func TestWithBadStuff1(t *testing.T) {
 		0,
 		emptyCodeBlock,
 		nil,
-		"bash: line 1: notagoodcommand: command not found"}
+		"bash: line 1: notagoodcommand: command not found\n"}
 
 	labels := []string{"foo", "bar"}
 	blocks := []*codeBlock{&codeBlock{labels, "notagoodcommand\n"}}
@@ -56,7 +56,7 @@ func TestWithBadStuff2(t *testing.T) {
 		2,
 		emptyCodeBlock,
 		nil,
-		"bash: line 9: lochNessMonster: command not found"}
+		"bash: line 9: lochNessMonster: command not found\n"}
 
 	labels := []string{"foo", "bar"}
 
