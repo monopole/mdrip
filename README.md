@@ -1,5 +1,7 @@
 # mdrip
 
+[![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip)
+
 `mdrip` rips labeled command blocks from markdown files for execution.
 
 `mdrip` accepts one _label_ argument and any number of _file name_
@@ -89,3 +91,4 @@ reported as the block name for logging.  But like any label
 it can be used for selection too.
 
  * The @sleep label causes mdrip to insert a `sleep 2` command after the block.  Appropriate if one is starting a server in the background in that block.
+
