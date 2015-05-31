@@ -1,8 +1,8 @@
-// Much of this (other than the custom stateFn's) copied from
+// Other than the custom stateFn's, much of this is copied from
 // https://golang.org/src/pkg/text/template/parse/lex.go. Cannot use
 // stuct embedding to reuse, since all the good parts are private.
 
-package main
+package util
 
 import (
 	"fmt"
@@ -13,9 +13,16 @@ import (
 
 type Pos int
 
-type codeBlock struct {
+type CommandBlock struct {
 	labels   []string
 	codeText string
+}
+
+func (x CommandBlock) GetLabels() []string {
+	return x.labels
+}
+func (x CommandBlock) GetCodeText() string {
+	return x.codeText
 }
 
 type item struct {
@@ -31,7 +38,7 @@ func (i item) String() string {
 		return i.val
 	case i.typ == itemBlockLabel:
 		return string(labelMarker) + i.val
-	case i.typ == itemCodeBlock:
+	case i.typ == itemCommandBlock:
 		return "--------\n" + i.val + "--------\n"
 	case len(i.val) > 10:
 		return fmt.Sprintf("%.30s...", i.val)
@@ -42,17 +49,17 @@ func (i item) String() string {
 type itemType int
 
 const (
-	itemError      itemType = iota
-	itemBlockLabel          // Label for a code block
-	itemCodeBlock           // All lines between code block marks
+	itemError        itemType = iota
+	itemBlockLabel            // Label for a command block
+	itemCommandBlock          // All lines between codeFence marks
 	itemEOF
 )
 
 const (
-	labelMarker   = '@'
-	commentOpen   = "<!--"
-	commentClose  = "-->"
-	codeBlockMark = "```\n"
+	labelMarker  = '@'
+	commentOpen  = "<!--"
+	commentClose = "-->"
+	codeFence    = "```\n"
 )
 
 const eof = -1
@@ -172,7 +179,7 @@ func lexText(l *lexer) stateFn {
 	}
 }
 
-// Move to lexing a code block intended for a particular script, or to
+// Move to lexing a command block intended for a particular script, or to
 // lexing a simple comment.  Comment opener known to be present.
 func lexPutativeComment(l *lexer) stateFn {
 	l.pos += Pos(len(commentOpen))
@@ -229,33 +236,33 @@ func lexBlockLabels(l *lexer) stateFn {
 			l.ignore()
 			r := l.next()
 			if r != '\n' && r != '\r' {
-				return l.errorf("Expected code block marker at start of line.")
+				return l.errorf("Expected command block marker at start of line.")
 			}
 			l.ignore()
-			if !strings.HasPrefix(l.input[l.pos:], codeBlockMark) {
-				return l.errorf("Expected code block mark, got: " + l.input[l.pos:])
+			if !strings.HasPrefix(l.input[l.pos:], codeFence) {
+				return l.errorf("Expected command block mark, got: " + l.input[l.pos:])
 			}
-			return lexCodeBlock
+			return lexCommandBlock
 		}
 	}
 	return lexText
 }
 
-// lexCodeBlock scans a code block.  Initial marker known to be present.
-func lexCodeBlock(l *lexer) stateFn {
-	l.pos += Pos(len(codeBlockMark))
+// lexCommandBlock scans a command block.  Initial marker known to be present.
+func lexCommandBlock(l *lexer) stateFn {
+	l.pos += Pos(len(codeFence))
 	l.ignore()
 	for {
-		if strings.HasPrefix(l.input[l.pos:], codeBlockMark) {
+		if strings.HasPrefix(l.input[l.pos:], codeFence) {
 			if l.pos > l.start {
-				l.emit(itemCodeBlock)
+				l.emit(itemCommandBlock)
 			}
-			l.pos += Pos(len(codeBlockMark))
+			l.pos += Pos(len(codeFence))
 			l.ignore()
 			return lexText
 		}
 		if l.next() == eof {
-			return l.errorf("unclosed code block")
+			return l.errorf("unclosed command block")
 		}
 	}
 }
@@ -270,11 +277,11 @@ func shouldSleep(labels []string) bool {
 }
 
 // Parse lexes the incoming string into a mapping from block label to
-// codeBlock array.  The labels are the strings after a labelMarker in
-// a comment preceding a code block.  Arrays hold code blocks in the
+// CommandBlock array.  The labels are the strings after a labelMarker in
+// a comment preceding a command block.  Arrays hold command blocks in the
 // order they appeared in the input.
-func Parse(s string) (result map[string][]*codeBlock) {
-	result = make(map[string][]*codeBlock)
+func Parse(s string) (result map[string][]*CommandBlock) {
+	result = make(map[string][]*CommandBlock)
 	currentLabels := make([]string, 0, 10)
 	l := newLex(s)
 	for {
@@ -284,24 +291,24 @@ func Parse(s string) (result map[string][]*codeBlock) {
 			return
 		case item.typ == itemBlockLabel:
 			currentLabels = append(currentLabels, item.val)
-		case item.typ == itemCodeBlock:
+		case item.typ == itemCommandBlock:
 			if len(currentLabels) == 0 {
-				fmt.Println("Have an unlabelled code block:\n " + item.val)
+				fmt.Println("Have an unlabelled command block:\n " + item.val)
 				os.Exit(1)
 			}
-			// If the code block has a 'sleep' label, add a brief sleep at
-			// the end.  This is hack to give servers placed in the
+			// If the command block has a 'sleep' label, add a brief sleep
+			// at the end.  This is hack to give servers placed in the
 			// background time to start.
 			if shouldSleep(currentLabels) {
 				item.val = item.val + "sleep 2s # Added by mdrip\n"
 			}
-			newBlock := &codeBlock{currentLabels, item.val}
+			newBlock := &CommandBlock{currentLabels, item.val}
 			for _, label := range currentLabels {
 				blocks, ok := result[label]
 				if ok {
 					blocks = append(blocks, newBlock)
 				} else {
-					blocks = []*codeBlock{newBlock}
+					blocks = []*CommandBlock{newBlock}
 				}
 				result[label] = blocks
 			}
