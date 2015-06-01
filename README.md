@@ -28,7 +28,7 @@ Assuming Go installed:
 ```
 export MDRIP=~/mdrip
 GOPATH=$MDRIP/go go get github.com/monopole/mdrip
-GOPATH=$MDRIP/go go test github.com/monopole/mdrip
+GOPATH=$MDRIP/go go test github.com/monopole/mdrip/util
 $MDRIP/go/bin/mdrip   # Shows usage.
 ```
 

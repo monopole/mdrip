@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ var lexTests = []lexTest{
 	{"block1", "aa <!-- @1 -->\n" +
 		"```\n" + block1 + "```\n bbb",
 		[]item{{itemBlockLabel, "1"},
-			{itemCodeBlock, block1},
+			{itemCommandBlock, block1},
 			tEOF}},
 	{"block2", "aa <!-- @1 @2-->\n" +
 		"```\n" + block1 + "```\n bb cc\n" +
@@ -39,10 +39,10 @@ var lexTests = []lexTest{
 		[]item{
 			{itemBlockLabel, "1"},
 			{itemBlockLabel, "2"},
-			{itemCodeBlock, block1},
+			{itemCommandBlock, block1},
 			{itemBlockLabel, "3"},
 			{itemBlockLabel, "4"},
-			{itemCodeBlock, block2},
+			{itemCommandBlock, block2},
 			tEOF}},
 }
 
