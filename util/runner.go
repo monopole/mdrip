@@ -21,7 +21,7 @@ var debug = flag.Bool("debug", false,
 // check reports the error fatally if its non-nil.
 func check(msg string, err error) {
 	if err != nil {
-		fmt.Printf("Problem with %s\n", msg, err)
+		fmt.Printf("Problem with %s: %v\n", msg, err)
 		log.Fatal(err)
 	}
 }

@@ -245,7 +245,6 @@ func lexBlockLabels(l *lexer) stateFn {
 			return lexCommandBlock
 		}
 	}
-	return lexText
 }
 
 // lexCommandBlock scans a command block.  Initial marker known to be present.

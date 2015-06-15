@@ -24,6 +24,7 @@ const MsgTimeout = "MDRIP_TIMEOUT_Command_block_did_not_finish_in_allotted_time"
 // it.
 func BuffScanner(wait time.Duration, label string, stream io.ReadCloser, debug bool) <-chan string {
 	chLine := make(chan string, 1)
+
 	xScanner := func() <-chan string {
 		chBuffLine := make(chan string, 1)
 		go func() {
@@ -95,10 +96,7 @@ func BuffScanner(wait time.Duration, label string, stream io.ReadCloser, debug b
 				return
 			}
 		}
-
-		if debug {
-			fmt.Printf("DEBUG: buffScanner: returning chLine\n")
-		}
 	}()
+
 	return chLine
 }
