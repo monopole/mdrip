@@ -44,6 +44,12 @@ var lexTests = []lexTest{
 			{itemBlockLabel, "4"},
 			{itemCommandBlock, block2},
 			tEOF}},
+	{"blockWithLangName", "Hello <!-- @1 -->\n" +
+		"```java\nvoid main whatever\n```",
+		[]item{
+			{itemBlockLabel, "1"},
+			{itemCommandBlock, "void main whatever\n"},
+			tEOF}},
 }
 
 // collect gathers the emitted items into a slice.
