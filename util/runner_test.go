@@ -53,7 +53,7 @@ func TestStartWithABadCommand(t *testing.T) {
 		0,
 		emptyCommandBlock,
 		nil,
-		"bash: line 1: notagoodcommand: command not found"}
+		"line 1: notagoodcommand: command not found"}
 
 	labels := []string{"foo", "bar"}
 	blocks := []*CommandBlock{
@@ -69,7 +69,7 @@ func TestBadCommandInTheMiddle(t *testing.T) {
 		2,
 		emptyCommandBlock,
 		nil,
-		"bash: line 9: lochNessMonster: command not found"}
+		"line 9: lochNessMonster: command not found"}
 
 	labels := []string{"foo", "bar"}
 
