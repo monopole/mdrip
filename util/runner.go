@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -18,7 +19,16 @@ import (
 var debug = flag.Bool("debug", false,
 	"If true, dump more information during run.")
 
-// check reports the error fatally if its non-nil.
+func checkWrite(output string, writer io.Writer) {
+	n, err := writer.Write([]byte(output))
+	if err != nil {
+		log.Fatalf("Could not write %d bytes: %v", len(output), err)
+	} else if n != len(output) {
+		log.Fatalf("Expected to write %d bytes, wrote %d", len(output), n)
+	}
+}
+
+// check reports the error fatally if it's non-nil.
 func check(msg string, err error) {
 	if err != nil {
 		fmt.Printf("Problem with %s: %v\n", msg, err)
@@ -146,7 +156,7 @@ func NewScriptBucket(fileName string, script []*CommandBlock) *ScriptBucket {
 // It writes command blocks to shell, then waits after  each block to
 // see if the block worked.  If the block appeared to complete without
 // error, the routine sends the next block, else it exits early.
-func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket, blockTimeout time.Duration,
+func userBehavior(scriptBuckets []*ScriptBucket, blockTimeout time.Duration,
 	stdOut, stdErr io.ReadCloser) (errResult *ScriptResult) {
 	emptyArray := []string{}
 
@@ -165,13 +175,6 @@ func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket, blockTimeout t
 			if *debug {
 				fmt.Printf("DEBUG: userBehavior: sending \"%s\"\n", block.codeText)
 			}
-			_, err := stdIn.Write([]byte(block.codeText))
-			check("write script", err)
-			if *debug {
-				fmt.Printf("DEBUG: userBehavior: sending happy\n")
-			}
-			_, err = stdIn.Write([]byte("\necho " + MsgHappy + " " + blockName + "\n"))
-			check("write msgHappy", err)
 
 			result := <-chAccOut
 
@@ -188,9 +191,6 @@ func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket, blockTimeout t
 					if *debug {
 						fmt.Printf("DEBUG: userBehavior: stdout Result: %s\n", result.output)
 					}
-					// Shell may still be alive despite a failure (e.g. an mdrip
-					// imposed timeout).  Maybe send exit.
-					exitShell(stdIn)
 					errResult.output = result.output
 					errResult.message = result.output
 				}
@@ -202,7 +202,6 @@ func userBehavior(stdIn io.Writer, scriptBuckets []*ScriptBucket, blockTimeout t
 			}
 		}
 	}
-	exitShell(stdIn)
 	fmt.Printf("All done, no errors triggered.\n")
 	return
 }
@@ -222,15 +221,6 @@ func fillErrResult(chAccErr <-chan *blockOutput, errResult *ScriptResult) {
 	if *debug {
 		fmt.Printf("DEBUG: userBehavior: stderr Result: %s\n", result.output)
 	}
-}
-
-func exitShell(stdIn io.Writer) {
-	if *debug {
-		fmt.Printf("DEBUG: userBehavior: exiting subshell.\n")
-	}
-	stdIn.Write([]byte("exit\n"))
-	// Don't check for error - it either works, or we'll have
-	// already reported a failed shell.
 }
 
 func dumpCapturedOutput(name, delim, output string) {
@@ -274,17 +264,36 @@ func Complain(result *ScriptResult, label string) {
 // when the subprocess exits on error.
 func RunInSubShell(scriptBuckets []*ScriptBucket, blockTimeout time.Duration) (
 	result *ScriptResult) {
+	// Write script buckets to a file to be executed.
+	scriptFile, err := ioutil.TempFile("", "mdrip-script-")
+	check("create temp file", err)
+	check("chmod temp file", os.Chmod(scriptFile.Name(), 0744))
+	for _, bucket := range scriptBuckets {
+		for _, block := range bucket.script {
+			checkWrite(block.codeText, scriptFile)
+			checkWrite("\n", scriptFile)
+			checkWrite("echo "+MsgHappy+" "+block.labels[0]+"\n", scriptFile)
+		}
+	}
+	if *debug {
+		fmt.Printf("DEBUG: RunInSubShell: running commands from %s\n", scriptFile.Name())
+	}
+	defer func() {
+		check("delete temp file", os.Remove(scriptFile.Name()))
+	}()
+
 	// Adding "-e" to force the subshell to die on any error.
-	shell := exec.Command("bash", "-e")
+	shell := exec.Command("bash", "-e", scriptFile.Name())
+
+	stdIn, err := shell.StdinPipe()
+	check("in pipe", err)
+	check("close shell's stdin", stdIn.Close())
 
 	stdOut, err := shell.StdoutPipe()
 	check("out pipe", err)
 
 	stdErr, err := shell.StderrPipe()
 	check("err pipe", err)
-
-	stdIn, err := shell.StdinPipe()
-	check("in pipe", err)
 
 	err = shell.Start()
 	check("shell start", err)
@@ -300,7 +309,7 @@ func RunInSubShell(scriptBuckets []*ScriptBucket, blockTimeout time.Duration) (
 		}
 	}
 
-	result = userBehavior(stdIn, scriptBuckets, blockTimeout, stdOut, stdErr)
+	result = userBehavior(scriptBuckets, blockTimeout, stdOut, stdErr)
 
 	if *debug {
 		fmt.Printf("DEBUG: RunInSubShell:  Waiting for shell to end.\n")
