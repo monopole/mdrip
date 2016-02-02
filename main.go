@@ -60,7 +60,7 @@ func emitStraightScript(label string, scriptBuckets []*util.ScriptBucket) {
 func emitPreambledScript(label string, scriptBuckets []*util.ScriptBucket, n int) {
 	dumpBucket(label, scriptBuckets[0], n)
 	delim := "HANDLED_SCRIPT"
-	fmt.Printf(" bash -e <<'%s'\n", delim)
+	fmt.Printf(" bash -euo pipefail <<'%s'\n", delim)
 	fmt.Printf("function handledTrouble() {\n")
 	fmt.Printf("  echo \" \"\n")
 	fmt.Printf("  echo \"Unable to continue!\"\n")
@@ -98,7 +98,7 @@ If the markdown file contains
   '''
   Blah blah blah.
 
-then the command '{this} foo {fileName}' emits: 
+then the command '{this} foo {fileName}' emits:
 
   cd $HOME
   echo "Proxima Centauri"
