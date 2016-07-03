@@ -3,45 +3,25 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/util"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"time"
 )
 
 var blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
 	"The max amount of time to wait for a command block to exit.")
 
-// dumpBucket emits the contents of a util.ScriptBucket.
-//
-// If n <= 0, dump everything, else only dump the first n blocks.  n
-// is 1 relative, i.e., if you want the first two blocks dumped, pass
-// n==2, not n==1.
-func dumpBucket(label string, bucket *util.ScriptBucket, n int) {
-	fmt.Printf("#\n# Script @%s from %s \n#\n", label, bucket.GetFileName())
-	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d\n"
-	for i, block := range bucket.GetScript() {
-		if n > 0 && i >= n {
-			break
-		}
-		fmt.Printf(delimFmt, "Start", i+1)
-		fmt.Printf("echo \"Block '%s' (%d/%d in %s) of %s\"\n####\n",
-			block.GetLabels()[0], i+1, len(bucket.GetScript()), label, bucket.GetFileName())
-		fmt.Print(block.GetCodeText())
-		fmt.Printf(delimFmt, "End", i+1)
-		fmt.Println()
-	}
-}
-
 // emitStraightScript simply prints the contents of scriptBuckets.
-func emitStraightScript(label string, scriptBuckets []*util.ScriptBucket) {
+func emitStraightScript(w io.Writer, label model.Label, scriptBuckets []*model.ScriptBucket) {
 	for _, bucket := range scriptBuckets {
-		dumpBucket(label, bucket, 0)
+		bucket.Dump(w, label, 0)
 	}
-	fmt.Printf("echo \" \"\n")
-	fmt.Printf("echo \"All done.  No errors.\"\n")
+	fmt.Fprintf(w, "echo \" \"\n")
+	fmt.Fprintf(w, "echo \"All done.  No errors.\"\n")
 }
 
 // emitPreambledScript emits the first script normally, then emit it
@@ -57,18 +37,18 @@ func emitStraightScript(label string, scriptBuckets []*util.ScriptBucket) {
 // The first script must be able to complete without exit on error
 // because its not running as a subshell.  So it should just set
 // environment variables and/or define shell funtions.
-func emitPreambledScript(label string, scriptBuckets []*util.ScriptBucket, n int) {
-	dumpBucket(label, scriptBuckets[0], n)
+func emitPreambledScript(w io.Writer, label model.Label, scriptBuckets []*model.ScriptBucket, n int) {
+	scriptBuckets[0].Dump(w, label, n)
 	delim := "HANDLED_SCRIPT"
-	fmt.Printf(" bash -euo pipefail <<'%s'\n", delim)
-	fmt.Printf("function handledTrouble() {\n")
-	fmt.Printf("  echo \" \"\n")
-	fmt.Printf("  echo \"Unable to continue!\"\n")
-	fmt.Printf("  exit 1\n")
-	fmt.Printf("}\n")
-	fmt.Printf("trap handledTrouble INT TERM\n")
-	emitStraightScript(label, scriptBuckets)
-	fmt.Printf("%s\n", delim)
+	fmt.Fprintf(w, " bash -euo pipefail <<'%s'\n", delim)
+	fmt.Fprintf(w, "function handledTrouble() {\n")
+	fmt.Fprintf(w, "  echo \" \"\n")
+	fmt.Fprintf(w, "  echo \"Unable to continue!\"\n")
+	fmt.Fprintf(w, "  exit 1\n")
+	fmt.Fprintf(w, "}\n")
+	fmt.Fprintf(w, "trap handledTrouble INT TERM\n")
+	emitStraightScript(w, label, scriptBuckets)
+	fmt.Fprintf(w, "%s\n", delim)
 }
 
 func usage() {
@@ -82,6 +62,7 @@ either runs them in a subshell or emits them to stdout.
 If the markdown file contains
 
   Blah blah blah.
+  Beand
   <!-- @goHome @foo -->
   '''
   cd $HOME
@@ -129,8 +110,8 @@ func main() {
 		usage()
 		os.Exit(1)
 	}
-	label := flag.Arg(0)
-	scriptBuckets := make([]*util.ScriptBucket, flag.NArg()-1)
+	label := model.Label(flag.Arg(0))
+	scriptBuckets := make([]*model.ScriptBucket, flag.NArg()-1)
 
 	for i := 1; i < flag.NArg(); i++ {
 		fileName := flag.Arg(i)
@@ -146,7 +127,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "No block labelled %q in file %q.\n", label, fileName)
 			os.Exit(3)
 		}
-		scriptBuckets[i-1] = util.NewScriptBucket(fileName, script)
+		scriptBuckets[i-1] = model.NewScriptBucket(fileName, script)
 	}
 
 	if len(scriptBuckets) < 1 {
@@ -155,9 +136,9 @@ func main() {
 
 	if !*subshell {
 		if *preambled >= 0 {
-			emitPreambledScript(label, scriptBuckets, *preambled)
+			emitPreambledScript(os.Stdout, label, scriptBuckets, *preambled)
 		} else {
-			emitStraightScript(label, scriptBuckets)
+			emitStraightScript(os.Stdout, label, scriptBuckets)
 		}
 		return
 	}

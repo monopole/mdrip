@@ -6,24 +6,22 @@ package util
 
 import (
 	"fmt"
+	"github.com/monopole/mdrip/model"
 	"os"
 	"strings"
 	"unicode/utf8"
 )
 
-type Pos int
+type position int
 
-type CommandBlock struct {
-	labels   []string
-	codeText string
-}
+type itemType int
 
-func (x CommandBlock) GetLabels() []string {
-	return x.labels
-}
-func (x CommandBlock) GetCodeText() string {
-	return x.codeText
-}
+const (
+	itemError        itemType = iota
+	itemBlockLabel            // Label for a command block
+	itemCommandBlock          // All lines between codeFence marks
+	itemEOF
+)
 
 type item struct {
 	typ itemType // Type of this item.
@@ -46,15 +44,6 @@ func (i item) String() string {
 	return fmt.Sprintf("%s", i.val)
 }
 
-type itemType int
-
-const (
-	itemError        itemType = iota
-	itemBlockLabel            // Label for a command block
-	itemCommandBlock          // All lines between codeFence marks
-	itemEOF
-)
-
 const (
 	labelMarker  = '@'
 	commentOpen  = "<!--"
@@ -67,23 +56,23 @@ const eof = -1
 type stateFn func(*lexer) stateFn
 
 type lexer struct {
-	input string    // string being scanned
-	state stateFn   // the next lexing function to enter
-	pos   Pos       // current position in 'input'
-	start Pos       // start of this item
-	width Pos       // width of last rune read
-	items chan item // channel of scanned items
+	input   string    // string being scanned
+	state   stateFn   // the next lexing function to enter
+	current position  // current position in 'input'
+	start   position  // start of this item
+	width   position  // width of last rune read
+	items   chan item // channel of scanned items
 }
 
 // next returns the next rune in the input.
 func (l *lexer) next() rune {
-	if int(l.pos) >= len(l.input) {
+	if int(l.current) >= len(l.input) {
 		l.width = 0
 		return eof
 	}
-	r, w := utf8.DecodeRuneInString(l.input[l.pos:])
-	l.width = Pos(w)
-	l.pos += l.width
+	r, w := utf8.DecodeRuneInString(l.input[l.current:])
+	l.width = position(w)
+	l.current += l.width
 	return r
 }
 
@@ -94,16 +83,16 @@ func (l *lexer) peek() rune {
 }
 
 func (l *lexer) backup() {
-	l.pos -= l.width
+	l.current -= l.width
 }
 
 func (l *lexer) emit(t itemType) {
-	l.items <- item{t, l.input[l.start:l.pos]}
-	l.start = l.pos
+	l.items <- item{t, l.input[l.start:l.current]}
+	l.start = l.current
 }
 
 func (l *lexer) ignore() {
-	l.start = l.pos
+	l.start = l.current
 }
 
 // Consumes the next rune if it's from the valid set.
@@ -168,7 +157,7 @@ func isEndOfLine(r rune) bool {
 // lexText scans until an opening comment delimiter.
 func lexText(l *lexer) stateFn {
 	for {
-		if strings.HasPrefix(l.input[l.pos:], commentOpen) {
+		if strings.HasPrefix(l.input[l.current:], commentOpen) {
 			return lexPutativeComment
 		}
 		if l.next() == eof {
@@ -182,7 +171,7 @@ func lexText(l *lexer) stateFn {
 // Move to lexing a command block intended for a particular script, or to
 // lexing a simple comment.  Comment opener known to be present.
 func lexPutativeComment(l *lexer) stateFn {
-	l.pos += Pos(len(commentOpen))
+	l.current += position(len(commentOpen))
 	for {
 		switch r := l.next(); {
 		case isSpace(r):
@@ -200,11 +189,11 @@ func lexPutativeComment(l *lexer) stateFn {
 // lexCommentRemainder assumes a comment opener was read,
 // and eats everything up to and including the comment closer.
 func lexCommentRemainder(l *lexer) stateFn {
-	i := strings.Index(l.input[l.pos:], commentClose)
+	i := strings.Index(l.input[l.current:], commentClose)
 	if i < 0 {
 		return l.errorf("unclosed comment")
 	}
-	l.pos += Pos(i + len(commentClose))
+	l.current += position(i + len(commentClose))
 	l.ignore()
 	return lexText
 }
@@ -227,10 +216,10 @@ func lexBlockLabels(l *lexer) stateFn {
 			l.emit(itemBlockLabel)
 		default:
 			l.backup()
-			if !strings.HasPrefix(l.input[l.pos:], commentClose) {
+			if !strings.HasPrefix(l.input[l.current:], commentClose) {
 				return l.errorf("improperly closed block label sequence")
 			}
-			l.pos += Pos(len(commentClose))
+			l.current += position(len(commentClose))
 			l.ignore()
 			l.acceptRun(" \t")
 			l.ignore()
@@ -239,8 +228,8 @@ func lexBlockLabels(l *lexer) stateFn {
 				return l.errorf("Expected command block marker at start of line.")
 			}
 			l.ignore()
-			if !strings.HasPrefix(l.input[l.pos:], codeFence) {
-				return l.errorf("Expected command block mark, got: " + l.input[l.pos:])
+			if !strings.HasPrefix(l.input[l.current:], codeFence) {
+				return l.errorf("Expected command block mark, got: " + l.input[l.current:])
 			}
 			return lexCommandBlock
 		}
@@ -249,19 +238,19 @@ func lexBlockLabels(l *lexer) stateFn {
 
 // lexCommandBlock scans a command block.  Initial marker known to be present.
 func lexCommandBlock(l *lexer) stateFn {
-	l.pos += Pos(len(codeFence))
+	l.current += position(len(codeFence))
 	l.ignore()
 	// Ignore any language specifier.
-	if idx := strings.Index(l.input[l.pos:], "\n"); idx > -1 {
-		l.pos += Pos(idx) + 1
+	if idx := strings.Index(l.input[l.current:], "\n"); idx > -1 {
+		l.current += position(idx) + 1
 		l.ignore()
 	}
 	for {
-		if strings.HasPrefix(l.input[l.pos:], codeFence) {
-			if l.pos > l.start {
+		if strings.HasPrefix(l.input[l.current:], codeFence) {
+			if l.current > l.start {
 				l.emit(itemCommandBlock)
 			}
-			l.pos += Pos(len(codeFence))
+			l.current += position(len(codeFence))
 			l.ignore()
 			return lexText
 		}
@@ -271,9 +260,9 @@ func lexCommandBlock(l *lexer) stateFn {
 	}
 }
 
-func shouldSleep(labels []string) bool {
-	for _, label := range labels {
-		if label == "sleep" {
+func shouldSleep(labels []model.Label) bool {
+	for _, l := range labels {
+		if l == "sleep" {
 			return true
 		}
 	}
@@ -284,9 +273,9 @@ func shouldSleep(labels []string) bool {
 // CommandBlock array.  The labels are the strings after a labelMarker in
 // a comment preceding a command block.  Arrays hold command blocks in the
 // order they appeared in the input.
-func Parse(s string) (result map[string][]*CommandBlock) {
-	result = make(map[string][]*CommandBlock)
-	currentLabels := make([]string, 0, 10)
+func Parse(s string) (result map[model.Label][]*model.CommandBlock) {
+	result = make(map[model.Label][]*model.CommandBlock)
+	currentLabels := make([]model.Label, 0, 10)
 	l := newLex(s)
 	for {
 		item := l.nextItem()
@@ -294,7 +283,7 @@ func Parse(s string) (result map[string][]*CommandBlock) {
 		case item.typ == itemEOF || item.typ == itemError:
 			return
 		case item.typ == itemBlockLabel:
-			currentLabels = append(currentLabels, item.val)
+			currentLabels = append(currentLabels, model.Label(item.val))
 		case item.typ == itemCommandBlock:
 			if len(currentLabels) == 0 {
 				fmt.Println("Have an unlabelled command block:\n " + item.val)
@@ -306,17 +295,17 @@ func Parse(s string) (result map[string][]*CommandBlock) {
 			if shouldSleep(currentLabels) {
 				item.val = item.val + "sleep 2s # Added by mdrip\n"
 			}
-			newBlock := &CommandBlock{currentLabels, item.val}
+			newBlock := model.NewCommandBlock(currentLabels, item.val)
 			for _, label := range currentLabels {
 				blocks, ok := result[label]
 				if ok {
 					blocks = append(blocks, newBlock)
 				} else {
-					blocks = []*CommandBlock{newBlock}
+					blocks = []*model.CommandBlock{newBlock}
 				}
 				result[label] = blocks
 			}
-			currentLabels = make([]string, 0, 10)
+			currentLabels = make([]model.Label, 0, 10)
 		}
 	}
 }

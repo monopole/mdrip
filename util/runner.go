@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/monopole/mdrip/model"
 	"io"
 	"io/ioutil"
 	"log"
@@ -36,16 +37,6 @@ func check(msg string, err error) {
 	}
 }
 
-// blockOutput pairs the output collected from a stream (i.e. stderr
-// or stdout) as a result of executing all or part of a command block
-// with a bool indicating if the output is associated with shell
-// success or shell failure.  Output can appear on stderr without
-// neccessarily being associated with shell failure.
-type blockOutput struct {
-	success bool
-	output  string
-}
-
 // accumulateOutput returns a channel to which it writes objects that
 // contain what purport to be the entire output of one command block.
 //
@@ -60,8 +51,8 @@ type blockOutput struct {
 // On a sad path, an accumulation of strings is sent with a success ==
 // false flag attached, and the function exits early, before it's
 // input channel closes.
-func accumulateOutput(prefix string, in <-chan string) <-chan *blockOutput {
-	out := make(chan *blockOutput)
+func accumulateOutput(prefix string, in <-chan string) <-chan *model.BlockOutput {
+	out := make(chan *model.BlockOutput)
 	var accum bytes.Buffer
 	go func() {
 		defer close(out)
@@ -72,7 +63,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *blockOutput {
 				if *debug {
 					fmt.Printf("DEBUG: accumulateOutput %s: Timeout return.\n", prefix)
 				}
-				out <- &blockOutput{false, accum.String()}
+				out <- model.NewFailureOutput(accum.String())
 				return
 			}
 			if strings.HasPrefix(line, MsgError) {
@@ -80,14 +71,14 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *blockOutput {
 				if *debug {
 					fmt.Printf("DEBUG: accumulateOutput %s: Error return.\n", prefix)
 				}
-				out <- &blockOutput{false, accum.String()}
+				out <- model.NewFailureOutput(accum.String())
 				return
 			}
 			if strings.HasPrefix(line, MsgHappy) {
 				if *debug {
 					fmt.Printf("DEBUG: accumulateOutput %s: %s\n", prefix, line)
 				}
-				out <- &blockOutput{true, accum.String()}
+				out <- model.NewSuccessOutput(accum.String())
 				accum.Reset()
 			} else {
 				if *debug {
@@ -106,7 +97,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *blockOutput {
 				fmt.Printf(
 					"DEBUG: accumulateOutput %s: Erroneous (missing-happy) output [%s]\n", prefix, accum.String())
 			}
-			out <- &blockOutput{false, accum.String()}
+			out <- model.NewFailureOutput(accum.String())
 		} else {
 			if *debug {
 				fmt.Printf("DEBUG: accumulateOutput %s: Nothing trailing.\n", prefix)
@@ -116,49 +107,15 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *blockOutput {
 	return out
 }
 
-// ScriptResult pairs blockOutput with meta data about shell execution.
-type ScriptResult struct {
-	blockOutput
-	fileName string        // File in which the error occurred.
-	index    int           // Command block index.
-	block    *CommandBlock // Content of actual command block.
-	problem  error         // Error, if any.
-	message  string        // Detailed error message, if any.
-}
-
-func (x ScriptResult) GetFileName() string {
-	return x.fileName
-}
-
-func (x ScriptResult) GetProblem() error {
-	return x.problem
-}
-
-// ScriptBucket associates a list of commandBlocks with the name of the
-// file they came from.
-type ScriptBucket struct {
-	fileName string
-	script   []*CommandBlock
-}
-
-func (x ScriptBucket) GetFileName() string {
-	return x.fileName
-}
-func (x ScriptBucket) GetScript() []*CommandBlock {
-	return x.script
-}
-func NewScriptBucket(fileName string, script []*CommandBlock) *ScriptBucket {
-	return &ScriptBucket{fileName, script}
-}
-
 // userBehavior acts like a command line user.
+// TODO(monopole): update the comments, as this function no longer writes to stdin.
+// See https://github.com/monopole/mdrip/commit/a7be6a6fb62ccf8dfe1c2906515ce3e83d0400d7
 //
 // It writes command blocks to shell, then waits after  each block to
 // see if the block worked.  If the block appeared to complete without
 // error, the routine sends the next block, else it exits early.
-func userBehavior(scriptBuckets []*ScriptBucket, blockTimeout time.Duration,
-	stdOut, stdErr io.ReadCloser) (errResult *ScriptResult) {
-	emptyArray := []string{}
+func userBehavior(scriptBuckets []*model.ScriptBucket, blockTimeout time.Duration,
+	stdOut, stdErr io.ReadCloser) (errResult *model.ScriptResult) {
 
 	chOut := BuffScanner(blockTimeout, "stdout", stdOut, *debug)
 	chErr := BuffScanner(1*time.Minute, "stderr", stdErr, *debug)
@@ -166,37 +123,33 @@ func userBehavior(scriptBuckets []*ScriptBucket, blockTimeout time.Duration,
 	chAccOut := accumulateOutput("stdOut", chOut)
 	chAccErr := accumulateOutput("stdErr", chErr)
 
-	errResult = &ScriptResult{blockOutput{false, ""}, "", -1, &CommandBlock{emptyArray, ""}, nil, ""}
+	errResult = model.NewScriptResult()
 	for _, bucket := range scriptBuckets {
-		for i, block := range bucket.script {
-			blockName := block.labels[0]
+		numBlocks := len(bucket.GetScript())
+		for i, block := range bucket.GetScript() {
 			fmt.Printf("Running %s (%d/%d) from %s\n",
-				blockName, i+1, len(bucket.script), bucket.fileName)
+				block.GetName(), i+1, numBlocks, bucket.GetFileName())
 			if *debug {
-				fmt.Printf("DEBUG: userBehavior: sending \"%s\"\n", block.codeText)
+				fmt.Printf("DEBUG: userBehavior: sending \"%s\"\n", block.GetCode())
 			}
 
 			result := <-chAccOut
 
-			if result == nil || !result.success {
+			if result == nil || !result.Succeeded() {
 				// A nil result means stdout has closed early because a
 				// sub-subprocess failed.
 				if result == nil {
 					if *debug {
 						fmt.Printf("DEBUG: userBehavior: stdout Result == nil.\n")
-						// fmt.Printf("DEBUG: userBehavior: sending warning to stdErr\n")
 					}
-					//					chErr <- MsgError + " : early termination; stdout has closed."
+					// Perhaps chErr <- MsgError + " : early termination; stdout has closed."
 				} else {
 					if *debug {
-						fmt.Printf("DEBUG: userBehavior: stdout Result: %s\n", result.output)
+						fmt.Printf("DEBUG: userBehavior: stdout Result: %s\n", result.GetOutput())
 					}
-					errResult.output = result.output
-					errResult.message = result.output
+					errResult.SetOutput(result.GetOutput()).SetMessage(result.GetOutput())
 				}
-				errResult.fileName = bucket.fileName
-				errResult.index = i
-				errResult.block = block
+				errResult.SetFileName(bucket.GetFileName()).SetIndex(i).SetBlock(block)
 				fillErrResult(chAccErr, errResult)
 				return
 			}
@@ -207,41 +160,18 @@ func userBehavior(scriptBuckets []*ScriptBucket, blockTimeout time.Duration,
 }
 
 // fillErrResult fills an instance of ScriptResult.
-func fillErrResult(chAccErr <-chan *blockOutput, errResult *ScriptResult) {
+func fillErrResult(chAccErr <-chan *model.BlockOutput, errResult *model.ScriptResult) {
 	result := <-chAccErr
 	if result == nil {
 		if *debug {
 			fmt.Printf("DEBUG: userBehavior: stderr Result == nil.\n")
 		}
-		errResult.problem = errors.New("unknown")
+		errResult.SetProblem(errors.New("unknown"))
 		return
 	}
-	errResult.problem = errors.New(result.output)
-	errResult.message = result.output
+	errResult.SetProblem(errors.New(result.output)).SetMessage(result.GetOutput())
 	if *debug {
-		fmt.Printf("DEBUG: userBehavior: stderr Result: %s\n", result.output)
-	}
-}
-
-func dumpCapturedOutput(name, delim, output string) {
-	fmt.Fprintf(os.Stderr, "\n%s capture:\n", name)
-	fmt.Fprintf(os.Stderr, delim)
-	fmt.Fprintf(os.Stderr, output)
-	fmt.Fprintf(os.Stderr, "\n")
-	fmt.Fprintf(os.Stderr, delim)
-}
-
-// Complain spits the contents of a ScriptResult to stderr.
-func Complain(result *ScriptResult, label string) {
-	delim := strings.Repeat("-", 70) + "\n"
-	fmt.Fprintf(os.Stderr, "Error in block '%s' (#%d of script '%s') in %s:\n",
-		result.block.labels[0], result.index+1, label, result.fileName)
-	fmt.Fprintf(os.Stderr, delim)
-	fmt.Fprintf(os.Stderr, string(result.block.codeText))
-	fmt.Fprintf(os.Stderr, delim)
-	dumpCapturedOutput("Stdout", delim, result.output)
-	if len(result.message) > 0 {
-		dumpCapturedOutput("Stderr", delim, result.message)
+		fmt.Printf("DEBUG: userBehavior: stderr Result: %s\n", result.GetOutput())
 	}
 }
 
@@ -262,17 +192,17 @@ func Complain(result *ScriptResult, label string) {
 // Error reporting works by discarding output from command blocks that
 // succeeded, and only reporting the contents of stdout and stderr
 // when the subprocess exits on error.
-func RunInSubShell(scriptBuckets []*ScriptBucket, blockTimeout time.Duration) (
-	result *ScriptResult) {
+func RunInSubShell(scriptBuckets []*model.ScriptBucket, blockTimeout time.Duration) (
+	result *model.ScriptResult) {
 	// Write script buckets to a file to be executed.
 	scriptFile, err := ioutil.TempFile("", "mdrip-script-")
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(scriptFile.Name(), 0744))
 	for _, bucket := range scriptBuckets {
-		for _, block := range bucket.script {
-			checkWrite(block.codeText, scriptFile)
+		for _, block := range bucket.GetScript() {
+			checkWrite(block.GetCode().String(), scriptFile)
 			checkWrite("\n", scriptFile)
-			checkWrite("echo "+MsgHappy+" "+block.labels[0]+"\n", scriptFile)
+			checkWrite("echo "+MsgHappy+" "+block.GetName().String()+"\n", scriptFile)
 		}
 	}
 	if *debug {
