@@ -144,10 +144,10 @@ func main() {
 	}
 
 	result := util.RunInSubShell(scriptBuckets, *blockTimeOut)
-	if result.GetProblem() != nil {
+	if result.Problem() != nil {
 		result.Dump(label)
 		if !*swallow {
-			log.Fatal(result.GetProblem())
+			log.Fatal(result.Problem())
 		}
 	}
 }

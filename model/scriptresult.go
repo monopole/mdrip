@@ -28,7 +28,7 @@ func (x BlockOutput) Succeeded() bool {
 	return x.success == yep
 }
 
-func (x BlockOutput) GetOutput() string {
+func (x BlockOutput) Output() string {
 	return x.output
 }
 
@@ -57,16 +57,19 @@ func NewScriptResult() *ScriptResult {
 }
 
 // For tests.
-func NoCommandsScriptResult(blockOutput *BlockOutput, fileName string, index int, message string) *ScriptResult {
+func NoCommandsScriptResult(
+	blockOutput *BlockOutput, fileName string, index int, message string) *ScriptResult {
 	noLabels := []Label{}
-	return &ScriptResult{*blockOutput, fileName, index, NewCommandBlock(noLabels, ""), nil, message}
+	return &ScriptResult{
+		*blockOutput, fileName, index,
+		NewCommandBlock(noLabels, ""), nil, message}
 }
 
-func (x *ScriptResult) GetFileName() string {
+func (x *ScriptResult) FileName() string {
 	return x.fileName
 }
 
-func (x *ScriptResult) GetProblem() error {
+func (x *ScriptResult) Problem() error {
 	return x.problem
 }
 
@@ -75,7 +78,7 @@ func (x *ScriptResult) SetProblem(e error) *ScriptResult {
 	return x
 }
 
-func (x *ScriptResult) GetMessage() string {
+func (x *ScriptResult) Message() string {
 	return x.message
 }
 
@@ -89,7 +92,7 @@ func (x *ScriptResult) SetOutput(m string) *ScriptResult {
 	return x
 }
 
-func (x *ScriptResult) GetIndex() int {
+func (x *ScriptResult) Index() int {
 	return x.index
 }
 

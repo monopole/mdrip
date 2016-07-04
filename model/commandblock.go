@@ -37,11 +37,11 @@ func NewCommandBlock(labels []Label, code string) *CommandBlock {
 
 // GetName returns the name of the block.  It's always the first
 // label, and we assure that there is at least one label.
-func (x CommandBlock) GetName() Label {
+func (x CommandBlock) Name() Label {
 	return x.labels[0]
 }
 
-func (x CommandBlock) GetLabels() []Label {
+func (x CommandBlock) Labels() []Label {
 	return x.labels
 }
 
@@ -49,7 +49,9 @@ func (x CommandBlock) GetCode() Code {
 	return x.code
 }
 
-func (x CommandBlock) Dump(w io.Writer, prefix string, n int, label Label, fileName string) {
-	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n", prefix, x.GetName(), n, label, fileName)
+func (x CommandBlock) Dump(
+	w io.Writer, prefix string, n int, label Label, fileName string) {
+	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n",
+		prefix, x.Name(), n, label, fileName)
 	fmt.Fprint(w, x.GetCode())
 }

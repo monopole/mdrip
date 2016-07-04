@@ -125,10 +125,10 @@ func userBehavior(scriptBuckets []*model.ScriptBucket, blockTimeout time.Duratio
 
 	errResult = model.NewScriptResult()
 	for _, bucket := range scriptBuckets {
-		numBlocks := len(bucket.GetScript())
-		for i, block := range bucket.GetScript() {
+		numBlocks := len(bucket.Script())
+		for i, block := range bucket.Script() {
 			fmt.Printf("Running %s (%d/%d) from %s\n",
-				block.GetName(), i+1, numBlocks, bucket.GetFileName())
+				block.Name(), i+1, numBlocks, bucket.FileName())
 			if *debug {
 				fmt.Printf("DEBUG: userBehavior: sending \"%s\"\n", block.GetCode())
 			}
@@ -145,11 +145,11 @@ func userBehavior(scriptBuckets []*model.ScriptBucket, blockTimeout time.Duratio
 					// Perhaps chErr <- MsgError + " : early termination; stdout has closed."
 				} else {
 					if *debug {
-						fmt.Printf("DEBUG: userBehavior: stdout Result: %s\n", result.GetOutput())
+						fmt.Printf("DEBUG: userBehavior: stdout Result: %s\n", result.Output())
 					}
-					errResult.SetOutput(result.GetOutput()).SetMessage(result.GetOutput())
+					errResult.SetOutput(result.Output()).SetMessage(result.Output())
 				}
-				errResult.SetFileName(bucket.GetFileName()).SetIndex(i).SetBlock(block)
+				errResult.SetFileName(bucket.FileName()).SetIndex(i).SetBlock(block)
 				fillErrResult(chAccErr, errResult)
 				return
 			}
@@ -169,9 +169,9 @@ func fillErrResult(chAccErr <-chan *model.BlockOutput, errResult *model.ScriptRe
 		errResult.SetProblem(errors.New("unknown"))
 		return
 	}
-	errResult.SetProblem(errors.New(result.GetOutput())).SetMessage(result.GetOutput())
+	errResult.SetProblem(errors.New(result.Output())).SetMessage(result.Output())
 	if *debug {
-		fmt.Printf("DEBUG: userBehavior: stderr Result: %s\n", result.GetOutput())
+		fmt.Printf("DEBUG: userBehavior: stderr Result: %s\n", result.Output())
 	}
 }
 
@@ -199,10 +199,10 @@ func RunInSubShell(scriptBuckets []*model.ScriptBucket, blockTimeout time.Durati
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(scriptFile.Name(), 0744))
 	for _, bucket := range scriptBuckets {
-		for _, block := range bucket.GetScript() {
+		for _, block := range bucket.Script() {
 			checkWrite(block.GetCode().String(), scriptFile)
 			checkWrite("\n", scriptFile)
-			checkWrite("echo "+MsgHappy+" "+block.GetName().String()+"\n", scriptFile)
+			checkWrite("echo "+MsgHappy+" "+block.Name().String()+"\n", scriptFile)
 		}
 	}
 	if *debug {
@@ -245,7 +245,7 @@ func RunInSubShell(scriptBuckets []*model.ScriptBucket, blockTimeout time.Durati
 		fmt.Printf("DEBUG: RunInSubShell:  Waiting for shell to end.\n")
 	}
 	waitError := shell.Wait()
-	if result.GetProblem() == nil {
+	if result.Problem() == nil {
 		result.SetProblem(waitError)
 	}
 	if *debug {

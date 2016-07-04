@@ -15,7 +15,7 @@ var emptyCommandBlock *model.CommandBlock = model.NewCommandBlock(noLabels, "")
 const timeoutSeconds = 1
 
 func TestRunnerWithNothing(t *testing.T) {
-	if RunInSubShell([]*model.ScriptBucket{}, timeoutSeconds*time.Second).GetProblem() != nil {
+	if RunInSubShell([]*model.ScriptBucket{}, timeoutSeconds*time.Second).Problem() != nil {
 		t.Fail()
 	}
 }
@@ -30,20 +30,20 @@ func TestRunnerWithGoodStuff(t *testing.T) {
 		model.NewCommandBlock(labels, "echo beans\necho apple\n"),
 		model.NewCommandBlock(labels, "echo hasta\necho la vista\n")}
 	result := doIt(blocks)
-	if result.GetProblem() != nil {
+	if result.Problem() != nil {
 		t.Fail()
 	}
 }
 
 func checkFail(t *testing.T, got, want *model.ScriptResult) {
-	if got.GetProblem() == nil {
+	if got.Problem() == nil {
 		t.Fail()
 	}
-	if got.GetIndex() != want.GetIndex() {
-		t.Errorf("%s got\n\t%v\nwant\n\t%v", "script", got.GetIndex(), want.GetIndex())
+	if got.Index() != want.Index() {
+		t.Errorf("%s got\n\t%v\nwant\n\t%v", "script", got.Index(), want.Index())
 	}
-	if !strings.Contains(got.GetMessage(), want.GetMessage()) {
-		t.Errorf("%s got\n\t%v\nwant\n\t%v", "message", got.GetMessage(), want.GetMessage())
+	if !strings.Contains(got.Message(), want.Message()) {
+		t.Errorf("%s got\n\t%v\nwant\n\t%v", "message", got.Message(), want.Message())
 	}
 }
 

@@ -13,11 +13,11 @@ type ScriptBucket struct {
 	script   []*CommandBlock
 }
 
-func (b ScriptBucket) GetFileName() string {
+func (b ScriptBucket) FileName() string {
 	return b.fileName
 }
 
-func (b ScriptBucket) GetScript() []*CommandBlock {
+func (b ScriptBucket) Script() []*CommandBlock {
 	return b.script
 }
 
@@ -27,15 +27,15 @@ func (b ScriptBucket) GetScript() []*CommandBlock {
 // is a count not an index.  If you want the first two blocks dumped,
 // pass n==2, not n==1.
 func (bucket ScriptBucket) Dump(w io.Writer, label Label, n int) {
-	fmt.Fprintf(w, "#\n# Script @%s from %s \n#\n", label, bucket.GetFileName())
+	fmt.Fprintf(w, "#\n# Script @%s from %s \n#\n", label, bucket.FileName())
 	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d of %d\n"
-	blockCount := len(bucket.GetScript())
-	for i, block := range bucket.GetScript() {
+	blockCount := len(bucket.Script())
+	for i, block := range bucket.Script() {
 		if n > 0 && i >= n {
 			break
 		}
 		fmt.Fprintf(w, delimFmt, "Start", i+1, blockCount)
-		block.Dump(w, "#", i+1, label, bucket.GetFileName())
+		block.Dump(w, "#", i+1, label, bucket.FileName())
 		fmt.Fprintf(w, delimFmt, "End", i+1, blockCount)
 		fmt.Fprintln(w)
 	}
