@@ -130,7 +130,7 @@ func userBehavior(scriptBuckets []*model.ScriptBucket, blockTimeout time.Duratio
 			fmt.Printf("Running %s (%d/%d) from %s\n",
 				block.Name(), i+1, numBlocks, bucket.FileName())
 			if *debug {
-				fmt.Printf("DEBUG: userBehavior: sending \"%s\"\n", block.GetCode())
+				fmt.Printf("DEBUG: userBehavior: sending \"%s\"\n", block.Code())
 			}
 
 			result := <-chAccOut
@@ -200,7 +200,7 @@ func RunInSubShell(scriptBuckets []*model.ScriptBucket, blockTimeout time.Durati
 	check("chmod temp file", os.Chmod(scriptFile.Name(), 0744))
 	for _, bucket := range scriptBuckets {
 		for _, block := range bucket.Script() {
-			checkWrite(block.GetCode().String(), scriptFile)
+			checkWrite(block.Code().String(), scriptFile)
 			checkWrite("\n", scriptFile)
 			checkWrite("echo "+MsgHappy+" "+block.Name().String()+"\n", scriptFile)
 		}
