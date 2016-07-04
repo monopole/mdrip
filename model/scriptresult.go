@@ -50,12 +50,33 @@ type ScriptResult struct {
 	message  string        // Detailed error message, if any.
 }
 
+func NewScriptResult() *ScriptResult {
+	noLabels := []Label{}
+	blockOutput := NewFailureOutput("")
+	return &ScriptResult{*blockOutput, "", -1, NewCommandBlock(noLabels, ""), nil, ""}
+}
+
+// For tests.
+func NoCommandsScriptResult(blockOutput *BlockOutput, fileName string, index int, message string) *ScriptResult {
+	noLabels := []Label{}
+	return &ScriptResult{*blockOutput, fileName, index, NewCommandBlock(noLabels, ""), nil, message}
+}
+
 func (x *ScriptResult) GetFileName() string {
 	return x.fileName
 }
 
 func (x *ScriptResult) GetProblem() error {
 	return x.problem
+}
+
+func (x *ScriptResult) SetProblem(e error) *ScriptResult {
+	x.problem = e
+	return x
+}
+
+func (x *ScriptResult) GetMessage() string {
+	return x.message
 }
 
 func (x *ScriptResult) SetMessage(m string) *ScriptResult {
@@ -66,6 +87,10 @@ func (x *ScriptResult) SetMessage(m string) *ScriptResult {
 func (x *ScriptResult) SetOutput(m string) *ScriptResult {
 	x.output = m
 	return x
+}
+
+func (x *ScriptResult) GetIndex() int {
+	return x.index
 }
 
 func (x *ScriptResult) SetIndex(i int) *ScriptResult {
@@ -80,11 +105,6 @@ func (x *ScriptResult) SetBlock(b *CommandBlock) *ScriptResult {
 
 func (x *ScriptResult) SetFileName(n string) *ScriptResult {
 	x.fileName = n
-	return x
-}
-
-func (x *ScriptResult) SetProblem(e error) *ScriptResult {
-	x.problem = e
 	return x
 }
 
@@ -106,10 +126,4 @@ func dumpCapturedOutput(name, delim, output string) {
 	fmt.Fprintf(os.Stderr, output)
 	fmt.Fprintf(os.Stderr, "\n")
 	fmt.Fprintf(os.Stderr, delim)
-}
-
-func NewScriptResult() *ScriptResult {
-	noLabels := []Label{}
-	blockOutput := NewFailureOutput("")
-	return &ScriptResult{*blockOutput, "", -1, NewCommandBlock(noLabels, ""), nil, ""}
 }

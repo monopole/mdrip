@@ -169,7 +169,7 @@ func fillErrResult(chAccErr <-chan *model.BlockOutput, errResult *model.ScriptRe
 		errResult.SetProblem(errors.New("unknown"))
 		return
 	}
-	errResult.SetProblem(errors.New(result.output)).SetMessage(result.GetOutput())
+	errResult.SetProblem(errors.New(result.GetOutput())).SetMessage(result.GetOutput())
 	if *debug {
 		fmt.Printf("DEBUG: userBehavior: stderr Result: %s\n", result.GetOutput())
 	}
@@ -245,8 +245,8 @@ func RunInSubShell(scriptBuckets []*model.ScriptBucket, blockTimeout time.Durati
 		fmt.Printf("DEBUG: RunInSubShell:  Waiting for shell to end.\n")
 	}
 	waitError := shell.Wait()
-	if result.problem == nil {
-		result.problem = waitError
+	if result.GetProblem() == nil {
+		result.SetProblem(waitError)
 	}
 	if *debug {
 		fmt.Printf("DEBUG: RunInSubShell:  Shell done.\n")

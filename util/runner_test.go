@@ -15,12 +15,12 @@ var emptyCommandBlock *model.CommandBlock = model.NewCommandBlock(noLabels, "")
 const timeoutSeconds = 1
 
 func TestRunnerWithNothing(t *testing.T) {
-	if RunInSubShell([]*model.ScriptBucket{}, timeoutSeconds*time.Second).problem != nil {
+	if RunInSubShell([]*model.ScriptBucket{}, timeoutSeconds*time.Second).GetProblem() != nil {
 		t.Fail()
 	}
 }
 
-func doIt(blocks []*model.CommandBlock) *ScriptResult {
+func doIt(blocks []*model.CommandBlock) *model.ScriptResult {
 	return RunInSubShell([]*model.ScriptBucket{model.NewScriptBucket("iAmFileName", blocks)}, timeoutSeconds*time.Second)
 }
 
@@ -30,31 +30,30 @@ func TestRunnerWithGoodStuff(t *testing.T) {
 		model.NewCommandBlock(labels, "echo beans\necho apple\n"),
 		model.NewCommandBlock(labels, "echo hasta\necho la vista\n")}
 	result := doIt(blocks)
-	if result.problem != nil {
+	if result.GetProblem() != nil {
 		t.Fail()
 	}
 }
 
-func checkFail(t *testing.T, got, want *ScriptResult) {
-	if got.problem == nil {
+func checkFail(t *testing.T, got, want *model.ScriptResult) {
+	if got.GetProblem() == nil {
 		t.Fail()
 	}
-	if got.index != want.index {
-		t.Errorf("%s got\n\t%v\nwant\n\t%v", "script", got.index, want.index)
+	if got.GetIndex() != want.GetIndex() {
+		t.Errorf("%s got\n\t%v\nwant\n\t%v", "script", got.GetIndex(), want.GetIndex())
 	}
-	if !strings.Contains(got.message, want.message) {
-		t.Errorf("%s got\n\t%v\nwant\n\t%v", "message", got.message, want.message)
+	if !strings.Contains(got.GetMessage(), want.GetMessage()) {
+		t.Errorf("%s got\n\t%v\nwant\n\t%v", "message", got.GetMessage(), want.GetMessage())
 	}
 }
 
 func TestStartWithABadCommand(t *testing.T) {
-	want := &ScriptResult{
-		blockOutput{nope, "dunno"},
+
+	want := model.NoCommandsScriptResult(
+		model.NewFailureOutput("dunno"),
 		"fileNameTestStartWithABadCommand",
 		0,
-		emptyCommandBlock,
-		nil,
-		"line 1: notagoodcommand: command not found"}
+		"line 1: notagoodcommand: command not found")
 
 	blocks := []*model.CommandBlock{
 		model.NewCommandBlock(labels, "notagoodcommand\ndate\n"),
@@ -63,13 +62,12 @@ func TestStartWithABadCommand(t *testing.T) {
 }
 
 func TestBadCommandInTheMiddle(t *testing.T) {
-	want := &ScriptResult{
-		blockOutput{nope, "dunno"},
+
+	want := model.NoCommandsScriptResult(
+		model.NewFailureOutput("dunno"),
 		"fileNameTestBadCommandInTheMiddle",
 		2,
-		emptyCommandBlock,
-		nil,
-		"line 9: lochNessMonster: command not found"}
+		"line 9: lochNessMonster: command not found")
 
 	blocks := []*model.CommandBlock{
 		model.NewCommandBlock(labels, "echo tofu\ndate\n"),
@@ -81,13 +79,11 @@ func TestBadCommandInTheMiddle(t *testing.T) {
 }
 
 func TestTimeOut(t *testing.T) {
-	want := &ScriptResult{
-		blockOutput{nope, "dunno"},
+	want := model.NoCommandsScriptResult(
+		model.NewFailureOutput("dunno"),
 		"fileNameTestTimeOut",
 		0,
-		emptyCommandBlock,
-		nil,
-		MsgTimeout}
+		MsgTimeout)
 
 	// Go to sleep for twice the length of the timeout.
 	blocks := []*model.CommandBlock{
