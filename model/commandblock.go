@@ -13,19 +13,19 @@ func (l Label) String() string {
 	return string(l)
 }
 
-// RawCode contains the actual sequence of shell commands (including
-// stuff like HERE documents) to run as an opaque block.  If all
-// commands succeed, the block succeeds, else the block fails.
-type RawCode string
+// opaqueCode is an opaque, uninterpreted, unknown block of shell
+// commands parsed from markdown.  Fed into a shell interpreted, the
+// entire thing either succeeds, or fails.
+type opaqueCode string
 
-func (c RawCode) String() string {
+func (c opaqueCode) String() string {
 	return string(c)
 }
 
-// CommandBlock groups Code with its labels.
+// CommandBlock groups opaqueCode with its labels.
 type CommandBlock struct {
 	labels []Label
-	code   RawCode
+	code   opaqueCode
 }
 
 func NewCommandBlock(labels []Label, code string) *CommandBlock {
@@ -33,11 +33,13 @@ func NewCommandBlock(labels []Label, code string) *CommandBlock {
 		// Assure at least one label.
 		labels = []Label{Label("unknown")}
 	}
-	return &CommandBlock{labels, RawCode(code)}
+	return &CommandBlock{labels, opaqueCode(code)}
 }
 
-// GetName returns the name of the block.  It's always the first
-// label, and construction assures there will be at least one.
+// GetName returns the name of the command block.
+//
+// It's always the first label, and construction assures there will be
+// at least one.
 func (x CommandBlock) Name() Label {
 	return x.labels[0]
 }
@@ -46,7 +48,7 @@ func (x CommandBlock) Labels() []Label {
 	return x.labels
 }
 
-func (x CommandBlock) Code() RawCode {
+func (x CommandBlock) Code() opaqueCode {
 	return x.code
 }
 

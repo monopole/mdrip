@@ -13,6 +13,10 @@ type ScriptBucket struct {
 	script   []*CommandBlock
 }
 
+func NewScriptBucket(fileName string, script []*CommandBlock) *ScriptBucket {
+	return &ScriptBucket{fileName, script}
+}
+
 func (b ScriptBucket) FileName() string {
 	return b.fileName
 }
@@ -39,8 +43,4 @@ func (bucket ScriptBucket) Dump(w io.Writer, label Label, n int) {
 		fmt.Fprintf(w, delimFmt, "End", i+1, blockCount)
 		fmt.Fprintln(w)
 	}
-}
-
-func NewScriptBucket(fileName string, script []*CommandBlock) *ScriptBucket {
-	return &ScriptBucket{fileName, script}
 }

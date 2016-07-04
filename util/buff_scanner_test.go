@@ -20,7 +20,7 @@ func (stalledReader) Close() error { return nil }
 
 func TestStalledReader(t *testing.T) {
 	foo := stalledReader{}
-	chOut := BuffScanner(1*time.Second, "heythere", foo, true)
+	chOut := BuffScanner(1*time.Second, "heythere", foo)
 
 	line, ok := <-chOut
 	if !ok {
@@ -49,7 +49,7 @@ func (bustedReader) Close() error { return nil }
 
 func TestBustedReader(t *testing.T) {
 	foo := bustedReader{}
-	chOut := BuffScanner(1*time.Second, "heythere", foo, true)
+	chOut := BuffScanner(1*time.Second, "heythere", foo)
 
 	line, ok := <-chOut
 	if !ok {
@@ -74,7 +74,7 @@ func (simpleReader) Close() error { return nil }
 
 func TestSimpleReader(t *testing.T) {
 	foo1 := simpleReader{bytes.NewBufferString("beans and\nrice")}
-	chOut := BuffScanner(1*time.Second, "heythere", foo1, true)
+	chOut := BuffScanner(1*time.Second, "heythere", foo1)
 
 	line, ok := <-chOut
 	if !ok {
@@ -104,7 +104,7 @@ func TestSimpleReader(t *testing.T) {
 func main() {
 	{
 		foo := simpleReader{bytes.NewBufferString("beans and\nrice")}
-		chOut := BuffScanner(1*time.Second, "heythere", foo, true)
+		chOut := BuffScanner(1*time.Second, "heythere", foo)
 		for line := range chOut {
 			fmt.Println(line)
 		}
@@ -112,7 +112,7 @@ func main() {
 	}
 	{
 		foo := stalledReader{}
-		chOut := BuffScanner(1*time.Second, "heythere", foo, true)
+		chOut := BuffScanner(1*time.Second, "heythere", foo)
 		for line := range chOut {
 			fmt.Println(line)
 		}
@@ -120,7 +120,7 @@ func main() {
 	}
 	{
 		foo := bustedReader{}
-		chOut := BuffScanner(1*time.Second, "heythere", foo, true)
+		chOut := BuffScanner(1*time.Second, "heythere", foo)
 		for line := range chOut {
 			fmt.Println(line)
 		}
