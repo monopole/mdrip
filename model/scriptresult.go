@@ -43,7 +43,7 @@ func NewSuccessOutput(output string) *BlockOutput {
 // ScriptResult pairs BlockOutput with meta data about shell execution.
 type ScriptResult struct {
 	BlockOutput
-	fileName string        // File in which the error occurred.
+	fileName FileName      // File in which the error occurred.
 	index    int           // Command block index.
 	block    *CommandBlock // Content of actual command block.
 	problem  error         // Error, if any.
@@ -58,14 +58,14 @@ func NewScriptResult() *ScriptResult {
 
 // For tests.
 func NoCommandsScriptResult(
-	blockOutput *BlockOutput, fileName string, index int, message string) *ScriptResult {
+	blockOutput *BlockOutput, fileName FileName, index int, message string) *ScriptResult {
 	noLabels := []Label{}
 	return &ScriptResult{
 		*blockOutput, fileName, index,
 		NewCommandBlock(noLabels, ""), nil, message}
 }
 
-func (x *ScriptResult) FileName() string {
+func (x *ScriptResult) FileName() FileName {
 	return x.fileName
 }
 
@@ -106,7 +106,7 @@ func (x *ScriptResult) SetBlock(b *CommandBlock) *ScriptResult {
 	return x
 }
 
-func (x *ScriptResult) SetFileName(n string) *ScriptResult {
+func (x *ScriptResult) SetFileName(n FileName) *ScriptResult {
 	x.fileName = n
 	return x
 }

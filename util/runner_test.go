@@ -15,13 +15,14 @@ var emptyCommandBlock *model.CommandBlock = model.NewCommandBlock(noLabels, "")
 const timeoutSeconds = 1
 
 func TestRunnerWithNothing(t *testing.T) {
-	if RunInSubShell([]*model.ScriptBucket{}, timeoutSeconds*time.Second).Problem() != nil {
+	if RunInSubShell(model.NewProgram(), timeoutSeconds*time.Second).Problem() != nil {
 		t.Fail()
 	}
 }
 
 func doIt(blocks []*model.CommandBlock) *model.ScriptResult {
-	return RunInSubShell([]*model.ScriptBucket{model.NewScriptBucket("iAmFileName", blocks)}, timeoutSeconds*time.Second)
+	p := model.NewProgram().Add(model.NewScriptBucket("iAmFileName", blocks))
+	return RunInSubShell(p, timeoutSeconds*time.Second)
 }
 
 func TestRunnerWithGoodStuff(t *testing.T) {

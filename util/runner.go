@@ -109,7 +109,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *model.BlockOutput
 // It writes command blocks to shell, then waits after  each block to
 // see if the block worked.  If the block appeared to complete without
 // error, the routine sends the next block, else it exits early.
-func userBehavior(scriptBuckets []*model.ScriptBucket, blockTimeout time.Duration,
+func userBehavior(p *model.Program, blockTimeout time.Duration,
 	stdOut, stdErr io.ReadCloser) (errResult *model.ScriptResult) {
 
 	chOut := BuffScanner(blockTimeout, "stdout", stdOut)
@@ -119,7 +119,7 @@ func userBehavior(scriptBuckets []*model.ScriptBucket, blockTimeout time.Duratio
 	chAccErr := accumulateOutput("stdErr", chErr)
 
 	errResult = model.NewScriptResult()
-	for _, bucket := range scriptBuckets {
+	for _, bucket := range p.Scripts() {
 		numBlocks := len(bucket.Script())
 		for i, block := range bucket.Script() {
 			glog.Info("Running %s (%d/%d) from %s\n",
@@ -187,13 +187,12 @@ func fillErrResult(chAccErr <-chan *model.BlockOutput, errResult *model.ScriptRe
 // Error reporting works by discarding output from command blocks that
 // succeeded, and only reporting the contents of stdout and stderr
 // when the subprocess exits on error.
-func RunInSubShell(scriptBuckets []*model.ScriptBucket, blockTimeout time.Duration) (
-	result *model.ScriptResult) {
+func RunInSubShell(p *model.Program, blockTimeout time.Duration) (result *model.ScriptResult) {
 	// Write script buckets to a file to be executed.
 	scriptFile, err := ioutil.TempFile("", "mdrip-script-")
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(scriptFile.Name(), 0744))
-	for _, bucket := range scriptBuckets {
+	for _, bucket := range p.Scripts() {
 		for _, block := range bucket.Script() {
 			checkWrite(block.Code().String(), scriptFile)
 			checkWrite("\n", scriptFile)
@@ -234,7 +233,7 @@ func RunInSubShell(scriptBuckets []*model.ScriptBucket, blockTimeout time.Durati
 		}
 	}
 
-	result = userBehavior(scriptBuckets, blockTimeout, stdOut, stdErr)
+	result = userBehavior(p, blockTimeout, stdOut, stdErr)
 
 	if glog.V(2) {
 		glog.Info("RunInSubShell:  Waiting for shell to end.")

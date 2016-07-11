@@ -5,6 +5,8 @@ import (
 	"io"
 )
 
+type FileName string
+
 // Labels are applied to code blocks to identify them and allow the
 // blocks to be grouped into categories, e.g. tests or tutorials.
 type Label string
@@ -53,7 +55,7 @@ func (x CommandBlock) Code() opaqueCode {
 }
 
 func (x CommandBlock) Dump(
-	w io.Writer, prefix string, n int, label Label, fileName string) {
+	w io.Writer, prefix string, n int, label Label, fileName FileName) {
 	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n",
 		prefix, x.Name(), n, label, fileName)
 	fmt.Fprint(w, x.Code())
