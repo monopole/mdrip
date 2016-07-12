@@ -4,13 +4,12 @@
 
 `mdrip` rips labeled command blocks from markdown files for execution.
 
-If you find markdown an effective means to document why and how to run
-arbitrary sequences of commands, then _mdrip_ makes it easy to place
-your documentation under test.
+If you find markdown an effective means to document why and how to run arbitrary
+sequences of commands, then _mdrip_ makes it easy to place your documentation
+under test.
 
-Alternatively, _mrdip_ can be viewed as a means to write _feature_
-level __integration tests__ via shell commands in a self-documenting,
-easily rendered markdown file.
+Alternatively, _mrdip_ can be viewed as a means to write high level _integration
+tests_ via shell commands in a self-documenting, easily rendered markdown file.
 
 ## Execution
 
