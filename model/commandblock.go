@@ -5,16 +5,6 @@ import (
 	"io"
 )
 
-type FileName string
-
-// Labels are applied to code blocks to identify them and allow the
-// blocks to be grouped into categories, e.g. tests or tutorials.
-type Label string
-
-func (l Label) String() string {
-	return string(l)
-}
-
 // opaqueCode is an opaque, uninterpreted, unknown block of shell
 // commands parsed from markdown.  Fed into a shell interpreted, the
 // entire thing either succeeds, or fails.

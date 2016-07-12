@@ -119,11 +119,11 @@ func userBehavior(p *model.Program, blockTimeout time.Duration,
 	chAccErr := accumulateOutput("stdErr", chErr)
 
 	errResult = model.NewScriptResult()
-	for _, bucket := range p.Scripts() {
-		numBlocks := len(bucket.Script())
-		for i, block := range bucket.Script() {
+	for _, script := range p.Scripts() {
+		numBlocks := len(script.Blocks())
+		for i, block := range script.Blocks() {
 			glog.Info("Running %s (%d/%d) from %s\n",
-				block.Name(), i+1, numBlocks, bucket.FileName())
+				block.Name(), i+1, numBlocks, script.FileName())
 			if glog.V(2) {
 				glog.Info("userBehavior: sending \"%s\"", block.Code())
 			}
@@ -144,7 +144,7 @@ func userBehavior(p *model.Program, blockTimeout time.Duration,
 					}
 					errResult.SetOutput(result.Output()).SetMessage(result.Output())
 				}
-				errResult.SetFileName(bucket.FileName()).SetIndex(i).SetBlock(block)
+				errResult.SetFileName(script.FileName()).SetIndex(i).SetBlock(block)
 				fillErrResult(chAccErr, errResult)
 				return
 			}
@@ -188,12 +188,12 @@ func fillErrResult(chAccErr <-chan *model.BlockOutput, errResult *model.ScriptRe
 // succeeded, and only reporting the contents of stdout and stderr
 // when the subprocess exits on error.
 func RunInSubShell(p *model.Program, blockTimeout time.Duration) (result *model.ScriptResult) {
-	// Write script buckets to a file to be executed.
+	// Write scripts to a file to be executed.
 	scriptFile, err := ioutil.TempFile("", "mdrip-script-")
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(scriptFile.Name(), 0744))
-	for _, bucket := range p.Scripts() {
-		for _, block := range bucket.Script() {
+	for _, script := range p.Scripts() {
+		for _, block := range script.Blocks() {
 			checkWrite(block.Code().String(), scriptFile)
 			checkWrite("\n", scriptFile)
 			checkWrite("echo "+MsgHappy+" "+block.Name().String()+"\n", scriptFile)

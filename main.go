@@ -27,7 +27,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "No block labelled %q in file %q.\n", c.ScriptName, fileName)
 			os.Exit(3)
 		}
-		program.Add(model.NewScriptBucket(fileName, script))
+		program.Add(model.NewScript(fileName, script))
 	}
 
 	if !c.Subshell {
@@ -44,7 +44,7 @@ func main() {
 	result := util.RunInSubShell(program, c.BlockTimeOut)
 	if result.Problem() != nil {
 		result.Dump(c.ScriptName)
-		if !c.Swallow {
+		if !c.Succeed {
 			log.Fatal(result.Problem())
 		}
 	}

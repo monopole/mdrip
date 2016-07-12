@@ -12,18 +12,20 @@ var blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
 	"The max amount of time to wait for a command block to exit.")
 
 var preambled = flag.Int("preambled", -1,
-	"Place all scripts in a subshell, preambled by the first {n} blocks in the first script.")
+	"Place all scripts in a subshell, "+
+		"preambled by the first {n} blocks in the first script.")
 
 var subshell = flag.Bool("subshell", false,
 	"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
 
-var swallow = flag.Bool("swallow", false,
-	"Swallow errors from subshell (non-zero exit only on problems in driver code).")
+var succeed = flag.Bool("succeed", false,
+	"Ignore errors from subshell, so this program always succeeds"+
+		" (or rather only fails on usage error, not script error).")
 
 type Config struct {
 	Preambled    int
 	Subshell     bool
-	Swallow      bool
+	Succeed      bool
 	BlockTimeOut time.Duration
 	ScriptName   model.Label
 	FileNames    []model.FileName
@@ -34,14 +36,14 @@ func GetConfig() *Config {
 	flag.Usage = Usage
 	flag.Parse()
 
-	if *swallow && !*subshell {
-		fmt.Fprintf(os.Stderr, "Makes no sense to specify --swallow but not --subshell.\n")
+	if *succeed && !*subshell {
+		fmt.Fprintf(os.Stderr, "Makes no sense to specify --succeed but not --subshell.\n")
 		Usage()
 		os.Exit(1)
 	}
 
-	// Must have a label, followed by at least one file name.
 	if flag.NArg() < 2 {
+		fmt.Fprintf(os.Stderr, "Must have a label, followed by at least one file name.\n")
 		Usage()
 		os.Exit(1)
 	}
@@ -49,7 +51,7 @@ func GetConfig() *Config {
 	c := &Config{}
 	c.Subshell = *subshell
 	c.Preambled = *preambled
-	c.Swallow = *swallow
+	c.Succeed = *succeed
 	c.ScriptName = model.Label(flag.Arg(0))
 	c.FileNames = make([]model.FileName, flag.NArg()-1)
 

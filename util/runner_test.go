@@ -21,7 +21,7 @@ func TestRunnerWithNothing(t *testing.T) {
 }
 
 func doIt(blocks []*model.CommandBlock) *model.ScriptResult {
-	p := model.NewProgram().Add(model.NewScriptBucket("iAmFileName", blocks))
+	p := model.NewProgram().Add(model.NewScript("iAmFileName", blocks))
 	return RunInSubShell(p, timeoutSeconds*time.Second)
 }
 
