@@ -34,22 +34,22 @@ $MDRIP/go/bin/mdrip   # Shows usage.
 
 ## Example
 
-This [markdown coding tutorial](https://github.com/monopole/mdrip/blob/master/example_tutorial.md)
+This [markdown coding tutorial](https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md)
 (raw markdown
-[here](https://raw.githubusercontent.com/monopole/mdrip/master/example_tutorial.md))
+[here](https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md))
 has bash code blocks that write, compile and run a Go program.
 
 Send code from that file to `stdout`:
 
 ```
 $MDRIP/go/bin/mdrip lesson1 \
-    $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md
+    $MDRIP/go/src/github.com/monopole/mdrip/data/example_tutorial.md
 ```
 
 Alternatively, run it's code in a subshell:
 ```
 $MDRIP/go/bin/mdrip --subshell lesson1 \
-    $MDRIP/go/src/github.com/monopole/mdrip/example_tutorial.md
+    $MDRIP/go/src/github.com/monopole/mdrip/data/example_tutorial.md
 ```
 
 The above command has no output and exits with status zero if all the
