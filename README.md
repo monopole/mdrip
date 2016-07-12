@@ -20,6 +20,10 @@ It's language independent because shell scripts can
 make, build and run programs in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
 
+This program facilitates placing _code walks_ or _code labs_ (a Google
+term) under test in a continuous build environment.  Write your code
+labs in markdown, add _mdrip_ to run those code walks as feature tests,
+and enjoy.
 
 ## Build
 
@@ -28,7 +32,7 @@ Assuming Go installed:
 ```
 export MDRIP=~/mdrip
 GOPATH=$MDRIP/go go get github.com/monopole/mdrip
-GOPATH=$MDRIP/go go test github.com/monopole/mdrip/util
+GOPATH=$MDRIP/go go test github.com/monopole/mdrip/...
 $MDRIP/go/bin/mdrip   # Shows usage.
 ```
 
