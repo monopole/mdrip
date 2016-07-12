@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,17 +17,16 @@ func main() {
 	for _, fileName := range c.FileNames {
 		contents, err := ioutil.ReadFile(string(fileName))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to read %q\n", fileName)
-			os.Exit(2)
+			log.Fatal("Unable to read %q\n", fileName)
 		}
 		m := lexer.Parse(string(contents))
-		script, ok := m[c.ScriptName]
-		if !ok {
-			fmt.Fprintf(os.Stderr,
-				"No block labelled %q in file %q.\n", c.ScriptName, fileName)
-			os.Exit(3)
+		if script, ok := m[c.ScriptName]; ok {
+			p.Add(model.NewScript(fileName, script))
 		}
-		p.Add(model.NewScript(fileName, script))
+	}
+
+	if p.ScriptCount() < 1 {
+		log.Fatal("Found no blocks labelled \"%q\" in the given files.", c.ScriptName)
 	}
 
 	if c.Subshell {

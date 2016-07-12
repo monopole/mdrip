@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/golang/glog"
-	"github.com/monopole/mdrip/scanner"
-	"github.com/monopole/mdrip/util"
 	"io"
 	"io/ioutil"
 	"log"
@@ -14,6 +11,10 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
+	"github.com/monopole/mdrip/scanner"
+	"github.com/monopole/mdrip/util"
 )
 
 // Program is a list of Scripts, each from their own file.
@@ -28,6 +29,10 @@ func NewProgram() *Program {
 func (p *Program) Add(s *Script) *Program {
 	p.scripts = append(p.scripts, s)
 	return p
+}
+
+func (p *Program) ScriptCount() int {
+	return len(p.scripts)
 }
 
 // DumpNormal simply prints the contents of a program.
