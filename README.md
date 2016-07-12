@@ -34,7 +34,7 @@ $MDRIP/go/bin/mdrip   # Shows usage.
 
 ## Example
 
-This [example tutorial] (raw markdown [here][raw-example])
+This [example tutorial][example-tutorial] (raw markdown [here][raw-example])
 has bash code blocks that write, compile and run a Go program.
 
 Send code from that file to `stdout`:
@@ -97,6 +97,6 @@ cleanup.  A block that does cleanup can be added to the markdown.
    background in that block.
 
 [travis-mdrip]: https://travis-ci.org/monopole/mdrip
-[example tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
+[example-tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
 [raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md
 
