@@ -34,9 +34,7 @@ $MDRIP/go/bin/mdrip   # Shows usage.
 
 ## Example
 
-This [markdown coding tutorial](https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md)
-(raw markdown
-[here](https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md))
+This [example tutorial] (raw markdown [here][raw-example])
 has bash code blocks that write, compile and run a Go program.
 
 Send code from that file to `stdout`:
@@ -46,7 +44,7 @@ $MDRIP/go/bin/mdrip lesson1 \
     $MDRIP/go/src/github.com/monopole/mdrip/data/example_tutorial.md
 ```
 
-Alternatively, run it's code in a subshell:
+Alternatively, run its code in a subshell:
 ```
 $MDRIP/go/bin/mdrip --subshell lesson1 \
     $MDRIP/go/src/github.com/monopole/mdrip/data/example_tutorial.md
@@ -57,8 +55,9 @@ scripts labelled `@lesson1` in the given markdown succeed.  On any
 failure, however, the command dumps a report and exits with non-zero
 status.
 
-This is one way to cover documentation with feature tests.
-Keeping code and documentation describing the code in the same file makes it much easier to keep them in sync.
+This is one way to cover documentation with feature tests.  Keeping
+code and documentation describing the code in the same file makes it
+much easier to keep them in sync.
 
 
 ## Details
@@ -80,15 +79,24 @@ Alternatively, the tool can itself run extracted code in a bash subshell like th
 
 > `mdrip --subshell someLabel file1.md file2.md ...`
 
-If that command fails, so did something in a command block.  `mdrip` reports which block failed and what it's `stdout` and `stderr` saw, while otherwise capturing and discarding subshell output.
+If that command fails, so did something in a command block.  `mdrip`
+reports which block failed and what that block's `stdout` and `stderr`
+saw, while otherwise capturing and discarding subshell output.
 
-There's no notion of encapsulation.  Also, there's no automatic cleanup.  A block that does cleanup can be added to the markdown.
+There's no notion of encapsulation.  Also, there's no automatic
+cleanup.  A block that does cleanup can be added to the markdown.
 
 ### Special labels
 
  * The first label on a block is slightly special, in that it's
-reported as the block name for logging.  But like any label
-it can be used for selection too.
+   reported as the block name for logging.  But like any label it can
+   be used for selection too.
 
- * The @sleep label causes mdrip to insert a `sleep 2` command after the block.  Appropriate if one is starting a server in the background in that block.
+ * The @sleep label causes mdrip to insert a `sleep 2` command after
+   the block.  Appropriate if one is starting a server in the
+   background in that block.
+
+[travis-mdrip]: https://travis-ci.org/monopole/mdrip
+[example tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
+[raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md
 
