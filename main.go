@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/monopole/mdrip/config"
 	"github.com/monopole/mdrip/model"
-	"github.com/monopole/mdrip/util"
+	"github.com/monopole/mdrip/text"
 	"io/ioutil"
 	"log"
 	"os"
@@ -21,7 +21,7 @@ func main() {
 			config.Usage()
 			os.Exit(2)
 		}
-		m := util.Parse(string(contents))
+		m := text.Parse(string(contents))
 		script, ok := m[c.ScriptName]
 		if !ok {
 			fmt.Fprintf(os.Stderr, "No block labelled %q in file %q.\n", c.ScriptName, fileName)
@@ -41,7 +41,7 @@ func main() {
 		return
 	}
 
-	result := util.RunInSubShell(program, c.BlockTimeOut)
+	result := program.RunInSubShell(c.BlockTimeOut)
 	if result.Problem() != nil {
 		result.Dump(c.ScriptName)
 		if !c.Succeed {

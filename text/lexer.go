@@ -2,7 +2,7 @@
 // https://golang.org/src/pkg/text/template/parse/lex.go. Cannot use
 // stuct embedding to reuse, since all the good parts are private.
 
-package util
+package text
 
 import (
 	"fmt"

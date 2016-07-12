@@ -1,4 +1,4 @@
-package util
+package scanner
 
 import (
 	"bufio"

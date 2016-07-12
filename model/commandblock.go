@@ -5,9 +5,9 @@ import (
 	"io"
 )
 
-// opaqueCode is an opaque, uninterpreted, unknown block of shell
-// commands parsed from markdown.  Fed into a shell interpreted, the
-// entire thing either succeeds, or fails.
+// opaqueCode is an opaque, uninterpreted, unknown block of text that
+// is presumably shell commands parsed from markdown.  Fed into a
+// shell interpretet, the entire thing either succeeds or fails.
 type opaqueCode string
 
 func (c opaqueCode) String() string {

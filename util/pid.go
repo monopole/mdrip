@@ -16,7 +16,7 @@ import (
 // Goal is to be able to support killing any subprocesses created by
 // RunInSubShell.  At the moment, its up to command script authors to
 // clean up after themselves.
-func getProcesssGroupId(pid int) (int, error) {
+func GetProcesssGroupId(pid int) (int, error) {
 	//  /bin/ps -o pid,pgid,rgid,ppid,cmd
 	//  /bin/ps -o pgid=12492 --no-headers
 	cmdOut, execErr := exec.Command(
