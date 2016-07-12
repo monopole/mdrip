@@ -2,50 +2,48 @@ package main
 
 import (
 	"fmt"
-	"github.com/monopole/mdrip/config"
-	"github.com/monopole/mdrip/lexer"
-	"github.com/monopole/mdrip/model"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/monopole/mdrip/config"
+	"github.com/monopole/mdrip/lexer"
+	"github.com/monopole/mdrip/model"
 )
 
 func main() {
 	c := config.GetConfig()
-	program := model.NewProgram()
+	p := model.NewProgram()
 
 	for _, fileName := range c.FileNames {
 		contents, err := ioutil.ReadFile(string(fileName))
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to read %q\n", fileName)
-			config.Usage()
 			os.Exit(2)
 		}
 		m := lexer.Parse(string(contents))
 		script, ok := m[c.ScriptName]
 		if !ok {
-			fmt.Fprintf(os.Stderr, "No block labelled %q in file %q.\n", c.ScriptName, fileName)
+			fmt.Fprintf(os.Stderr,
+				"No block labelled %q in file %q.\n", c.ScriptName, fileName)
 			os.Exit(3)
 		}
-		program.Add(model.NewScript(fileName, script))
+		p.Add(model.NewScript(fileName, script))
 	}
 
-	if !c.Subshell {
-		if c.Preambled >= 0 {
-			fmt.Printf("Yo\n")
-			program.DumpPreambled(os.Stdout, c.ScriptName, c.Preambled)
-		} else {
-			fmt.Printf("Beans\n")
-			program.DumpNormal(os.Stdout, c.ScriptName)
+	if c.Subshell {
+		r := p.RunInSubShell(c.BlockTimeOut)
+		if r.Problem() != nil {
+			r.Dump(c.ScriptName)
+			if c.FailWithSubshell {
+				log.Fatal(r.Problem())
+			}
 		}
-		return
-	}
-
-	result := program.RunInSubShell(c.BlockTimeOut)
-	if result.Problem() != nil {
-		result.Dump(c.ScriptName)
-		if !c.Succeed {
-			log.Fatal(result.Problem())
+	} else {
+		if c.Preambled >= 0 {
+			p.DumpPreambled(os.Stdout, c.ScriptName, c.Preambled)
+		} else {
+			p.DumpNormal(os.Stdout, c.ScriptName)
 		}
 	}
 }

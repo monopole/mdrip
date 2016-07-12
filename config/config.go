@@ -3,9 +3,10 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/monopole/mdrip/model"
 	"os"
 	"time"
+
+	"github.com/monopole/mdrip/model"
 )
 
 var blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
@@ -18,40 +19,38 @@ var preambled = flag.Int("preambled", -1,
 var subshell = flag.Bool("subshell", false,
 	"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
 
-var succeed = flag.Bool("succeed", false,
-	"Ignore errors from subshell, so this program always succeeds"+
-		" (or rather only fails on usage error, not script error).")
+var failWithSubshell = flag.Bool("failWithSubshell", false,
+	"Fail if the subshell fails (normally only fails on a usage error). Only makes sense with --subshell.")
 
 type Config struct {
-	Preambled    int
-	Subshell     bool
-	Succeed      bool
-	BlockTimeOut time.Duration
-	ScriptName   model.Label
-	FileNames    []model.FileName
+	Preambled        int
+	Subshell         bool
+	FailWithSubshell bool
+	BlockTimeOut     time.Duration
+	ScriptName       model.Label
+	FileNames        []model.FileName
 }
 
 func GetConfig() *Config {
-
-	flag.Usage = Usage
+	flag.Usage = usage
 	flag.Parse()
 
-	if *succeed && !*subshell {
-		fmt.Fprintf(os.Stderr, "Makes no sense to specify --succeed but not --subshell.\n")
-		Usage()
+	if *failWithSubshell && !*subshell {
+		fmt.Fprintf(os.Stderr, "Makes no sense to specify --failWithSubshell but not --subshell.\n")
+		usage()
 		os.Exit(1)
 	}
 
 	if flag.NArg() < 2 {
 		fmt.Fprintf(os.Stderr, "Must have a label, followed by at least one file name.\n")
-		Usage()
+		usage()
 		os.Exit(1)
 	}
 
 	c := &Config{}
 	c.Subshell = *subshell
 	c.Preambled = *preambled
-	c.Succeed = *succeed
+	c.FailWithSubshell = *failWithSubshell
 	c.ScriptName = model.Label(flag.Arg(0))
 	c.FileNames = make([]model.FileName, flag.NArg()-1)
 
@@ -60,10 +59,9 @@ func GetConfig() *Config {
 	}
 
 	return c
-
 }
 
-func Usage() {
+func usage() {
 	fmt.Fprintf(os.Stderr, "\nUsage:  %s {label} {fileName}...\n", os.Args[0])
 	flag.PrintDefaults()
 	fmt.Fprintf(os.Stderr,
