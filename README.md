@@ -4,13 +4,31 @@
 
 `mdrip` rips labeled command blocks from markdown files for execution.
 
+If you find markdown an effective means to document why and how to run
+arbitrary sequences of commands, then _mdrip_ makes it easy to place
+your documentation under test.
+
+Alternatively, _mrdip_ can be viewed as a means to write _feature_
+level __integration tests__ via shell commands in a self-documenting,
+easily rendered markdown file.
+
+## Execution
+
 `mdrip` accepts one _label_ argument and any number of _file name_
-arguments, where the files are assumed to contain markdown.  It scans
-the files for
+arguments, where the files are assumed to contain markdown.
+
+> `mdrip {label} {file.md} [{file2.md}...]`
+
+The program scans the files for
 [fenced code blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks)
 immediately preceded by an HTML comment with embedded _@labels_.
 
-If one of the block labels matches the label argument to the command line, the associated block is extracted.  Extracted blocks are emitted to `stdout`, or, if `--subshell` is specified, concatenated to run as a subprocess.
+If one of the block labels matches the _{label}_ argument to the
+command line, the associated block is extracted.
+
+Extracted blocks are emitted to `stdout` (where they can be piped to
+an interpreter), or, if `--subshell` is specified, concatenated to run
+as a subprocess.
 
 This is a markdown-based instance of language-independent
 [literate programming](http://en.wikipedia.org/wiki/Literate_programming)
@@ -19,11 +37,6 @@ This is a markdown-based instance of language-independent
 It's language independent because shell scripts can
 make, build and run programs in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
-
-This program facilitates placing _code walks_ or _code labs_ (a Google
-term) under test in a continuous build environment.  Write your code
-labs in markdown, add _mdrip_ to run those code walks as feature tests,
-and enjoy.
 
 ## Build
 
