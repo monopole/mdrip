@@ -40,8 +40,8 @@ func NewSuccessOutput(output string) *BlockOutput {
 	return &BlockOutput{yep, output}
 }
 
-// ScriptResult pairs BlockOutput with meta data about shell execution.
-type ScriptResult struct {
+// RunResult pairs BlockOutput with meta data about shell execution.
+type RunResult struct {
 	BlockOutput
 	fileName FileName      // File in which the error occurred.
 	index    int           // Command block index.
@@ -50,69 +50,69 @@ type ScriptResult struct {
 	message  string        // Detailed error message, if any.
 }
 
-func NewScriptResult() *ScriptResult {
+func NewRunResult() *RunResult {
 	noLabels := []Label{}
 	blockOutput := NewFailureOutput("")
-	return &ScriptResult{*blockOutput, "", -1, NewCommandBlock(noLabels, ""), nil, ""}
+	return &RunResult{*blockOutput, "", -1, NewCommandBlock(noLabels, ""), nil, ""}
 }
 
 // For tests.
-func NoCommandsScriptResult(
-	blockOutput *BlockOutput, fileName FileName, index int, message string) *ScriptResult {
+func NoCommandsRunResult(
+	blockOutput *BlockOutput, fileName FileName, index int, message string) *RunResult {
 	noLabels := []Label{}
-	return &ScriptResult{
+	return &RunResult{
 		*blockOutput, fileName, index,
 		NewCommandBlock(noLabels, ""), nil, message}
 }
 
-func (x *ScriptResult) FileName() FileName {
+func (x *RunResult) FileName() FileName {
 	return x.fileName
 }
 
-func (x *ScriptResult) Problem() error {
+func (x *RunResult) Problem() error {
 	return x.problem
 }
 
-func (x *ScriptResult) SetProblem(e error) *ScriptResult {
+func (x *RunResult) SetProblem(e error) *RunResult {
 	x.problem = e
 	return x
 }
 
-func (x *ScriptResult) Message() string {
+func (x *RunResult) Message() string {
 	return x.message
 }
 
-func (x *ScriptResult) SetMessage(m string) *ScriptResult {
+func (x *RunResult) SetMessage(m string) *RunResult {
 	x.message = m
 	return x
 }
 
-func (x *ScriptResult) SetOutput(m string) *ScriptResult {
+func (x *RunResult) SetOutput(m string) *RunResult {
 	x.output = m
 	return x
 }
 
-func (x *ScriptResult) Index() int {
+func (x *RunResult) Index() int {
 	return x.index
 }
 
-func (x *ScriptResult) SetIndex(i int) *ScriptResult {
+func (x *RunResult) SetIndex(i int) *RunResult {
 	x.index = i
 	return x
 }
 
-func (x *ScriptResult) SetBlock(b *CommandBlock) *ScriptResult {
+func (x *RunResult) SetBlock(b *CommandBlock) *RunResult {
 	x.block = b
 	return x
 }
 
-func (x *ScriptResult) SetFileName(n FileName) *ScriptResult {
+func (x *RunResult) SetFileName(n FileName) *RunResult {
 	x.fileName = n
 	return x
 }
 
-// Complain spits the contents of a ScriptResult to stderr.
-func (x *ScriptResult) Dump(selectedLabel Label) {
+// Complain spits the contents of a RunResult to stderr.
+func (x *RunResult) Dump(selectedLabel Label) {
 	delim := strings.Repeat("-", 70) + "\n"
 	fmt.Fprintf(os.Stderr, delim)
 	x.block.Dump(os.Stderr, "Error", x.index+1, selectedLabel, x.fileName)

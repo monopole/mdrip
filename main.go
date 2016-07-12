@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/monopole/mdrip/config"
+	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
-	"github.com/monopole/mdrip/text"
 	"io/ioutil"
 	"log"
 	"os"
@@ -21,7 +21,7 @@ func main() {
 			config.Usage()
 			os.Exit(2)
 		}
-		m := text.Parse(string(contents))
+		m := lexer.Parse(string(contents))
 		script, ok := m[c.ScriptName]
 		if !ok {
 			fmt.Fprintf(os.Stderr, "No block labelled %q in file %q.\n", c.ScriptName, fileName)

@@ -30,10 +30,6 @@ func (p *Program) Add(s *Script) *Program {
 	return p
 }
 
-func (p *Program) Scripts() []*Script {
-	return p.scripts
-}
-
 // DumpNormal simply prints the contents of a program.
 func (p Program) DumpNormal(w io.Writer, label Label) {
 	for _, s := range p.scripts {
@@ -62,7 +58,7 @@ func (p Program) DumpNormal(w io.Writer, label Label) {
 // survive any errors in that subshell with a modified environment.
 func (p Program) DumpPreambled(w io.Writer, label Label, n int) {
 	// Write the first n blocks normally
-	p.Scripts()[0].Dump(w, label, n)
+	p.scripts[0].Dump(w, label, n)
 	// Followed by everything appearing in a bash subshell.
 	hereDocName := "HANDLED_SCRIPT"
 	fmt.Fprintf(w, " bash -euo pipefail <<'%s'\n", hereDocName)
@@ -76,7 +72,7 @@ func (p Program) DumpPreambled(w io.Writer, label Label, n int) {
 	fmt.Fprintf(w, "%s\n", hereDocName)
 }
 
-func checkWrite(output string, writer io.Writer) {
+func write(output string, writer io.Writer) {
 	n, err := writer.Write([]byte(output))
 	if err != nil {
 		log.Fatalf("Could not write %d bytes: %v", len(output), err)
@@ -173,7 +169,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 // error, the routine sends the next block, else it exits early.
 func (p *Program) userBehavior(
 	blockTimeout time.Duration,
-	stdOut, stdErr io.ReadCloser) (errResult *ScriptResult) {
+	stdOut, stdErr io.ReadCloser) (errResult *RunResult) {
 
 	chOut := scanner.BuffScanner(blockTimeout, "stdout", stdOut)
 	chErr := scanner.BuffScanner(1*time.Minute, "stderr", stdErr)
@@ -181,8 +177,8 @@ func (p *Program) userBehavior(
 	chAccOut := accumulateOutput("stdOut", chOut)
 	chAccErr := accumulateOutput("stdErr", chErr)
 
-	errResult = NewScriptResult()
-	for _, script := range p.Scripts() {
+	errResult = NewRunResult()
+	for _, script := range p.scripts {
 		numBlocks := len(script.Blocks())
 		for i, block := range script.Blocks() {
 			glog.Info("Running %s (%d/%d) from %s\n",
@@ -217,8 +213,8 @@ func (p *Program) userBehavior(
 	return
 }
 
-// fillErrResult fills an instance of ScriptResult.
-func fillErrResult(chAccErr <-chan *BlockOutput, errResult *ScriptResult) {
+// fillErrResult fills an instance of RunResult.
+func fillErrResult(chAccErr <-chan *BlockOutput, errResult *RunResult) {
 	result := <-chAccErr
 	if result == nil {
 		if glog.V(2) {
@@ -250,16 +246,16 @@ func fillErrResult(chAccErr <-chan *BlockOutput, errResult *ScriptResult) {
 // Error reporting works by discarding output from command blocks that
 // succeeded, and only reporting the contents of stdout and stderr
 // when the subprocess exits on error.
-func (p *Program) RunInSubShell(blockTimeout time.Duration) (result *ScriptResult) {
-	// Write scripts to a file to be executed.
+func (p *Program) RunInSubShell(blockTimeout time.Duration) (result *RunResult) {
+	// Write program to a file to be executed.
 	scriptFile, err := ioutil.TempFile("", "mdrip-script-")
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(scriptFile.Name(), 0744))
-	for _, script := range p.Scripts() {
+	for _, script := range p.scripts {
 		for _, block := range script.Blocks() {
-			checkWrite(block.Code().String(), scriptFile)
-			checkWrite("\n", scriptFile)
-			checkWrite("echo "+scanner.MsgHappy+" "+block.Name().String()+"\n", scriptFile)
+			write(block.Code().String(), scriptFile)
+			write("\n", scriptFile)
+			write("echo "+scanner.MsgHappy+" "+block.Name().String()+"\n", scriptFile)
 		}
 	}
 	if glog.V(2) {

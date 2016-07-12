@@ -20,7 +20,7 @@ func TestRunnerWithNothing(t *testing.T) {
 	}
 }
 
-func doIt(blocks []*CommandBlock) *ScriptResult {
+func doIt(blocks []*CommandBlock) *RunResult {
 	p := NewProgram().Add(NewScript("iAmFileName", blocks))
 	return p.RunInSubShell(timeoutSeconds * time.Second)
 }
@@ -36,7 +36,7 @@ func TestRunnerWithGoodStuff(t *testing.T) {
 	}
 }
 
-func checkFail(t *testing.T, got, want *ScriptResult) {
+func checkFail(t *testing.T, got, want *RunResult) {
 	if got.Problem() == nil {
 		t.Fail()
 	}
@@ -50,7 +50,7 @@ func checkFail(t *testing.T, got, want *ScriptResult) {
 
 func TestStartWithABadCommand(t *testing.T) {
 
-	want := NoCommandsScriptResult(
+	want := NoCommandsRunResult(
 		NewFailureOutput("dunno"),
 		"fileNameTestStartWithABadCommand",
 		0,
@@ -64,7 +64,7 @@ func TestStartWithABadCommand(t *testing.T) {
 
 func TestBadCommandInTheMiddle(t *testing.T) {
 
-	want := NoCommandsScriptResult(
+	want := NoCommandsRunResult(
 		NewFailureOutput("dunno"),
 		"fileNameTestBadCommandInTheMiddle",
 		2,
@@ -80,7 +80,7 @@ func TestBadCommandInTheMiddle(t *testing.T) {
 }
 
 func TestTimeOut(t *testing.T) {
-	want := NoCommandsScriptResult(
+	want := NoCommandsRunResult(
 		NewFailureOutput("dunno"),
 		"fileNameTestTimeOut",
 		0,

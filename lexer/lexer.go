@@ -1,8 +1,9 @@
-// Other than the custom stateFn's, much of this is copied from
-// https://golang.org/src/pkg/text/template/parse/lex.go. Cannot use
-// stuct embedding to reuse, since all the good parts are private.
+// Inspired by golang.org/src/pkg/text/template/parse/lex.go
+//
+// Cannot use stuct embedding to reuse, since all the good parts are
+// private.
 
-package text
+package lexer
 
 import (
 	"fmt"
