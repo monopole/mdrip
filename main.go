@@ -14,14 +14,15 @@ func main() {
 	c := config.GetConfig()
 	p := model.NewProgram()
 
+	// Build the program from blocks extracted from markdown files.
 	for _, fileName := range c.FileNames {
 		contents, err := ioutil.ReadFile(string(fileName))
 		if err != nil {
-			log.Fatal("Unable to read %q\n", fileName)
+			log.Print("Unable to read file %q.", fileName)
 		}
 		m := lexer.Parse(string(contents))
-		if script, ok := m[c.ScriptName]; ok {
-			p.Add(model.NewScript(fileName, script))
+		if blocks, ok := m[c.ScriptName]; ok {
+			p.Add(model.NewScript(fileName, blocks))
 		}
 	}
 
@@ -29,19 +30,19 @@ func main() {
 		log.Fatal("Found no blocks labelled \"%q\" in the given files.", c.ScriptName)
 	}
 
-	if c.Subshell {
-		r := p.RunInSubShell(c.BlockTimeOut)
-		if r.Problem() != nil {
-			r.Dump(c.ScriptName)
+	// Either run or print the program.
+	if c.RunInSubshell {
+		if r := p.RunInSubShell(c.BlockTimeOut); r.Problem() != nil {
+			r.Print(c.ScriptName)
 			if c.FailWithSubshell {
 				log.Fatal(r.Problem())
 			}
 		}
 	} else {
 		if c.Preambled >= 0 {
-			p.DumpPreambled(os.Stdout, c.ScriptName, c.Preambled)
+			p.PrintPreambled(os.Stdout, c.ScriptName, c.Preambled)
 		} else {
-			p.DumpNormal(os.Stdout, c.ScriptName)
+			p.PrintNormal(os.Stdout, c.ScriptName)
 		}
 	}
 }

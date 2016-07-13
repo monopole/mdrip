@@ -13,12 +13,13 @@ const (
 	nope
 )
 
-// BlockOutput pairs status (success or failure) with the output
+// BlockOutput pairs success status (yes or no) with the output
 // collected from a stream (i.e. stderr or stdout) as a result of
-// executing all or part of a command block.
+// executing a command block (or as much as could be executed before
+// it failed).
 //
 // Output can appear on stderr without neccessarily being associated
-// with shell failure.
+// with shell failure, so it's collected even in successful runs.
 type BlockOutput struct {
 	success status
 	output  string
@@ -73,7 +74,7 @@ func (x *RunResult) Problem() error {
 	return x.problem
 }
 
-func (x *RunResult) SetProblem(e error) *RunResult {
+func (x *RunResult) setProblem(e error) *RunResult {
 	x.problem = e
 	return x
 }
@@ -82,12 +83,12 @@ func (x *RunResult) Message() string {
 	return x.message
 }
 
-func (x *RunResult) SetMessage(m string) *RunResult {
+func (x *RunResult) setMessage(m string) *RunResult {
 	x.message = m
 	return x
 }
 
-func (x *RunResult) SetOutput(m string) *RunResult {
+func (x *RunResult) setOutput(m string) *RunResult {
 	x.output = m
 	return x
 }
@@ -96,34 +97,33 @@ func (x *RunResult) Index() int {
 	return x.index
 }
 
-func (x *RunResult) SetIndex(i int) *RunResult {
+func (x *RunResult) setIndex(i int) *RunResult {
 	x.index = i
 	return x
 }
 
-func (x *RunResult) SetBlock(b *CommandBlock) *RunResult {
+func (x *RunResult) setBlock(b *CommandBlock) *RunResult {
 	x.block = b
 	return x
 }
 
-func (x *RunResult) SetFileName(n FileName) *RunResult {
+func (x *RunResult) setFileName(n FileName) *RunResult {
 	x.fileName = n
 	return x
 }
 
-// Complain spits the contents of a RunResult to stderr.
-func (x *RunResult) Dump(selectedLabel Label) {
+func (x *RunResult) Print(selectedLabel Label) {
 	delim := strings.Repeat("-", 70) + "\n"
 	fmt.Fprintf(os.Stderr, delim)
-	x.block.Dump(os.Stderr, "Error", x.index+1, selectedLabel, x.fileName)
+	x.block.Print(os.Stderr, "Error", x.index+1, selectedLabel, x.fileName)
 	fmt.Fprintf(os.Stderr, delim)
-	dumpCapturedOutput("Stdout", delim, x.output)
+	printCapturedOutput("Stdout", delim, x.output)
 	if len(x.message) > 0 {
-		dumpCapturedOutput("Stderr", delim, x.message)
+		printCapturedOutput("Stderr", delim, x.message)
 	}
 }
 
-func dumpCapturedOutput(name, delim, output string) {
+func printCapturedOutput(name, delim, output string) {
 	fmt.Fprintf(os.Stderr, "\n%s capture:\n", name)
 	fmt.Fprintf(os.Stderr, delim)
 	fmt.Fprintf(os.Stderr, output)

@@ -17,16 +17,16 @@ import (
 	"github.com/monopole/mdrip/util"
 )
 
-// Program is a list of Scripts, each from their own file.
+// Program is a list of scripts, each from their own file.
 type Program struct {
-	scripts []*Script
+	scripts []*script
 }
 
 func NewProgram() *Program {
 	return &Program{}
 }
 
-func (p *Program) Add(s *Script) *Program {
+func (p *Program) Add(s *script) *Program {
 	p.scripts = append(p.scripts, s)
 	return p
 }
@@ -35,16 +35,16 @@ func (p *Program) ScriptCount() int {
 	return len(p.scripts)
 }
 
-// DumpNormal simply prints the contents of a program.
-func (p Program) DumpNormal(w io.Writer, label Label) {
+// PrintNormal simply prints the contents of a program.
+func (p Program) PrintNormal(w io.Writer, label Label) {
 	for _, s := range p.scripts {
-		s.Dump(w, label, 0)
+		s.Print(w, label, 0)
 	}
 	fmt.Fprintf(w, "echo \" \"\n")
 	fmt.Fprintf(w, "echo \"All done.  No errors.\"\n")
 }
 
-// DumpPreambled emits the first n blocks of a script normally, then
+// PrintPreambled emits the first n blocks of a script normally, then
 // emits the n blocks _again_, as well as the the remaining scripts,
 // so that they run in a subshell.
 //
@@ -61,9 +61,9 @@ func (p Program) DumpNormal(w io.Writer, label Label) {
 // The goal is to let the user both modify their existing terminal
 // environment, and run remaining code in a trapped subshell, and
 // survive any errors in that subshell with a modified environment.
-func (p Program) DumpPreambled(w io.Writer, label Label, n int) {
+func (p Program) PrintPreambled(w io.Writer, label Label, n int) {
 	// Write the first n blocks normally
-	p.scripts[0].Dump(w, label, n)
+	p.scripts[0].Print(w, label, n)
 	// Followed by everything appearing in a bash subshell.
 	hereDocName := "HANDLED_SCRIPT"
 	fmt.Fprintf(w, " bash -euo pipefail <<'%s'\n", hereDocName)
@@ -73,7 +73,7 @@ func (p Program) DumpPreambled(w io.Writer, label Label, n int) {
 	fmt.Fprintf(w, "  exit 1\n")
 	fmt.Fprintf(w, "}\n")
 	fmt.Fprintf(w, "trap handledTrouble INT TERM\n")
-	p.DumpNormal(w, label)
+	p.PrintNormal(w, label)
 	fmt.Fprintf(w, "%s\n", hereDocName)
 }
 
@@ -206,9 +206,9 @@ func (p *Program) userBehavior(
 					if glog.V(2) {
 						glog.Info("userBehavior: stdout Result: %s", result.Output())
 					}
-					errResult.SetOutput(result.Output()).SetMessage(result.Output())
+					errResult.setOutput(result.Output()).setMessage(result.Output())
 				}
-				errResult.SetFileName(script.FileName()).SetIndex(i).SetBlock(block)
+				errResult.setFileName(script.FileName()).setIndex(i).setBlock(block)
 				fillErrResult(chAccErr, errResult)
 				return
 			}
@@ -225,10 +225,10 @@ func fillErrResult(chAccErr <-chan *BlockOutput, errResult *RunResult) {
 		if glog.V(2) {
 			glog.Info("userBehavior: stderr Result == nil.")
 		}
-		errResult.SetProblem(errors.New("unknown"))
+		errResult.setProblem(errors.New("unknown"))
 		return
 	}
-	errResult.SetProblem(errors.New(result.Output())).SetMessage(result.Output())
+	errResult.setProblem(errors.New(result.Output())).setMessage(result.Output())
 	if glog.V(2) {
 		glog.Info("userBehavior: stderr Result: %s", result.Output())
 	}
@@ -304,7 +304,7 @@ func (p *Program) RunInSubShell(blockTimeout time.Duration) (result *RunResult) 
 	}
 	waitError := shell.Wait()
 	if result.Problem() == nil {
-		result.SetProblem(waitError)
+		result.setProblem(waitError)
 	}
 	if glog.V(2) {
 		glog.Info("RunInSubShell:  Shell done.")

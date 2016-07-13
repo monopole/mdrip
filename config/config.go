@@ -16,7 +16,7 @@ var preambled = flag.Int("preambled", -1,
 	"Place all scripts in a subshell, "+
 		"preambled by the first {n} blocks in the first script.")
 
-var subshell = flag.Bool("subshell", false,
+var runInSubshell = flag.Bool("subshell", false,
 	"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
 
 var failWithSubshell = flag.Bool("failWithSubshell", false,
@@ -24,7 +24,7 @@ var failWithSubshell = flag.Bool("failWithSubshell", false,
 
 type Config struct {
 	Preambled        int
-	Subshell         bool
+	RunInSubshell    bool
 	FailWithSubshell bool
 	BlockTimeOut     time.Duration
 	ScriptName       model.Label
@@ -35,7 +35,7 @@ func GetConfig() *Config {
 	flag.Usage = usage
 	flag.Parse()
 
-	if *failWithSubshell && !*subshell {
+	if *failWithSubshell && !*runInSubshell {
 		fmt.Fprintf(os.Stderr, "Makes no sense to specify --failWithSubshell but not --subshell.\n")
 		usage()
 		os.Exit(1)
@@ -48,7 +48,7 @@ func GetConfig() *Config {
 	}
 
 	c := &Config{}
-	c.Subshell = *subshell
+	c.RunInSubshell = *runInSubshell
 	c.Preambled = *preambled
 	c.FailWithSubshell = *failWithSubshell
 	c.ScriptName = model.Label(flag.Arg(0))

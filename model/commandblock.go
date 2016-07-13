@@ -44,7 +44,7 @@ func (x CommandBlock) Code() opaqueCode {
 	return x.code
 }
 
-func (x CommandBlock) Dump(
+func (x CommandBlock) Print(
 	w io.Writer, prefix string, n int, label Label, fileName FileName) {
 	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n",
 		prefix, x.Name(), n, label, fileName)
