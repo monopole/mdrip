@@ -2,27 +2,26 @@ package model
 
 import (
 	"github.com/monopole/mdrip/scanner"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 )
 
+const timeout = 2 * time.Second
+
 var noLabels []Label = []Label{}
 var labels = []Label{Label("foo"), Label("bar")}
 var emptyCommandBlock *CommandBlock = NewCommandBlock(noLabels, "")
 
-const timeoutSeconds = 1
-
 func TestRunnerWithNothing(t *testing.T) {
-	if NewProgram().RunInSubShell(timeoutSeconds*time.Second).Problem() != nil {
+	if NewProgram(timeout).RunInSubShell().Problem() != nil {
 		t.Fail()
 	}
 }
 
 func doIt(blocks []*CommandBlock) *RunResult {
-	p := NewProgram().Add(NewScript("iAmFileName", blocks))
-	return p.RunInSubShell(timeoutSeconds * time.Second)
+	p := NewProgram(timeout).Add(NewScript("iAmFileName", blocks))
+	return p.RunInSubShell()
 }
 
 func TestRunnerWithGoodStuff(t *testing.T) {
@@ -86,9 +85,12 @@ func TestTimeOut(t *testing.T) {
 		0,
 		scanner.MsgTimeout)
 
-	// Go to sleep for twice the length of the timeout.
+	// Insert this sleep in a command block.
+	// Arrange to sleep for two seconds longer than the timeout.
+	sleep := timeout + (2 * time.Second)
+
 	blocks := []*CommandBlock{
-		NewCommandBlock(labels, "date\nsleep "+strconv.Itoa(timeoutSeconds+2)+"\necho kale"),
+		NewCommandBlock(labels, "date\nsleep "+sleep.String()+"\necho kale"),
 		NewCommandBlock(labels, "echo beans\necho cheese\n")}
 	checkFail(t, doIt(blocks), want)
 }

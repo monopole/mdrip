@@ -1,34 +1,60 @@
+// Package config validates flag values and command line arguments and
+// converts them to read-only type-safe values for mdrip.
 package config
 
 import (
 	"flag"
 	"fmt"
+	"github.com/monopole/mdrip/model"
 	"os"
 	"time"
-
-	"github.com/monopole/mdrip/model"
 )
 
-var blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
-	"The max amount of time to wait for a command block to exit.")
+var (
+	blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
+		"The max amount of time to wait for a command block to exit.")
 
-var preambled = flag.Int("preambled", -1,
-	"Place all scripts in a subshell, "+
-		"preambled by the first {n} blocks in the first script.")
+	preambled = flag.Int("preambled", 0,
+		"Place all scripts in a subshell, "+
+			"preambled by the first {n} blocks in the first script.")
 
-var runInSubshell = flag.Bool("subshell", false,
-	"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
+	port = flag.Int("port", 0,
+		"Start a web server on given port.")
 
-var failWithSubshell = flag.Bool("failWithSubshell", false,
-	"Fail if the subshell fails (normally only fails on a usage error). Only makes sense with --subshell.")
+	runInSubshell = flag.Bool("subshell", false,
+		"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
+
+	failWithSubshell = flag.Bool("failWithSubshell", false,
+		"Fail if the subshell fails (normally only fails on a usage error). Only makes sense with --subshell.")
+)
 
 type Config struct {
-	Preambled        int
-	RunInSubshell    bool
-	FailWithSubshell bool
-	BlockTimeOut     time.Duration
-	ScriptName       model.Label
-	FileNames        []model.FileName
+	scriptName model.Label
+	FileNames  []model.FileName
+}
+
+func (c *Config) BlockTimeOut() time.Duration {
+	return *blockTimeOut
+}
+
+func (c *Config) Preambled() int {
+	return *preambled
+}
+
+func (c *Config) Port() int {
+	return *port
+}
+
+func (c *Config) RunInSubshell() bool {
+	return *runInSubshell
+}
+
+func (c *Config) FailWithSubshell() bool {
+	return *failWithSubshell
+}
+
+func (c *Config) ScriptName() model.Label {
+	return c.scriptName
 }
 
 func GetConfig() *Config {
@@ -36,23 +62,29 @@ func GetConfig() *Config {
 	flag.Parse()
 
 	if *failWithSubshell && !*runInSubshell {
-		fmt.Fprintf(os.Stderr, "Makes no sense to specify --failWithSubshell but not --subshell.\n")
+		fmt.Fprintln(os.Stderr,
+			"Makes no sense to specify --failWithSubshell but not --subshell.")
+		usage()
+		os.Exit(1)
+	}
+
+	if *port > 0 && *runInSubshell {
+		fmt.Fprintln(os.Stderr,
+			"Cannot specify both --port and --subshell; they are two different modes of operation.")
 		usage()
 		os.Exit(1)
 	}
 
 	if flag.NArg() < 2 {
-		fmt.Fprintf(os.Stderr, "Must have a label, followed by at least one file name.\n")
+		fmt.Fprintln(os.Stderr,
+			"Must have a label, followed by at least one file name.")
 		usage()
 		os.Exit(1)
 	}
 
-	c := &Config{}
-	c.RunInSubshell = *runInSubshell
-	c.Preambled = *preambled
-	c.FailWithSubshell = *failWithSubshell
-	c.ScriptName = model.Label(flag.Arg(0))
-	c.FileNames = make([]model.FileName, flag.NArg()-1)
+	c := &Config{
+		model.Label(flag.Arg(0)),
+		make([]model.FileName, flag.NArg()-1)}
 
 	for i := 1; i < flag.NArg(); i++ {
 		c.FileNames[i-1] = model.FileName(flag.Arg(i))

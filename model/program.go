@@ -19,11 +19,12 @@ import (
 
 // Program is a list of scripts, each from their own file.
 type Program struct {
-	scripts []*script
+	blockTimeout time.Duration
+	scripts      []*script
 }
 
-func NewProgram() *Program {
-	return &Program{}
+func NewProgram(timeout time.Duration) *Program {
+	return &Program{timeout, []*script{}}
 }
 
 func (p *Program) Add(s *script) *Program {
@@ -45,7 +46,7 @@ func (p Program) PrintNormal(w io.Writer, label Label) {
 }
 
 // PrintPreambled emits the first n blocks of a script normally, then
-// emits the n blocks _again_, as well as the the remaining scripts,
+// emits the n blocks _again_, as well as all the remaining scripts,
 // so that they run in a subshell.
 //
 // This allows the aggregrate script to be structured as 1) a preamble
@@ -54,9 +55,10 @@ func (p Program) PrintNormal(w io.Writer, label Label) {
 // exits on error.  An exit in (2) won't cause the active shell (most
 // likely a terminal) to close.
 //
-// The first script must be able to complete without exit on error
-// because its not running as a subshell.  So it should just set
-// environment variables and/or define shell functions.
+// It's up to the markdown author to assure that the n blocks can
+// always complete without exit on error because they will run in the
+// existing terminal.  Hence these blocks should just set environment
+// variables and/or define shell functions.
 //
 // The goal is to let the user both modify their existing terminal
 // environment, and run remaining code in a trapped subshell, and
@@ -172,11 +174,9 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 // It writes command blocks to shell, then waits after  each block to
 // see if the block worked.  If the block appeared to complete without
 // error, the routine sends the next block, else it exits early.
-func (p *Program) userBehavior(
-	blockTimeout time.Duration,
-	stdOut, stdErr io.ReadCloser) (errResult *RunResult) {
+func (p *Program) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunResult) {
 
-	chOut := scanner.BuffScanner(blockTimeout, "stdout", stdOut)
+	chOut := scanner.BuffScanner(p.blockTimeout, "stdout", stdOut)
 	chErr := scanner.BuffScanner(1*time.Minute, "stderr", stdErr)
 
 	chAccOut := accumulateOutput("stdOut", chOut)
@@ -251,7 +251,7 @@ func fillErrResult(chAccErr <-chan *BlockOutput, errResult *RunResult) {
 // Error reporting works by discarding output from command blocks that
 // succeeded, and only reporting the contents of stdout and stderr
 // when the subprocess exits on error.
-func (p *Program) RunInSubShell(blockTimeout time.Duration) (result *RunResult) {
+func (p *Program) RunInSubShell() (result *RunResult) {
 	// Write program to a file to be executed.
 	scriptFile, err := ioutil.TempFile("", "mdrip-script-")
 	check("create temp file", err)
@@ -297,7 +297,7 @@ func (p *Program) RunInSubShell(blockTimeout time.Duration) (result *RunResult) 
 		}
 	}
 
-	result = p.userBehavior(blockTimeout, stdOut, stdErr)
+	result = p.userBehavior(stdOut, stdErr)
 
 	if glog.V(2) {
 		glog.Info("RunInSubShell:  Waiting for shell to end.")
