@@ -47,7 +47,7 @@ func (p Program) PrintNormal(w io.Writer, label Label) {
 
 // PrintPreambled emits the first n blocks of a script normally, then
 // emits the n blocks _again_, as well as all the remaining scripts,
-// so that they run in a subshell.
+// so that they run in a subshell with signal handling.
 //
 // This allows the aggregrate script to be structured as 1) a preamble
 // initialization script that impacts the environment of the active
@@ -64,7 +64,7 @@ func (p Program) PrintNormal(w io.Writer, label Label) {
 // environment, and run remaining code in a trapped subshell, and
 // survive any errors in that subshell with a modified environment.
 func (p Program) PrintPreambled(w io.Writer, label Label, n int) {
-	// Write the first n blocks normally
+	// Write the first n blocks if the first script normally.
 	p.scripts[0].Print(w, label, n)
 	// Followed by everything appearing in a bash subshell.
 	hereDocName := "HANDLED_SCRIPT"

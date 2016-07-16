@@ -39,7 +39,7 @@ func main() {
 			}
 		}
 	} else {
-		if c.Preambled() >= 0 {
+		if c.Preambled() > 0 {
 			p.PrintPreambled(os.Stdout, c.ScriptName(), c.Preambled())
 		} else {
 			p.PrintNormal(os.Stdout, c.ScriptName())
