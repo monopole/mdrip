@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
+	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +25,32 @@ type Program struct {
 	scripts      []*script
 }
 
+const tmplNameProgram = "program"
+const tmplBodyProgram = `
+{{define "` + tmplNameProgram + `"}}
+<p>
+script count = {{.ScriptCount}}
+</p>
+{{range .Scripts}}
+  {{ template "` + tmplNameScript + `" . }}
+{{end}}
+<p>
+That's it.
+</p>
+{{end}}
+`
+
+const tmplMain = `
+<head>
+layla  la la 
+</head>
+<body>
+{{ template "` + tmplNameProgram + `" . }}
+</body>
+`
+
+var thePage = template.Must(template.New("main").Parse(tmplBodyScript + tmplBodyProgram + tmplMain))
+
 func NewProgram(timeout time.Duration) *Program {
 	return &Program{timeout, []*script{}}
 }
@@ -30,6 +58,11 @@ func NewProgram(timeout time.Duration) *Program {
 func (p *Program) Add(s *script) *Program {
 	p.scripts = append(p.scripts, s)
 	return p
+}
+
+// Exported only for the template.
+func (p *Program) Scripts() []*script {
+	return p.scripts
 }
 
 func (p *Program) ScriptCount() int {
@@ -82,9 +115,9 @@ func (p Program) PrintPreambled(w io.Writer, label Label, n int) {
 func write(output string, writer io.Writer) {
 	n, err := writer.Write([]byte(output))
 	if err != nil {
-		log.Fatalf("Could not write %d bytes: %v", len(output), err)
+		glog.Fatalf("Could not write %d bytes: %v", len(output), err)
 	} else if n != len(output) {
-		log.Fatalf("Expected to write %d bytes, wrote %d", len(output), n)
+		glog.Fatalf("Expected to write %d bytes, wrote %d", len(output), n)
 	}
 }
 
@@ -92,7 +125,7 @@ func write(output string, writer io.Writer) {
 func check(msg string, err error) {
 	if err != nil {
 		fmt.Printf("Problem with %s: %v\n", msg, err)
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 }
 
@@ -312,4 +345,29 @@ func (p *Program) RunInSubShell() (result *RunResult) {
 
 	// killProcesssGroup(pgid)
 	return
+}
+
+// Serve offers an http service at the given port.
+func (p *Program) Serve(port int) {
+	http.HandleFunc("/", p.foo)
+	http.HandleFunc("/bar", p.bar)
+	http.HandleFunc("/q", p.quit)
+	host := "localhost:" + strconv.Itoa(port)
+	glog.Info("Serving at " + host)
+	glog.Fatal(http.ListenAndServe(host, nil))
+}
+
+func (p *Program) foo(w http.ResponseWriter, r *http.Request) {
+	if err := thePage.Execute(w, p); err != nil {
+		glog.Fatal(err)
+	}
+	fmt.Println("Served page.")
+}
+
+func (p *Program) bar(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "bar")
+}
+
+func (p *Program) quit(w http.ResponseWriter, r *http.Request) {
+	os.Exit(0)
 }

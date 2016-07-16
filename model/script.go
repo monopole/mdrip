@@ -13,6 +13,15 @@ type script struct {
 	blocks   []*CommandBlock
 }
 
+const tmplNameScript = "script"
+const tmplBodyScript = `
+{{define "` + tmplNameScript + `"}}
+<p>
+File: {{.FileName}}
+</p>
+{{end}}
+`
+
 func NewScript(fileName FileName, blocks []*CommandBlock) *script {
 	return &script{fileName, blocks}
 }

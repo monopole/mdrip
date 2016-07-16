@@ -18,7 +18,7 @@ func main() {
 	for _, fileName := range c.FileNames {
 		contents, err := ioutil.ReadFile(string(fileName))
 		if err != nil {
-			log.Print("Unable to read file %q.", fileName)
+			log.Printf("Unable to read file \"%s\".", fileName)
 		}
 		m := lexer.Parse(string(contents))
 		if blocks, ok := m[c.ScriptName()]; ok {
@@ -38,6 +38,8 @@ func main() {
 				log.Fatal(r.Problem())
 			}
 		}
+	} else if c.Port() > 0 {
+		p.Serve(c.Port())
 	} else {
 		if c.Preambled() > 0 {
 			p.PrintPreambled(os.Stdout, c.ScriptName(), c.Preambled())
