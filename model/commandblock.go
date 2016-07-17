@@ -20,6 +20,20 @@ type CommandBlock struct {
 	code   opaqueCode
 }
 
+const tmplNameCommandBlock = "commandblock"
+const tmplBodyCommandBlock = `
+{{define "` + tmplNameCommandBlock + `"}}
+<p>
+{{range .Labels}}
+  {{ .String }}
+{{end}}
+</p>
+<blockquote>
+{{ .Code }}
+</blockquote>
+{{end}}
+`
+
 func NewCommandBlock(labels []Label, code string) *CommandBlock {
 	if len(labels) < 1 {
 		// Assure at least one label.

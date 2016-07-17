@@ -49,7 +49,12 @@ layla  la la
 </body>
 `
 
-var thePage = template.Must(template.New("main").Parse(tmplBodyScript + tmplBodyProgram + tmplMain))
+var thePage = template.Must(
+	template.New("main").Parse(
+		tmplBodyCommandBlock +
+			tmplBodyScript +
+			tmplBodyProgram +
+			tmplMain))
 
 func NewProgram(timeout time.Duration) *Program {
 	return &Program{timeout, []*script{}}
@@ -350,7 +355,8 @@ func (p *Program) RunInSubShell() (result *RunResult) {
 // Serve offers an http service at the given port.
 func (p *Program) Serve(port int) {
 	http.HandleFunc("/", p.foo)
-	http.HandleFunc("/bar", p.bar)
+	http.HandleFunc("/favicon.ico", p.favicon)
+	http.HandleFunc("/image", p.image)
 	http.HandleFunc("/q", p.quit)
 	host := "localhost:" + strconv.Itoa(port)
 	glog.Info("Serving at " + host)
@@ -361,11 +367,25 @@ func (p *Program) foo(w http.ResponseWriter, r *http.Request) {
 	if err := thePage.Execute(w, p); err != nil {
 		glog.Fatal(err)
 	}
-	fmt.Println("Served page.")
 }
 
-func (p *Program) bar(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "bar")
+func (p *Program) favicon(w http.ResponseWriter, r *http.Request) {
+	Lissajous(w, 7, 3, 10)
+}
+
+func (p *Program) image(w http.ResponseWriter, r *http.Request) {
+	Lissajous(w,
+		getIntParam("s", r, 300),
+		getIntParam("c", r, 30),
+		getIntParam("n", r, 100))
+}
+
+func getIntParam(n string, r *http.Request, d int) int {
+	v, err := strconv.Atoi(r.URL.Query().Get(n))
+	if err != nil {
+		return d
+	}
+	return v
 }
 
 func (p *Program) quit(w http.ResponseWriter, r *http.Request) {

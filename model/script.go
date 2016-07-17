@@ -17,7 +17,13 @@ const tmplNameScript = "script"
 const tmplBodyScript = `
 {{define "` + tmplNameScript + `"}}
 <p>
-File: {{.FileName}}
+Begin File: {{.FileName}}
+</p>
+{{range .Blocks}}
+  {{ template "` + tmplNameCommandBlock + `" . }}
+{{end}}
+<p>
+End File: {{.FileName}}
 </p>
 {{end}}
 `
