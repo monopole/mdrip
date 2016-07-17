@@ -29,7 +29,9 @@ const tmplBodyCommandBlock = `
 {{end}}
 </p>
 <blockquote>
+<pre>
 {{ .Code }}
+</pre>
 </blockquote>
 {{end}}
 `
