@@ -32,8 +32,9 @@ const tmplBodyProgram = `
 <p>
 script count = {{.ScriptCount}}
 </p>
-{{range .Scripts}}
-  {{ template "` + tmplNameScript + `" . }}
+{{range $i, $s := .Scripts}}
+  <div data-id="{{$i}}">
+  {{ template "` + tmplNameScript + `" $s }}
 {{end}}
 <p>
 That's it.
@@ -41,51 +42,11 @@ That's it.
 {{end}}
 `
 
-const tmplMain = `
-<head>
-<style type="text/css">
-</style>
-<script type="text/javascript">
-  function OnRunBlockClick(event) {
-    if (!(event && event.target)) {
-      alert("no event!");
-      return
-    }
-    var b = event.target;
-    var oldColor =  b.style.color;
-    var oldValue =  b.value;
-    b.style.color = 'red';
-    b.value = 'running...';
-    b.disabled = true;
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-      if (xhttp.readyState == XMLHttpRequest.DONE) {
-        b.style.color = oldColor;
-        b.value = oldValue;
-        b.disabled = false;
-        if (xhttp.status != 200) {
-          alert("status was " + xhttp.status);
-          return
-        }
-        alert(xhttp.responseText)
-      }
-    };
-    xhttp.open("GET", "/runblock", true);
-    xhttp.send();
-  }
-</script>
-</head>
-<body>
-{{ template "` + tmplNameProgram + `" . }}
-</body>
-`
-
-var thePage = template.Must(
+var templates = template.Must(
 	template.New("main").Parse(
 		tmplBodyCommandBlock +
 			tmplBodyScript +
-			tmplBodyProgram +
-			tmplMain))
+			tmplBodyProgram))
 
 func NewProgram(timeout time.Duration, label Label) *Program {
 	return &Program{timeout, label, []*script{}}
@@ -270,7 +231,8 @@ func (p *Program) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunResu
 					if glog.V(2) {
 						glog.Info("userBehavior: stdout Result == nil.")
 					}
-					// Perhaps chErr <- scanner.MsgError + " : early termination; stdout has closed."
+					// Perhaps chErr <- scanner.MsgError +
+					//   " : early termination; stdout has closed."
 				} else {
 					if glog.V(2) {
 						glog.Info("userBehavior: stdout Result: %s", result.Output())
@@ -395,12 +357,6 @@ func (p *Program) Serve(port int) {
 	glog.Fatal(http.ListenAndServe(host, nil))
 }
 
-func (p *Program) foo(w http.ResponseWriter, r *http.Request) {
-	if err := thePage.Execute(w, p); err != nil {
-		glog.Fatal(err)
-	}
-}
-
 func (p *Program) favicon(w http.ResponseWriter, r *http.Request) {
 	Lissajous(w, 7, 3, 1)
 }
@@ -420,13 +376,95 @@ func getIntParam(n string, r *http.Request, d int) int {
 	return v
 }
 
-func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
-	glog.Info("Run called.")
-	time.Sleep(3 * time.Second)
-	glog.Info("Run done.")
-	fmt.Fprint(w, "TODO: put stdout here")
-}
-
 func (p *Program) quit(w http.ResponseWriter, r *http.Request) {
 	os.Exit(0)
+}
+
+const header = `
+<head>
+<style type="text/css">
+</style>
+<script type="text/javascript">
+  function getId(el) {
+    return el.getAttribute("data-id");
+  }
+  function setButtonsDisabled(value) {
+    var buttons = document.getElementsByTagName('input');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].disabled = value;
+    }
+  }
+  function showOutput(blockEl, text) {
+    var c = blockEl.children;
+    for (var i = 0; i < c.length; i++) {
+      child = c[i];
+      if (child.getAttribute("data-result")) {
+        child.innerHTML = "<pre> " + text + " </pre>";
+      }
+    }
+  }
+  requestRunning = false
+  function onRunBlockClick(event) {
+    if (!(event && event.target)) {
+      alert("no event!");
+      return
+    }
+    if (requestRunning) {
+      alert("busy!");
+      return
+    }
+    requestRunning = true;
+    setButtonsDisabled(true)
+    var b = event.target;
+    blockId = getId(b.parentNode);
+    scriptId = getId(b.parentNode.parentNode);
+    var oldColor =  b.style.color;
+    var oldValue =  b.value;
+    b.style.color = 'red';
+    b.value = 'running...';
+    showOutput(b.parentNode, "running...")
+    b.disabled = true;
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if (xhttp.readyState == XMLHttpRequest.DONE) {
+        b.style.color = oldColor;
+        b.value = oldValue;
+        b.disabled = false;
+        if (xhttp.status == 200) {
+          showOutput(b.parentNode, xhttp.responseText)
+        } else {
+          alert("status was " + xhttp.status);
+        }
+        requestRunning = false;
+        setButtonsDisabled(false)
+      }
+    };
+    xhttp.open("GET", "/runblock?s=" + scriptId + "&b=" + blockId, true);
+    xhttp.send();
+  }
+</script>
+</head>
+`
+
+func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
+	indexScript := getIntParam("s", r, -1)
+	indexBlock := getIntParam("b", r, -1)
+	glog.Info("Run called; s=", indexScript, " b=", indexBlock)
+	code := p.scripts[indexScript].Blocks()[indexBlock].Code()
+	time.Sleep(3 * time.Second)
+	glog.Info("Run done.")
+	// TODO(jregan): replace this with result of _running_ the code
+	// (not the actual code).
+	fmt.Fprint(w, code)
+}
+
+func (p *Program) foo(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "<html>")
+	fmt.Fprint(w, header)
+	fmt.Fprintln(w, "<body>")
+	if err := templates.ExecuteTemplate(w, tmplNameProgram, p); err != nil {
+		glog.Fatal(err)
+	}
+	fmt.Fprintln(w, "</body>")
+	fmt.Fprintln(w, "</html>")
 }

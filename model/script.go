@@ -19,8 +19,13 @@ const tmplBodyScript = `
 <p>
 Begin File: {{.FileName}}
 </p>
-{{range .Blocks}}
-  {{ template "` + tmplNameCommandBlock + `" . }}
+{{range $i, $b := .Blocks}}
+  <div data-id="{{$i}}">
+  {{ template "` + tmplNameCommandBlock + `" $b }}
+  </div>
+  <p>
+   &nbsp
+  </p>
 {{end}}
 <p>
 End File: {{.FileName}}
