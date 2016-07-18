@@ -24,7 +24,9 @@ const tmplNameCommandBlock = "commandblock"
 const tmplBodyCommandBlock = `
 {{define "` + tmplNameCommandBlock + `"}}
 <hr>
-<input type="button" onclick="onRunBlockClick(event)" value="Run"></input>
+<input type="button" onclick="onRunBlockClick(event)" value="Run">
+</input>
+<em>{{ .Name }}</em>
 <pre>
 {{ .Code }}
 </pre>

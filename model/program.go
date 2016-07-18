@@ -385,13 +385,17 @@ const headerHtml = `
 <style type="text/css">
 </style>
 <script type="text/javascript">
+  var runButtons = []
+  var requestRunning = false
+  function onLoad() {
+    runButtons = document.getElementsByTagName('input');
+  }
   function getId(el) {
     return el.getAttribute("data-id");
   }
-  function setButtonsDisabled(value) {
-    var buttons = document.getElementsByTagName('input');
-    for (var i = 0; i < buttons.length; i++) {
-      buttons[i].disabled = value;
+  function setRunButtonsDisabled(value) {
+    for (var i = 0; i < runButtons.length; i++) {
+      runButtons[i].disabled = value;
     }
   }
   function showOutput(blockEl, text) {
@@ -403,7 +407,6 @@ const headerHtml = `
       }
     }
   }
-  requestRunning = false
   function onRunBlockClick(event) {
     if (!(event && event.target)) {
       alert("no event!");
@@ -414,14 +417,14 @@ const headerHtml = `
       return
     }
     requestRunning = true;
-    setButtonsDisabled(true)
+    setRunButtonsDisabled(true)
     var b = event.target;
     blockId = getId(b.parentNode);
     scriptId = getId(b.parentNode.parentNode);
     var oldColor =  b.style.color;
     var oldValue =  b.value;
     b.style.color = 'red';
-    b.value = 'running...';
+    b.value = 'Running...';
     showOutput(b.parentNode, "running...")
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
@@ -434,7 +437,7 @@ const headerHtml = `
                xhttp.responseText :
                "status = " + xhttp.status));
         requestRunning = false;
-        setButtonsDisabled(false)
+        setRunButtonsDisabled(false)
       }
     };
     xhttp.open("GET", "/runblock?s=" + scriptId + "&b=" + blockId, true);
@@ -449,20 +452,17 @@ func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
 	indexBlock := getIntParam("b", r, -1)
 	glog.Info("Run called; s=", indexScript, " b=", indexBlock)
 	code := p.scripts[indexScript].Blocks()[indexBlock].Code()
-	time.Sleep(3 * time.Second)
+	// TODO(jregan): send the code to tmux server for execution
+	time.Sleep(1 * time.Second)
 	glog.Info("Run done.")
-	// TODO(jregan): replace this with result of _running_ the code
-	// (not the actual code).
+	// TODO(jregan): replace this with stdout/stderr capture from run
 	fmt.Fprint(w, code)
 }
 
 func (p *Program) foo(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "<html>")
-	fmt.Fprint(w, headerHtml)
-	fmt.Fprintln(w, "<body>")
+	fmt.Fprintln(w, `<html>`+headerHtml+`<body onload="onLoad()">`)
 	if err := templates.ExecuteTemplate(w, tmplNameProgram, p); err != nil {
 		glog.Fatal(err)
 	}
-	fmt.Fprintln(w, "</body>")
-	fmt.Fprintln(w, "</html>")
+	fmt.Fprintln(w, `</body></html>`)
 }
