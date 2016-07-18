@@ -22,6 +22,7 @@ import (
 // Program is a list of scripts, each from their own file.
 type Program struct {
 	blockTimeout time.Duration
+	label        Label
 	scripts      []*script
 }
 
@@ -42,7 +43,37 @@ That's it.
 
 const tmplMain = `
 <head>
-layla  la la 
+<style type="text/css">
+</style>
+<script type="text/javascript">
+  function OnRunBlockClick(event) {
+    if (!(event && event.target)) {
+      alert("no event!");
+      return
+    }
+    var b = event.target;
+    var oldColor =  b.style.color;
+    var oldValue =  b.value;
+    b.style.color = 'red';
+    b.value = 'running...';
+    b.disabled = true;
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if (xhttp.readyState == XMLHttpRequest.DONE) {
+        b.style.color = oldColor;
+        b.value = oldValue;
+        b.disabled = false;
+        if (xhttp.status != 200) {
+          alert("status was " + xhttp.status);
+          return
+        }
+        alert(xhttp.responseText)
+      }
+    };
+    xhttp.open("GET", "/runblock", true);
+    xhttp.send();
+  }
+</script>
 </head>
 <body>
 {{ template "` + tmplNameProgram + `" . }}
@@ -56,8 +87,8 @@ var thePage = template.Must(
 			tmplBodyProgram +
 			tmplMain))
 
-func NewProgram(timeout time.Duration) *Program {
-	return &Program{timeout, []*script{}}
+func NewProgram(timeout time.Duration, label Label) *Program {
+	return &Program{timeout, label, []*script{}}
 }
 
 func (p *Program) Add(s *script) *Program {
@@ -75,9 +106,9 @@ func (p *Program) ScriptCount() int {
 }
 
 // PrintNormal simply prints the contents of a program.
-func (p Program) PrintNormal(w io.Writer, label Label) {
+func (p Program) PrintNormal(w io.Writer) {
 	for _, s := range p.scripts {
-		s.Print(w, label, 0)
+		s.Print(w, p.label, 0)
 	}
 	fmt.Fprintf(w, "echo \" \"\n")
 	fmt.Fprintf(w, "echo \"All done.  No errors.\"\n")
@@ -101,9 +132,9 @@ func (p Program) PrintNormal(w io.Writer, label Label) {
 // The goal is to let the user both modify their existing terminal
 // environment, and run remaining code in a trapped subshell, and
 // survive any errors in that subshell with a modified environment.
-func (p Program) PrintPreambled(w io.Writer, label Label, n int) {
+func (p Program) PrintPreambled(w io.Writer, n int) {
 	// Write the first n blocks if the first script normally.
-	p.scripts[0].Print(w, label, n)
+	p.scripts[0].Print(w, p.label, n)
 	// Followed by everything appearing in a bash subshell.
 	hereDocName := "HANDLED_SCRIPT"
 	fmt.Fprintf(w, " bash -euo pipefail <<'%s'\n", hereDocName)
@@ -113,7 +144,7 @@ func (p Program) PrintPreambled(w io.Writer, label Label, n int) {
 	fmt.Fprintf(w, "  exit 1\n")
 	fmt.Fprintf(w, "}\n")
 	fmt.Fprintf(w, "trap handledTrouble INT TERM\n")
-	p.PrintNormal(w, label)
+	p.PrintNormal(w)
 	fmt.Fprintf(w, "%s\n", hereDocName)
 }
 
@@ -357,6 +388,7 @@ func (p *Program) Serve(port int) {
 	http.HandleFunc("/", p.foo)
 	http.HandleFunc("/favicon.ico", p.favicon)
 	http.HandleFunc("/image", p.image)
+	http.HandleFunc("/runblock", p.runblock)
 	http.HandleFunc("/q", p.quit)
 	host := "localhost:" + strconv.Itoa(port)
 	glog.Info("Serving at " + host)
@@ -370,7 +402,7 @@ func (p *Program) foo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *Program) favicon(w http.ResponseWriter, r *http.Request) {
-	Lissajous(w, 7, 3, 10)
+	Lissajous(w, 7, 3, 1)
 }
 
 func (p *Program) image(w http.ResponseWriter, r *http.Request) {
@@ -386,6 +418,13 @@ func getIntParam(n string, r *http.Request, d int) int {
 		return d
 	}
 	return v
+}
+
+func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
+	glog.Info("Run called.")
+	time.Sleep(3 * time.Second)
+	glog.Info("Run done.")
+	fmt.Fprint(w, "TODO: put stdout here")
 }
 
 func (p *Program) quit(w http.ResponseWriter, r *http.Request) {

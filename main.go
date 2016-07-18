@@ -12,9 +12,10 @@ import (
 
 func main() {
 	c := config.GetConfig()
-	p := model.NewProgram(c.BlockTimeOut())
+	// A program has a timeout and a name.
+	p := model.NewProgram(c.BlockTimeOut(), c.ScriptName())
 
-	// Build the program from blocks extracted from markdown files.
+	// Build program code from blocks extracted from markdown files.
 	for _, fileName := range c.FileNames {
 		contents, err := ioutil.ReadFile(string(fileName))
 		if err != nil {
@@ -27,7 +28,9 @@ func main() {
 	}
 
 	if p.ScriptCount() < 1 {
-		log.Fatal("Found no blocks labelled \"%q\" in the given files.", c.ScriptName())
+		log.Fatal(
+			"Found no blocks labelled \"%q\" in the given files.",
+			c.ScriptName())
 	}
 
 	// Either run or print the program.
@@ -42,9 +45,9 @@ func main() {
 		p.Serve(c.Port())
 	} else {
 		if c.Preambled() > 0 {
-			p.PrintPreambled(os.Stdout, c.ScriptName(), c.Preambled())
+			p.PrintPreambled(os.Stdout, c.Preambled())
 		} else {
-			p.PrintNormal(os.Stdout, c.ScriptName())
+			p.PrintNormal(os.Stdout)
 		}
 	}
 }
