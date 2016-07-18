@@ -423,18 +423,16 @@ const header = `
     b.style.color = 'red';
     b.value = 'running...';
     showOutput(b.parentNode, "running...")
-    b.disabled = true;
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
       if (xhttp.readyState == XMLHttpRequest.DONE) {
         b.style.color = oldColor;
         b.value = oldValue;
-        b.disabled = false;
-        if (xhttp.status == 200) {
-          showOutput(b.parentNode, xhttp.responseText)
-        } else {
-          alert("status was " + xhttp.status);
-        }
+        showOutput(
+           b.parentNode,
+           (xhttp.status == 200 ?
+               xhttp.responseText :
+               "status = " + xhttp.status));
         requestRunning = false;
         setButtonsDisabled(false)
       }
