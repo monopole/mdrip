@@ -380,7 +380,7 @@ func (p *Program) quit(w http.ResponseWriter, r *http.Request) {
 	os.Exit(0)
 }
 
-const header = `
+const headerHtml = `
 <head>
 <style type="text/css">
 </style>
@@ -458,7 +458,7 @@ func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
 
 func (p *Program) foo(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "<html>")
-	fmt.Fprint(w, header)
+	fmt.Fprint(w, headerHtml)
 	fmt.Fprintln(w, "<body>")
 	if err := templates.ExecuteTemplate(w, tmplNameProgram, p); err != nil {
 		glog.Fatal(err)
