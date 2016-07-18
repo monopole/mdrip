@@ -1,10 +1,11 @@
 package model
 
 import (
-	"github.com/monopole/mdrip/scanner"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/monopole/mdrip/scanner"
 )
 
 const timeout = 2 * time.Second
@@ -14,13 +15,13 @@ var labels = []Label{Label("foo"), Label("bar")}
 var emptyCommandBlock *CommandBlock = NewCommandBlock(noLabels, "")
 
 func TestRunnerWithNothing(t *testing.T) {
-	if NewProgram(timeout).RunInSubShell().Problem() != nil {
+	if NewProgram(timeout, labels[0]).RunInSubShell().Problem() != nil {
 		t.Fail()
 	}
 }
 
 func doIt(blocks []*CommandBlock) *RunResult {
-	p := NewProgram(timeout).Add(NewScript("iAmFileName", blocks))
+	p := NewProgram(timeout, labels[0]).Add(NewScript("iAmFileName", blocks))
 	return p.RunInSubShell()
 }
 
