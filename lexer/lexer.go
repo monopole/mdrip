@@ -8,7 +8,6 @@ package lexer
 import (
 	"fmt"
 	"github.com/monopole/mdrip/model"
-	"os"
 	"strings"
 	"unicode/utf8"
 )
@@ -270,13 +269,17 @@ func shouldSleep(labels []model.Label) bool {
 	return false
 }
 
+func freshLabels() []model.Label {
+	return make([]model.Label, 0, 10)
+}
+
 // Parse lexes the incoming string into a mapping from block label to
 // CommandBlock array.  The labels are the strings after a labelMarker in
 // a comment preceding a command block.  Arrays hold command blocks in the
 // order they appeared in the input.
 func Parse(s string) (result map[model.Label][]*model.CommandBlock) {
 	result = make(map[model.Label][]*model.CommandBlock)
-	currentLabels := make([]model.Label, 0, 10)
+	currentLabels := freshLabels()
 	l := newLex(s)
 	for {
 		item := l.nextItem()
@@ -286,10 +289,8 @@ func Parse(s string) (result map[model.Label][]*model.CommandBlock) {
 		case item.typ == itemBlockLabel:
 			currentLabels = append(currentLabels, model.Label(item.val))
 		case item.typ == itemCommandBlock:
-			if len(currentLabels) == 0 {
-				fmt.Println("Have an unlabelled command block:\n " + item.val)
-				os.Exit(1)
-			}
+			// Always add AnyLabel at the end, so one can extract all blocks.
+			currentLabels = append(currentLabels, model.AnyLabel)
 			// If the command block has a 'sleep' label, add a brief sleep
 			// at the end.  This is hack to give servers placed in the
 			// background time to start.
@@ -306,7 +307,7 @@ func Parse(s string) (result map[model.Label][]*model.CommandBlock) {
 				}
 				result[label] = blocks
 			}
-			currentLabels = make([]model.Label, 0, 10)
+			currentLabels = freshLabels()
 		}
 	}
 }

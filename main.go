@@ -28,22 +28,24 @@ func main() {
 	}
 
 	if p.ScriptCount() < 1 {
-		log.Fatal(
-			"Found no blocks labelled \"%q\" in the given files.",
-			c.ScriptName())
+		if c.ScriptName().IsAny() {
+			log.Fatal("No blocks found in the given files.")
+		} else {
+			log.Fatalf("No blocks labelled %q found in the given files.", c.ScriptName())
+		}
 	}
 
-	// Either run or print the program.
-	if c.RunInSubshell() {
+	switch c.Mode() {
+	case config.ModeWeb:
+		p.Serve(c.Port())
+	case config.ModeTest:
 		if r := p.RunInSubShell(); r.Problem() != nil {
 			r.Print(c.ScriptName())
-			if c.FailWithSubshell() {
+			if !c.IgnoreTestFailure() {
 				log.Fatal(r.Problem())
 			}
 		}
-	} else if c.Port() > 0 {
-		p.Serve(c.Port())
-	} else {
+	default:
 		if c.Preambled() > 0 {
 			p.PrintPreambled(os.Stdout, c.Preambled())
 		} else {

@@ -353,6 +353,7 @@ func (p *Program) Serve(port int) {
 	http.HandleFunc("/runblock", p.runblock)
 	http.HandleFunc("/q", p.quit)
 	host := "localhost:" + strconv.Itoa(port)
+	fmt.Println("Serving at http://" + host)
 	glog.Info("Serving at " + host)
 	glog.Fatal(http.ListenAndServe(host, nil))
 }
@@ -452,6 +453,16 @@ func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
 	indexBlock := getIntParam("b", r, -1)
 	glog.Info("Run called; s=", indexScript, " b=", indexBlock)
 	code := p.scripts[indexScript].Blocks()[indexBlock].Code()
+
+	// shell := exec.Command("bash", "-e", scriptFile.Name())
+	// Tell user to do this:
+	// # tmux new -s myname
+	// then this guy should do
+	// # tmux a -t nyname
+	// # tmux load-buffer -b 0 /tmp/k.txt
+	// # tmux paste-buffer -r -b 0 -t {target-pane}
+	// Handy commands at https://learnxinyminutes.com/docs/tmux/
+
 	// TODO(jregan): send the code to tmux server for execution
 	time.Sleep(1 * time.Second)
 	glog.Info("Run done.")

@@ -7,29 +7,162 @@ import (
 	"fmt"
 	"github.com/monopole/mdrip/model"
 	"os"
+	"strings"
 	"time"
 )
 
+type ModeType int
+
+const (
+	usageText = `
+Extracts code blocks from the given markdown files for further processing.
+
+
+E.g. if the markdown file contains
+
+  Blah blah blah.
+  Blah blah blah.
+
+  <!-- @goHome @foo -->
+  '''
+  cd $HOME
+  '''
+
+  Blah blah blah.
+  Blah blah blah.
+
+  <!-- @platitude @apple -->
+  '''
+  echo "an apple a day keeps the doctor away"
+  '''
+
+  Blah blah blah.
+  Blah blah blah.
+
+  <!-- @reportNearbyStar @foo @bar -->
+  '''
+  echo "Proxima Centauri"
+  '''
+
+  Blah blah blah.
+  Blah blah blah.
+
+then the command 'mdrip --label foo {fileName}' emits:
+
+  cd $HOME
+  echo "Proxima Centauri"
+
+while the command 'mdrip --label platitude {fileName}' emits:
+
+  echo "an apple a day keeps the doctor away"
+
+
+Modes:
+
+ --mode print  (the default)
+
+   Print extracted script to stdout.
+
+   Use 
+      eval "$(mdrip file.md)"
+   to run in current terminal, impacting your environment.
+
+   Use
+      mdrip file.md | source /dev/stdin
+   to run in a piped shell that exits with extracted code status.
+
+ --mode web
+
+   Starts a web server at http://localhost:8000 to offer a UX
+   facilitating execution of command blocks in an existing tmux
+   session.
+
+   Change port using --port flag.
+
+ --mode test
+
+   Use this flag for markdown-based feature tests.
+
+   Suppose one has a tutorial consisting of command line instructions
+   in a markdown file.
+
+   To assure that those instructions continue to work, some test suite
+   can assert that the following command exits with status 0:
+
+     mdrip --mode test /path/to/tutorial.md
+
+   This runs extracted blocks in an mdrip subshell, leaving the
+   executing shell unchanged.
+
+   In this mode, mdrip captures the stdout and stderr of the
+   subprocess, reporting only blocks that fail, facilitating error
+   diagnosis.
+
+   Normally, mdrip exits with non-zero status only when used
+   incorrectly, e.g. file not found, bad flags, etc.  In in test mode,
+   mdrip will exit with the status of any failing code block.
+
+
+Flags:
+
+`
+
+	ModePrint ModeType = iota
+	ModeWeb
+	ModeTest
+)
+
 var (
-	blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
-		"The max amount of time to wait for a command block to exit.")
+	mode = flag.String("mode", "print",
+		`Mode is print, test or web.`)
+
+	label = flag.String("label", "",
+		`Using "--label foo" means extract only blocks annotated with "<!-- @foo -->".`)
 
 	preambled = flag.Int("preambled", 0,
-		"Place all scripts in a subshell, "+
-			"preambled by the first {n} blocks in the first script.")
+		`In --mode print, run the first {n} blocks in the current shell, and the rest in a trapped subshell.`)
 
-	port = flag.Int("port", 0,
-		"Start a web server on given port.")
+	port = flag.Int("port", 8000,
+		`In --mode web, use given port for the local web server.`)
 
-	runInSubshell = flag.Bool("subshell", false,
-		"Run extracted blocks in subshell (leaves your env vars and pwd unchanged).")
+	blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
+		`In --mode test, the max amount of time to wait for a command block to exit.`)
 
-	failWithSubshell = flag.Bool("failWithSubshell", false,
-		"Fail if the subshell fails (normally only fails on a usage error). Only makes sense with --subshell.")
+	ignoreTestFailure = flag.Bool("ignoreTestFailure", false,
+		`In --mode test, exit with success regardless of extracted code failure.`)
 )
+
+func determineMode() ModeType {
+	if len(*mode) > 0 {
+		v := strings.ToLower(*mode)
+		if strings.HasPrefix(v, "t") {
+			return ModeTest
+		}
+		if strings.HasPrefix(v, "w") {
+			return ModeWeb
+		}
+	}
+	return ModePrint
+}
+
+func determineLabel() model.Label {
+	if len(*label) == 0 {
+		return model.AnyLabel
+	}
+	return model.Label(*label)
+}
+
+func determineFiles() []model.FileName {
+	f := make([]model.FileName, flag.NArg())
+	for i, n := range flag.Args() {
+		f[i] = model.FileName(n)
+	}
+	return f
+}
 
 type Config struct {
 	scriptName model.Label
+	mode       ModeType
 	FileNames  []model.FileName
 }
 
@@ -45,12 +178,12 @@ func (c *Config) Port() int {
 	return *port
 }
 
-func (c *Config) RunInSubshell() bool {
-	return *runInSubshell
+func (c *Config) Mode() ModeType {
+	return c.mode
 }
 
-func (c *Config) FailWithSubshell() bool {
-	return *failWithSubshell
+func (c *Config) IgnoreTestFailure() bool {
+	return *ignoreTestFailure
 }
 
 func (c *Config) ScriptName() model.Label {
@@ -61,75 +194,32 @@ func GetConfig() *Config {
 	flag.Usage = usage
 	flag.Parse()
 
-	if *failWithSubshell && !*runInSubshell {
+	desiredMode := determineMode()
+
+	if *ignoreTestFailure && desiredMode != ModeTest {
 		fmt.Fprintln(os.Stderr,
-			"Makes no sense to specify --failWithSubshell but not --subshell.")
+			`Makes no sense to specify --ignoreTestFailure without --mode test.`)
 		usage()
 		os.Exit(1)
 	}
 
-	if *port > 0 && *runInSubshell {
-		fmt.Fprintln(os.Stderr,
-			"Cannot specify both --port and --subshell; they are two different modes of operation.")
-		usage()
-		os.Exit(1)
-	}
-
-	if flag.NArg() < 2 {
-		fmt.Fprintln(os.Stderr,
-			"Must have a label, followed by at least one file name.")
+	if flag.NArg() < 1 {
+		fmt.Fprintln(os.Stderr, "Must specifiy a file name.")
+		// TODO if no file specified, read from stdin.
 		usage()
 		os.Exit(1)
 	}
 
 	c := &Config{
-		model.Label(flag.Arg(0)),
-		make([]model.FileName, flag.NArg()-1)}
-
-	for i := 1; i < flag.NArg(); i++ {
-		c.FileNames[i-1] = model.FileName(flag.Arg(i))
-	}
+		determineLabel(),
+		desiredMode,
+		determineFiles()}
 
 	return c
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "\nUsage:  %s {label} {fileName}...\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "\nUsage:  %s {fileName}...\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, usageText)
 	flag.PrintDefaults()
-	fmt.Fprintf(os.Stderr,
-		`
-Reads markdown files, extracts code blocks with a given @label, and
-either runs them in a subshell or emits them to stdout.
-
-If the markdown file contains
-
-  Blah blah blah.
-  Beand
-  <!-- @goHome @foo -->
-  '''
-  cd $HOME
-  '''
-  Blah blah blah.
-  <!-- @echoApple @apple -->
-  '''
-  echo "an apple a day keeps the doctor away"
-  '''
-  Blah blah blah.
-  <!-- @echoCloseStar @foo @baz -->
-  '''
-  echo "Proxima Centauri"
-  '''
-  Blah blah blah.
-
-then the command '{this} foo {fileName}' emits:
-
-  cd $HOME
-  echo "Proxima Centauri"
-
-Pipe output to 'source /dev/stdin' to run it directly.
-
-Use --subshell to run the blocks in a subshell leaving your current
-shell env vars and pwd unchanged.  The code blocks can, however, do
-anything to your computer that you can.
-`)
 }
