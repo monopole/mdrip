@@ -343,7 +343,7 @@ func (p *Program) RunInSubShell() (result *RunResult) {
 // Serve offers an http service at the given port.
 func (p *Program) Serve(port int) {
 	_, err := exec.LookPath(tmux)
-	check("no "+tmux, err)
+	check("Must install "+tmux, err)
 	http.HandleFunc("/", p.foo)
 	http.HandleFunc("/favicon.ico", p.favicon)
 	http.HandleFunc("/image", p.image)
