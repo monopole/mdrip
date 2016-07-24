@@ -400,12 +400,14 @@ const headerHtml = `
       runButtons[i].disabled = value;
     }
   }
-  function showOutput(blockEl, text) {
+  function incrementRunCount(blockEl) {
     var c = blockEl.children;
     for (var i = 0; i < c.length; i++) {
       child = c[i];
-      if (child.getAttribute("data-result")) {
-        child.innerHTML = "<pre> " + text + " </pre>";
+      attr = child.getAttribute("data-run-count")
+      if (attr) {
+        child.innerHTML = parseInt(child.innerHTML) + 1;
+        return
       }
     }
   }
@@ -427,17 +429,12 @@ const headerHtml = `
     var oldValue = b.value;
     b.style.color = 'red';
     b.value = 'Running...';
-    showOutput(b.parentNode, "running...")
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
       if (xhttp.readyState == XMLHttpRequest.DONE) {
         b.style.color = oldColor;
         b.value = oldValue;
-        showOutput(
-           b.parentNode,
-           (xhttp.status == 200 ?
-               xhttp.responseText :
-               "status = " + xhttp.status));
+        incrementRunCount(b.parentNode)
         requestRunning = false;
         setRunButtonsDisabled(false)
       }
@@ -461,22 +458,20 @@ const headerHtml = `
 func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
 	indexScript := getIntParam("sid", r, -1)
 	indexBlock := getIntParam("bid", r, -1)
-	paneId := "0" // Could get this from params
-
-	glog.Info("sid=", indexScript, " bid=", indexBlock)
-	// Not checking param values because.
-	code := p.scripts[indexScript].Blocks()[indexBlock].Code()
+	paneId := "0" // Could get this from params, but lets leave it zero for now.
 
 	tmpFile, err := ioutil.TempFile("", "mdrip-block-")
-
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(tmpFile.Name(), 0644))
-
-	write(tmpFile, code.String())
-
 	defer func() {
 		check("delete temp file", os.Remove(tmpFile.Name()))
 	}()
+
+	// Not checking param values because.
+	block := p.scripts[indexScript].Blocks()[indexBlock]
+	glog.Info("Running block ", block.Name(), " from file ", tmpFile.Name())
+
+	write(tmpFile, block.Code().String())
 
 	cmd := exec.Command("tmux", "load-buffer", tmpFile.Name())
 	out, err := cmd.Output()
@@ -484,12 +479,11 @@ func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
 		cmd = exec.Command("tmux", "paste-buffer", "-t", paneId)
 		out, err = cmd.Output()
 	}
-	glog.Info("cmd = ", cmd.Args)
-	glog.Info("out = ", out)
 	if err == nil {
-		fmt.Fprintln(w, "Sent")
-		// fmt.Fprintln(w, a run count?)
+		fmt.Fprintln(w, "Ok")
 	} else {
+		glog.Info("cmd = ", cmd.Args)
+		glog.Info("out = ", out)
 		glog.Info("err = ", err)
 		fmt.Fprintln(w, err)
 	}

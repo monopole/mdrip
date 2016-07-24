@@ -23,17 +23,13 @@ type CommandBlock struct {
 const tmplNameCommandBlock = "commandblock"
 const tmplBodyCommandBlock = `
 {{define "` + tmplNameCommandBlock + `"}}
-<hr>
 <input type="button" onclick="onRunBlockClick(event)" value="Run">
 </input>
+<b data-run-count="hey">0</b>
 <em>{{ .Name }}</em>
 <pre>
 {{ .Code }}
 </pre>
-<hr>
-<blockquote data-result="hey">
-</blockquote>
-<hr>
 {{end}}
 `
 
