@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"github.com/monopole/mdrip/model"
 	"os"
-	"strings"
 	"time"
+	"unicode"
 )
-
-type ModeType int
 
 const (
 	usageText = `
@@ -101,12 +99,12 @@ Modes:
    Normally, mdrip exits with non-zero status only when used
    incorrectly, e.g. file not found, bad flags, etc.  In in test mode,
    mdrip will exit with the status of any failing code block.
-
-
-Flags:
-
 `
+)
 
+type ModeType int
+
+const (
 	ModePrint ModeType = iota
 	ModeWeb
 	ModeTest
@@ -132,17 +130,19 @@ var (
 		`In --mode test, exit with success regardless of extracted code failure.`)
 )
 
+// A forgiving interpretation of mode argument.
 func determineMode() ModeType {
-	if len(*mode) > 0 {
-		v := strings.ToLower(*mode)
-		if strings.HasPrefix(v, "t") {
-			return ModeTest
-		}
-		if strings.HasPrefix(v, "w") {
-			return ModeWeb
-		}
+	if len(*mode) == 0 {
+		return ModePrint
 	}
-	return ModePrint
+	switch unicode.ToLower([]rune(*mode)[0]) {
+	case 't':
+		return ModeTest
+	case 'w':
+		return ModeWeb
+	default:
+		return ModePrint
+	}
 }
 
 func determineLabel() model.Label {
@@ -194,6 +194,13 @@ func GetConfig() *Config {
 	flag.Usage = usage
 	flag.Parse()
 
+	if flag.NArg() < 1 {
+		fmt.Fprintln(os.Stderr, "Must specify a file name.")
+		// TODO if file is --, read from stdin.
+		usage()
+		os.Exit(1)
+	}
+
 	desiredMode := determineMode()
 
 	if *ignoreTestFailure && desiredMode != ModeTest {
@@ -203,23 +210,12 @@ func GetConfig() *Config {
 		os.Exit(1)
 	}
 
-	if flag.NArg() < 1 {
-		fmt.Fprintln(os.Stderr, "Must specifiy a file name.")
-		// TODO if no file specified, read from stdin.
-		usage()
-		os.Exit(1)
-	}
-
-	c := &Config{
-		determineLabel(),
-		desiredMode,
-		determineFiles()}
-
-	return c
+	return &Config{determineLabel(), desiredMode, determineFiles()}
 }
 
 func usage() {
 	fmt.Fprintf(os.Stderr, "\nUsage:  %s {fileName}...\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, usageText)
+	fmt.Fprint(os.Stderr, usageText)
+	fmt.Fprint(os.Stderr, "\n\nFlags:\n\n")
 	flag.PrintDefaults()
 }

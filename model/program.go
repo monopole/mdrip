@@ -44,9 +44,7 @@ That's it.
 
 var templates = template.Must(
 	template.New("main").Parse(
-		tmplBodyCommandBlock +
-			tmplBodyScript +
-			tmplBodyProgram))
+		tmplBodyCommandBlock + tmplBodyScript + tmplBodyProgram))
 
 func NewProgram(timeout time.Duration, label Label) *Program {
 	return &Program{timeout, label, []*script{}}
@@ -109,7 +107,7 @@ func (p Program) PrintPreambled(w io.Writer, n int) {
 	fmt.Fprintf(w, "%s\n", hereDocName)
 }
 
-func write(output string, writer io.Writer) {
+func write(writer io.Writer, output string) {
 	n, err := writer.Write([]byte(output))
 	if err != nil {
 		glog.Fatalf("Could not write %d bytes: %v", len(output), err)
@@ -284,25 +282,25 @@ func fillErrResult(chAccErr <-chan *BlockOutput, errResult *RunResult) {
 // when the subprocess exits on error.
 func (p *Program) RunInSubShell() (result *RunResult) {
 	// Write program to a file to be executed.
-	scriptFile, err := ioutil.TempFile("", "mdrip-script-")
+	tmpFile, err := ioutil.TempFile("", "mdrip-script-")
 	check("create temp file", err)
-	check("chmod temp file", os.Chmod(scriptFile.Name(), 0744))
+	check("chmod temp file", os.Chmod(tmpFile.Name(), 0744))
 	for _, script := range p.scripts {
 		for _, block := range script.Blocks() {
-			write(block.Code().String(), scriptFile)
-			write("\n", scriptFile)
-			write("echo "+scanner.MsgHappy+" "+block.Name().String()+"\n", scriptFile)
+			write(tmpFile, block.Code().String())
+			write(tmpFile, "\n")
+			write(tmpFile, "echo "+scanner.MsgHappy+" "+block.Name().String()+"\n")
 		}
 	}
 	if glog.V(2) {
-		glog.Info("RunInSubShell: running commands from %s", scriptFile.Name())
+		glog.Info("RunInSubShell: running commands from %s", tmpFile.Name())
 	}
 	defer func() {
-		check("delete temp file", os.Remove(scriptFile.Name()))
+		check("delete temp file", os.Remove(tmpFile.Name()))
 	}()
 
 	// Adding "-e" to force the subshell to die on any error.
-	shell := exec.Command("bash", "-e", scriptFile.Name())
+	shell := exec.Command("bash", "-e", tmpFile.Name())
 
 	stdIn, err := shell.StdinPipe()
 	check("in pipe", err)
@@ -347,6 +345,9 @@ func (p *Program) RunInSubShell() (result *RunResult) {
 
 // Serve offers an http service at the given port.
 func (p *Program) Serve(port int) {
+	_, err := exec.LookPath("tmux")
+	check("no tmux", err)
+
 	http.HandleFunc("/", p.foo)
 	http.HandleFunc("/favicon.ico", p.favicon)
 	http.HandleFunc("/image", p.image)
@@ -422,8 +423,8 @@ const headerHtml = `
     var b = event.target;
     blockId = getId(b.parentNode);
     scriptId = getId(b.parentNode.parentNode);
-    var oldColor =  b.style.color;
-    var oldValue =  b.value;
+    var oldColor = b.style.color;
+    var oldValue = b.value;
     b.style.color = 'red';
     b.value = 'Running...';
     showOutput(b.parentNode, "running...")
@@ -441,33 +442,57 @@ const headerHtml = `
         setRunButtonsDisabled(false)
       }
     };
-    xhttp.open("GET", "/runblock?s=" + scriptId + "&b=" + blockId, true);
+    xhttp.open("GET", "/runblock?sid=" + scriptId + "&bid=" + blockId, true);
     xhttp.send();
   }
 </script>
 </head>
 `
 
+// Send a specific code block to a tmux session for execution.
+//
+// Uses a kludge to write the block to a temp file, then tell tmux to
+// load that file into a tmux paste buffer then 'paste' it into a
+// session for what looks a lot like an intuitive user-directed
+// action.
+//
+// Would writing to a tmux socket or fd directly have the same effect
+// and be less 'shelly'?
 func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
-	indexScript := getIntParam("s", r, -1)
-	indexBlock := getIntParam("b", r, -1)
-	glog.Info("Run called; s=", indexScript, " b=", indexBlock)
+	indexScript := getIntParam("sid", r, -1)
+	indexBlock := getIntParam("bid", r, -1)
+	paneId := "0" // Could get this from params
+
+	glog.Info("sid=", indexScript, " bid=", indexBlock)
+	// Not checking param values because.
 	code := p.scripts[indexScript].Blocks()[indexBlock].Code()
 
-	// shell := exec.Command("bash", "-e", scriptFile.Name())
-	// Tell user to do this:
-	// # tmux new -s myname
-	// then this guy should do
-	// # tmux a -t nyname
-	// # tmux load-buffer -b 0 /tmp/k.txt
-	// # tmux paste-buffer -r -b 0 -t {target-pane}
-	// Handy commands at https://learnxinyminutes.com/docs/tmux/
+	tmpFile, err := ioutil.TempFile("", "mdrip-block-")
 
-	// TODO(jregan): send the code to tmux server for execution
-	time.Sleep(1 * time.Second)
-	glog.Info("Run done.")
-	// TODO(jregan): replace this with stdout/stderr capture from run
-	fmt.Fprint(w, code)
+	check("create temp file", err)
+	check("chmod temp file", os.Chmod(tmpFile.Name(), 0644))
+
+	write(tmpFile, code.String())
+
+	defer func() {
+		check("delete temp file", os.Remove(tmpFile.Name()))
+	}()
+
+	cmd := exec.Command("tmux", "load-buffer", tmpFile.Name())
+	out, err := cmd.Output()
+	if err == nil {
+		cmd = exec.Command("tmux", "paste-buffer", "-t", paneId)
+		out, err = cmd.Output()
+	}
+	glog.Info("cmd = ", cmd.Args)
+	glog.Info("out = ", out)
+	if err == nil {
+		fmt.Fprintln(w, "Sent")
+		// fmt.Fprintln(w, a run count?)
+	} else {
+		glog.Info("err = ", err)
+		fmt.Fprintln(w, err)
+	}
 }
 
 func (p *Program) foo(w http.ResponseWriter, r *http.Request) {
