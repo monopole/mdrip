@@ -25,9 +25,9 @@ const tmplBodyCommandBlock = `
 {{define "` + tmplNameCommandBlock + `"}}
 <input type="button" onclick="onRunBlockClick(event)" value="Run">
 </input>
-<b data-run-count="hey">0</b>
-<em>{{ .Name }}</em>
-<pre>
+<span class="blockname">{{ .Name }}</span>
+<span class="count" data-run-count="hey">0</span>
+<pre class="code">
 {{ .Code }}
 </pre>
 {{end}}

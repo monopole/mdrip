@@ -26,19 +26,15 @@ type Program struct {
 	scripts      []*script
 }
 
+const tmux = "tmux"
+
 const tmplNameProgram = "program"
 const tmplBodyProgram = `
 {{define "` + tmplNameProgram + `"}}
-<p>
-script count = {{.ScriptCount}}
-</p>
 {{range $i, $s := .Scripts}}
   <div data-id="{{$i}}">
   {{ template "` + tmplNameScript + `" $s }}
 {{end}}
-<p>
-That's it.
-</p>
 {{end}}
 `
 
@@ -182,7 +178,8 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 		if len(trailing) > 0 {
 			if glog.V(2) {
 				glog.Info(
-					"accumulateOutput %s: Erroneous (missing-happy) output [%s]", prefix, accum.String())
+					"accumulateOutput %s: Erroneous (missing-happy) output [%s]",
+					prefix, accum.String())
 			}
 			out <- NewFailureOutput(accum.String())
 		} else {
@@ -345,9 +342,8 @@ func (p *Program) RunInSubShell() (result *RunResult) {
 
 // Serve offers an http service at the given port.
 func (p *Program) Serve(port int) {
-	_, err := exec.LookPath("tmux")
-	check("no tmux", err)
-
+	_, err := exec.LookPath(tmux)
+	check("no "+tmux, err)
 	http.HandleFunc("/", p.foo)
 	http.HandleFunc("/favicon.ico", p.favicon)
 	http.HandleFunc("/image", p.image)
@@ -385,8 +381,37 @@ func (p *Program) quit(w http.ResponseWriter, r *http.Request) {
 const headerHtml = `
 <head>
 <style type="text/css">
+body {
+  background-color: gray;
+}
+div.block {
+  /* font-family: Impact, Charcoal, sans-serif; */
+  font-family: "Times New Roman", Times, serif;
+  /* font-family: Arial, Helvetica, sans-serif; */
+  font-size: 1em;
+  font-weight: bold;
+  background-color: antiquewhite;
+  margin: 7px 0px 7px 0px;
+  border: 0px;
+}
+pre.code {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 0.8em;
+  color: #33ff66;
+  padding: 20px;
+  background-color: black;
+  margin: 0px;
+  border: 0px;
+}
+span.count {
+  padding-left: 8px;
+}
+span.blockname {
+  padding-left: 4px;
+}
 </style>
 <script type="text/javascript">
+  var blockUx = false // Not needed if pasting to tmux
   var runButtons = []
   var requestRunning = false
   function onLoad() {
@@ -404,8 +429,7 @@ const headerHtml = `
     var c = blockEl.children;
     for (var i = 0; i < c.length; i++) {
       child = c[i];
-      attr = child.getAttribute("data-run-count")
-      if (attr) {
+      if (child.getAttribute("data-run-count")) {
         child.innerHTML = parseInt(child.innerHTML) + 1;
         return
       }
@@ -421,22 +445,30 @@ const headerHtml = `
       return
     }
     requestRunning = true;
-    setRunButtonsDisabled(true)
+    if (blockUx) {
+      setRunButtonsDisabled(true)
+    }
     var b = event.target;
     blockId = getId(b.parentNode);
     scriptId = getId(b.parentNode.parentNode);
     var oldColor = b.style.color;
     var oldValue = b.value;
-    b.style.color = 'red';
-    b.value = 'Running...';
+    if (blockUx) {
+       b.style.color = 'red';
+       b.value = 'Running...';
+    }
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
       if (xhttp.readyState == XMLHttpRequest.DONE) {
-        b.style.color = oldColor;
-        b.value = oldValue;
+        if (blockUx) {
+          b.style.color = oldColor;
+          b.value = oldValue;
+        }
         incrementRunCount(b.parentNode)
         requestRunning = false;
-        setRunButtonsDisabled(false)
+        if (blockUx) {
+          setRunButtonsDisabled(false);
+        }
       }
     };
     xhttp.open("GET", "/runblock?sid=" + scriptId + "&bid=" + blockId, true);
@@ -473,10 +505,10 @@ func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
 
 	write(tmpFile, block.Code().String())
 
-	cmd := exec.Command("tmux", "load-buffer", tmpFile.Name())
+	cmd := exec.Command(tmux, "load-buffer", tmpFile.Name())
 	out, err := cmd.Output()
 	if err == nil {
-		cmd = exec.Command("tmux", "paste-buffer", "-t", paneId)
+		cmd = exec.Command(tmux, "paste-buffer", "-t", paneId)
 		out, err = cmd.Output()
 	}
 	if err == nil {

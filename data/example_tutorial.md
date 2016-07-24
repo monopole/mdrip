@@ -46,3 +46,10 @@ Clean up with this command:
 ```
 /bin/rm -rf $DEMO_DIR
 ```
+
+<!-- @sleepyTime @lesson1 -->
+```
+sleep 2s
+sleep 2s
+sleep 2s
+```

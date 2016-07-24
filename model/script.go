@@ -16,20 +16,12 @@ type script struct {
 const tmplNameScript = "script"
 const tmplBodyScript = `
 {{define "` + tmplNameScript + `"}}
-<p>
-Begin File: {{.FileName}}
-</p>
+<h2>{{.FileName}}</h2>
 {{range $i, $b := .Blocks}}
-  <div data-id="{{$i}}">
+  <div class="block" data-id="{{$i}}">
   {{ template "` + tmplNameCommandBlock + `" $b }}
   </div>
-  <p>
-   &nbsp
-  </p>
 {{end}}
-<p>
-End File: {{.FileName}}
-</p>
 {{end}}
 `
 
