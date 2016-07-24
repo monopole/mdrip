@@ -13,8 +13,9 @@ type script struct {
 	blocks   []*CommandBlock
 }
 
-const tmplNameScript = "script"
-const tmplBodyScript = `
+const (
+	tmplNameScript = "script"
+	tmplBodyScript = `
 {{define "` + tmplNameScript + `"}}
 <h2>{{.FileName}}</h2>
 {{range $i, $b := .Blocks}}
@@ -24,6 +25,7 @@ const tmplBodyScript = `
 {{end}}
 {{end}}
 `
+)
 
 func NewScript(fileName FileName, blocks []*CommandBlock) *script {
 	return &script{fileName, blocks}

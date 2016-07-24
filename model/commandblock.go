@@ -20,10 +20,11 @@ type CommandBlock struct {
 	code   opaqueCode
 }
 
-const tmplNameCommandBlock = "commandblock"
-const tmplBodyCommandBlock = `
+const (
+	tmplNameCommandBlock = "commandblock"
+	tmplBodyCommandBlock = `
 {{define "` + tmplNameCommandBlock + `"}}
-<input type="button" onclick="onRunBlockClick(event)" value="Run">
+<input type="button" onclick="onRunBlockClick(event)" value="run">
 </input>
 <span class="blockname">{{ .Name }}</span>
 <span class="count" data-run-count="hey">0</span>
@@ -32,6 +33,7 @@ const tmplBodyCommandBlock = `
 </pre>
 {{end}}
 `
+)
 
 func NewCommandBlock(labels []Label, code string) *CommandBlock {
 	if len(labels) < 1 {

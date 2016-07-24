@@ -26,10 +26,15 @@ type Program struct {
 	scripts      []*script
 }
 
-const tmux = "tmux"
+const (
+	tmux = "tmux"
+	// Could get this from URL params, but lets leave it zero for now.
+	paneId = "0"
+)
 
-const tmplNameProgram = "program"
-const tmplBodyProgram = `
+const (
+	tmplNameProgram = "program"
+	tmplBodyProgram = `
 {{define "` + tmplNameProgram + `"}}
 {{range $i, $s := .Scripts}}
   <div data-id="{{$i}}">
@@ -37,6 +42,7 @@ const tmplBodyProgram = `
 {{end}}
 {{end}}
 `
+)
 
 var templates = template.Must(
 	template.New("main").Parse(
@@ -351,6 +357,9 @@ func (p *Program) Serve(port int) {
 	http.HandleFunc("/q", p.quit)
 	host := "localhost:" + strconv.Itoa(port)
 	fmt.Println("Serving at http://" + host)
+	fmt.Println("Be sure tmux is running.")
+	fmt.Printf("Sending commands to tmux pane Id %s.\n", paneId)
+	fmt.Println()
 	glog.Info("Serving at " + host)
 	glog.Fatal(http.ListenAndServe(host, nil))
 }
@@ -455,7 +464,7 @@ span.blockname {
     var oldValue = b.value;
     if (blockUx) {
        b.style.color = 'red';
-       b.value = 'Running...';
+       b.value = 'running...';
     }
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
@@ -490,7 +499,6 @@ span.blockname {
 func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
 	indexScript := getIntParam("sid", r, -1)
 	indexBlock := getIntParam("bid", r, -1)
-	paneId := "0" // Could get this from params, but lets leave it zero for now.
 
 	tmpFile, err := ioutil.TempFile("", "mdrip-block-")
 	check("create temp file", err)
@@ -501,7 +509,7 @@ func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
 
 	// Not checking param values because.
 	block := p.scripts[indexScript].Blocks()[indexBlock]
-	glog.Info("Running block ", block.Name(), " from file ", tmpFile.Name())
+	glog.Info(block.Name(), " from ", tmpFile.Name())
 
 	write(tmpFile, block.Code().String())
 
