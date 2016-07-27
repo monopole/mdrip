@@ -17,7 +17,7 @@ const (
 	tmplNameScript = "script"
 	tmplBodyScript = `
 {{define "` + tmplNameScript + `"}}
-<h2>{{.FileName}}</h2>
+<h2>mdrip {{.FileName}}</h2>
 {{range $i, $b := .Blocks}}
   <div class="block" data-id="{{$i}}">
   {{ template "` + tmplNameCommandBlock + `" $b }}
