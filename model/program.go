@@ -394,10 +394,25 @@ const headerHtml = `
 body {
   background-color: gray;
 }
+span.didit {
+  background-color: orange;
+  padding: 7px 2px 7px 2px;
+  border: 0px;
+}
+span.spacer {
+  padding: 3px;
+  border: 0px;
+}
+span.button {
+  font-family: "Times New Roman", Times, sans-serif;
+  font-size: 1em;
+  background-color: #6699ff;
+  padding: 1px;
+  border: 0px;
+  cursor: pointer;
+}
 div.block {
-  /* font-family: Impact, Charcoal, sans-serif; */
-  font-family: "Times New Roman", Times, serif;
-  /* font-family: Arial, Helvetica, sans-serif; */
+  font-family: "Times New Roman", Times, sans-serif;
   font-size: 1em;
   font-weight: bold;
   background-color: antiquewhite;
@@ -425,7 +440,9 @@ span.blockname {
   var runButtons = []
   var requestRunning = false
   function onLoad() {
-    runButtons = document.getElementsByTagName('input');
+    if (blockUx) {
+      runButtons = document.getElementsByTagName('input');
+    }
   }
   function getId(el) {
     return el.getAttribute("data-id");
@@ -439,8 +456,13 @@ span.blockname {
     var c = blockEl.children;
     for (var i = 0; i < c.length; i++) {
       child = c[i];
-      if (child.getAttribute("data-run-count")) {
-        child.innerHTML = parseInt(child.innerHTML) + 1;
+      if (child.id == "counter") {
+        var span = document.createElement('span');
+        span.setAttribute("class","didit");        
+        child.appendChild(span);
+        span = document.createElement('span');
+        span.setAttribute("class","spacer");        
+        child.appendChild(span);
         return
       }
     }
