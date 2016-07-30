@@ -346,8 +346,8 @@ func (p *Program) RunInSubShell() (result *RunResult) {
 	return
 }
 
-// Serve offers an http service at the given port.
-func (p *Program) Serve(port int) {
+// Serve offers an http service.
+func (p *Program) Serve(hostAndPort string) {
 	_, err := exec.LookPath(tmux)
 	check("Must install "+tmux, err)
 	http.HandleFunc("/", p.foo)
@@ -355,14 +355,12 @@ func (p *Program) Serve(port int) {
 	http.HandleFunc("/image", p.image)
 	http.HandleFunc("/runblock", p.runblock)
 	http.HandleFunc("/q", p.quit)
-	hostname, _ := os.Hostname()
-	host := hostname + ":" + strconv.Itoa(port)
-	fmt.Println("Serving at http://" + host)
+	fmt.Println("Serving at http://" + hostAndPort)
 	fmt.Println("Be sure tmux is running.")
 	fmt.Printf("Sending commands to tmux pane Id %s.\n", paneId)
 	fmt.Println()
-	glog.Info("Serving at " + host)
-	glog.Fatal(http.ListenAndServe(host, nil))
+	glog.Info("Serving at " + hostAndPort)
+	glog.Fatal(http.ListenAndServe(hostAndPort, nil))
 }
 
 func (p *Program) favicon(w http.ResponseWriter, r *http.Request) {

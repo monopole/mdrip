@@ -5,8 +5,10 @@ package config
 import (
 	"flag"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/monopole/mdrip/model"
 	"os"
+	"strconv"
 	"time"
 	"unicode"
 )
@@ -120,6 +122,9 @@ var (
 	preambled = flag.Int("preambled", 0,
 		`In --mode print, run the first {n} blocks in the current shell, and the rest in a trapped subshell.`)
 
+	useHostname = flag.Bool("useHostname", false,
+		`In --mode web, use the hostname utility to specify where to serve, else implicitly use localhost.`)
+
 	port = flag.Int("port", 8000,
 		`In --mode web, use given port for the local web server.`)
 
@@ -174,8 +179,16 @@ func (c *Config) Preambled() int {
 	return *preambled
 }
 
-func (c *Config) Port() int {
-	return *port
+func (c *Config) HostAndPort() string {
+	hostname := "localhost"
+	if *useHostname {
+		var err error
+		hostname, err = os.Hostname()
+		if err != nil {
+			glog.Fatalf("Trouble with hostname: %v", err)
+		}
+	}
+	return hostname + ":" + strconv.Itoa(*port)
 }
 
 func (c *Config) Mode() ModeType {

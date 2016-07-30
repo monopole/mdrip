@@ -37,7 +37,7 @@ func main() {
 
 	switch c.Mode() {
 	case config.ModeWeb:
-		p.Serve(c.Port())
+		p.Serve(c.HostAndPort())
 	case config.ModeTest:
 		if r := p.RunInSubShell(); r.Problem() != nil {
 			r.Print(c.ScriptName())
