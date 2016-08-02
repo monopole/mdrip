@@ -19,7 +19,7 @@ const (
 {{define "` + tmplNameScript + `"}}
 <h2>mdrip {{.FileName}}</h2>
 {{range $i, $b := .Blocks}}
-  <div class="block" data-id="{{$i}}">
+  <div class="commandBlock" data-id="{{$i}}">
   {{ template "` + tmplNameCommandBlock + `" $b }}
   </div>
 {{end}}

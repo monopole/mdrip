@@ -39,6 +39,7 @@ const (
 {{range $i, $s := .Scripts}}
   <div data-id="{{$i}}">
   {{ template "` + tmplNameScript + `" $s }}
+  </div>
 {{end}}
 {{end}}
 `
@@ -392,32 +393,54 @@ const headerHtml = `
 body {
   background-color: gray;
 }
-span.didit {
-  background-color: orange;
-  padding: 7px 2px 7px 2px;
+div.commandBlock {
+/* background-color: red;*/
+  margin: 0px;
   border: 0px;
 }
-span.spacer {
-  padding: 3px;
-  border: 0px;
+
+.control {
+  background-color: antiquewhite;
+  height: 22px;
+  padding: 0px;
+/*
+  line-height: 0px;
+*/
+  text-align: left;
 }
-span.button {
-  font-family: "Times New Roman", Times, sans-serif;
-  font-size: 1em;
-  background-color: #6699ff;
-  padding: 1px;
-  border: 0px;
-  cursor: pointer;
-}
-div.block {
+
+.blockButton {
+  height: 22px;
+  text-align: center;
+  padding: 0 10px 0 10px;
+  margin-bottom: 30px;
+/*
+  display: inline-flex;
+  display: inline-block;
+  vertical-align: middle;
+  align-items: center;
+  justify-content: center;
+*/
+/*
+  text-align: center;
+  vertical-align: middle;
+*/
   font-family: "Times New Roman", Times, sans-serif;
   font-size: 1em;
   font-weight: bold;
-  background-color: antiquewhite;
-  margin: 7px 0px 7px 0px;
-  border: 0px;
+  font-style: oblique;
+
+  background-color: #6699ff;
+  cursor: pointer;
 }
-pre.code {
+
+.spacer {
+/*  display: inline-block; */
+  width: 20px;
+  height: 22px;
+}
+
+pre.kaka {
   font-family: "Lucida Console", Monaco, monospace;
   font-size: 0.8em;
   color: #33ff66;
@@ -426,12 +449,30 @@ pre.code {
   margin: 0px;
   border: 0px;
 }
-span.count {
-  padding-left: 8px;
+
+div.break {
+  height: 3px;
+  background-color: pink;
 }
-span.blockname {
-  padding-left: 4px;
+
+/*
+div.didit {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-color: orange;
 }
+*/
+.didit {
+  display: inline-block;
+  width: 24px;
+  height: 22px;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAWCAMAAADto6y6AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAQtQTFRFAAAAAH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//////BQzC2AAAAFd0Uk5TAAADLy4QZVEHKp8FAUnHbeJ3BAh68IYGC4f4nQyM/LkYCYnXf/rvAm/2/oFY7rcTPuHkOCEky3YjlW4Pqbww0MVTfUZA96p061Xs3mz1e4P70R2aHJYf2KM0AgAAAAFiS0dEWO21xI4AAAAJcEhZcwAAEysAABMrAbkohUIAAADTSURBVCjPbdDZUsJAEAXQXAgJIUDCogHBkbhFEIgCsqmo4MImgij9/39iUT4Qkp63OV0zfbsliTkIhWWOEVHUKOdaTNER9HgiaYQY1xUzlWY8kz04tBjP5Y8KRc6PxUmJcftUnMkIFGCdX1yqjDtX5cp1MChQrVHd3Xn8/y1wc0uNpuejZmt7Ae7aJDreBt1e3wVw/0D06HobYPD0/GI7Q0G10V4i4NV8e/8YE/V8KwImUxJEM82fFM78k4gW3MhfS1p9B3ckobgWBpiChJ/fjc//AJIfFr4X0swAAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE2LTA3LTMwVDE0OjI3OjUxLTA3OjAwUzMirAAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNi0wNy0zMFQxNDoyNzo0NC0wNzowMLz8tSkAAAAZdEVYdFNvZnR3YXJlAHd3dy5pbmtzY2FwZS5vcmeb7jwaAAAAFXRFWHRUaXRsZQBibHVlIENoZWNrIG1hcmsiA8jIAAAAAElFTkSuQmCC);
+}
+
+
 </style>
 <script type="text/javascript">
   var blockUx = false // Not needed if pasting to tmux
@@ -450,28 +491,22 @@ span.blockname {
       runButtons[i].disabled = value;
     }
   }
-  function incrementRunCount(blockEl) {
-    var c = blockEl.children;
-    for (var i = 0; i < c.length; i++) {
-      child = c[i];
-      if (child.id == "counter") {
-        var span = document.createElement('span');
-        span.setAttribute("class","didit");        
-        child.appendChild(span);
-        span = document.createElement('span');
-        span.setAttribute("class","spacer");        
-        child.appendChild(span);
-        return
-      }
-    }
+  function addCheck(el) {
+    var t = 'span';
+    var c = document.createElement(t);
+    c.setAttribute('class', 'didit');        
+    el.appendChild(c);
+    // c = document.createElement(t);
+    // c.setAttribute('class', 'spacer');        
+    // el.appendChild(c);
   }
   function onRunBlockClick(event) {
     if (!(event && event.target)) {
-      alert("no event!");
+      alert('no event!');
       return
     }
     if (requestRunning) {
-      alert("busy!");
+      alert('busy!');
       return
     }
     requestRunning = true;
@@ -479,8 +514,8 @@ span.blockname {
       setRunButtonsDisabled(true)
     }
     var b = event.target;
-    blockId = getId(b.parentNode);
-    scriptId = getId(b.parentNode.parentNode);
+    blockId = getId(b.parentNode.parentNode);
+    scriptId = getId(b.parentNode.parentNode.parentNode);
     var oldColor = b.style.color;
     var oldValue = b.value;
     if (blockUx) {
@@ -494,14 +529,14 @@ span.blockname {
           b.style.color = oldColor;
           b.value = oldValue;
         }
-        incrementRunCount(b.parentNode)
+        addCheck(b.parentNode)
         requestRunning = false;
         if (blockUx) {
           setRunButtonsDisabled(false);
         }
       }
     };
-    xhttp.open("GET", "/runblock?sid=" + scriptId + "&bid=" + blockId, true);
+    xhttp.open('GET', '/runblock?sid=' + scriptId + '&bid=' + blockId, true);
     xhttp.send();
   }
 </script>
