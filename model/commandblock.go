@@ -24,16 +24,15 @@ const (
 	tmplNameCommandBlock = "commandblock"
 	tmplBodyCommandBlock = `
 {{define "` + tmplNameCommandBlock + `"}}
-<div id="control" class="control">
-  <span class="blockButton" onclick="onRunBlockClick(event)"> {{ .Name }} </span>
+<h2 id="control" class="control">
+  <span class="blockButton" onclick="onRunBlockClick(event)">
+     {{ .Name }}
+  </span>
   <span class="spacer"> &nbsp; </span>
-</div>
-<div class="break"> </div>
+</h2>
 <pre class="kaka">
 {{ .Code }}
 </pre>
-<div class="break"> </div>
-<div class="break"> </div>
 {{end}}
 `
 )

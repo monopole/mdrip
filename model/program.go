@@ -83,8 +83,8 @@ func (p Program) PrintNormal(w io.Writer) {
 // This allows the aggregrate script to be structured as 1) a preamble
 // initialization script that impacts the environment of the active
 // shell, followed by 2) a script that executes as a subshell that
-// exits on error.  An exit in (2) won't cause the active shell (most
-// likely a terminal) to close.
+// exits on error.  An exit in (2) won't cause the active shell
+// to close (annoying if it is a terminal).
 //
 // It's up to the markdown author to assure that the n blocks can
 // always complete without exit on error because they will run in the
@@ -391,53 +391,35 @@ const headerHtml = `
 <head>
 <style type="text/css">
 body {
-  background-color: gray;
+  background-color: antiquewhite;
 }
+
 div.commandBlock {
-/* background-color: red;*/
+  /* background-color: red; */
   margin: 0px;
   border: 0px;
+  padding: 0px;
 }
 
 .control {
-  background-color: antiquewhite;
-  height: 22px;
+  font-family: "Times New Roman", Times, sans-serif;
+  font-size: 1.4em;
+  font-weight: bold;
+  font-style: oblique;
+  /* top rig bot lef */
+  margin: 15px 10px 12px 0px;
+  border: 0px;
   padding: 0px;
-/*
-  line-height: 0px;
-*/
-  text-align: left;
 }
 
 .blockButton {
-  height: 22px;
-  text-align: center;
-  padding: 0 10px 0 10px;
-  margin-bottom: 30px;
-/*
-  display: inline-flex;
-  display: inline-block;
-  vertical-align: middle;
-  align-items: center;
-  justify-content: center;
-*/
-/*
-  text-align: center;
-  vertical-align: middle;
-*/
-  font-family: "Times New Roman", Times, sans-serif;
-  font-size: 1em;
-  font-weight: bold;
-  font-style: oblique;
-
-  background-color: #6699ff;
+  height: 100%;
   cursor: pointer;
 }
 
 .spacer {
-/*  display: inline-block; */
-  width: 20px;
-  height: 22px;
+  height: 100%;
+  width: 5px;
 }
 
 pre.kaka {
@@ -450,29 +432,14 @@ pre.kaka {
   border: 0px;
 }
 
-div.break {
-  height: 3px;
-  background-color: pink;
-}
-
-/*
-div.didit {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background-color: orange;
-}
-*/
 .didit {
   display: inline-block;
   width: 24px;
-  height: 22px;
+  height: 20px;
   background-repeat: no-repeat;
   background-size: contain;
   background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAWCAMAAADto6y6AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAQtQTFRFAAAAAH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//////BQzC2AAAAFd0Uk5TAAADLy4QZVEHKp8FAUnHbeJ3BAh68IYGC4f4nQyM/LkYCYnXf/rvAm/2/oFY7rcTPuHkOCEky3YjlW4Pqbww0MVTfUZA96p061Xs3mz1e4P70R2aHJYf2KM0AgAAAAFiS0dEWO21xI4AAAAJcEhZcwAAEysAABMrAbkohUIAAADTSURBVCjPbdDZUsJAEAXQXAgJIUDCogHBkbhFEIgCsqmo4MImgij9/39iUT4Qkp63OV0zfbsliTkIhWWOEVHUKOdaTNER9HgiaYQY1xUzlWY8kz04tBjP5Y8KRc6PxUmJcftUnMkIFGCdX1yqjDtX5cp1MChQrVHd3Xn8/y1wc0uNpuejZmt7Ae7aJDreBt1e3wVw/0D06HobYPD0/GI7Q0G10V4i4NV8e/8YE/V8KwImUxJEM82fFM78k4gW3MhfS1p9B3ckobgWBpiChJ/fjc//AJIfFr4X0swAAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE2LTA3LTMwVDE0OjI3OjUxLTA3OjAwUzMirAAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNi0wNy0zMFQxNDoyNzo0NC0wNzowMLz8tSkAAAAZdEVYdFNvZnR3YXJlAHd3dy5pbmtzY2FwZS5vcmeb7jwaAAAAFXRFWHRUaXRsZQBibHVlIENoZWNrIG1hcmsiA8jIAAAAAElFTkSuQmCC);
 }
-
-
 </style>
 <script type="text/javascript">
   var blockUx = false // Not needed if pasting to tmux
@@ -496,9 +463,6 @@ div.didit {
     var c = document.createElement(t);
     c.setAttribute('class', 'didit');        
     el.appendChild(c);
-    // c = document.createElement(t);
-    // c.setAttribute('class', 'spacer');        
-    // el.appendChild(c);
   }
   function onRunBlockClick(event) {
     if (!(event && event.target)) {
