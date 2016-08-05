@@ -406,7 +406,6 @@ div.commandBlock {
   font-size: 1.4em;
   font-weight: bold;
   font-style: oblique;
-  /* top rig bot lef */
   margin: 15px 10px 12px 0px;
   border: 0px;
   padding: 0px;
@@ -422,12 +421,13 @@ div.commandBlock {
   width: 5px;
 }
 
-pre.kaka {
+pre.codeblock {
   font-family: "Lucida Console", Monaco, monospace;
   font-size: 0.8em;
   color: #33ff66;
-  padding: 20px;
   background-color: black;
+  /* top rig bot lef */
+  padding: 10px 20px 0px 20px;
   margin: 0px;
   border: 0px;
 }
