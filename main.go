@@ -36,7 +36,7 @@ func main() {
 	}
 
 	switch c.Mode() {
-	case config.ModeWeb:
+	case config.ModeTmux:
 		p.Serve(c.HostAndPort())
 	case config.ModeTest:
 		if r := p.RunInSubShell(); r.Problem() != nil {
