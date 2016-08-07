@@ -44,7 +44,7 @@ var templates = template.Must(
 		tmplBodyCommandBlock + tmplBodyScript + tmplBodyProgram))
 
 func NewProgram(timeout time.Duration, label Label) *Program {
-	return &Program{timeout, label, []*script{}, nil}
+	return &Program{timeout, label, []*script{}}
 }
 
 func (p *Program) Add(s *script) *Program {
