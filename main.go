@@ -8,6 +8,7 @@ import (
 	"github.com/monopole/mdrip/config"
 	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/tmux"
 )
 
 func main() {
@@ -37,7 +38,9 @@ func main() {
 
 	switch c.Mode() {
 	case config.ModeTmux:
-		p.Serve(c.HostAndPort())
+		t := tmux.NewTmux()
+		t.Initialize()
+		p.Serve(t, c.HostAndPort())
 	case config.ModeTest:
 		if r := p.RunInSubShell(); r.Problem() != nil {
 			r.Print(c.ScriptName())

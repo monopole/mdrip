@@ -27,12 +27,6 @@ type Program struct {
 }
 
 const (
-	tmux = "tmux"
-	// Could get this from URL params, but lets leave it zero for now.
-	paneId = "0"
-)
-
-const (
 	tmplNameProgram = "program"
 	tmplBodyProgram = `
 {{define "` + tmplNameProgram + `"}}
@@ -50,7 +44,7 @@ var templates = template.Must(
 		tmplBodyCommandBlock + tmplBodyScript + tmplBodyProgram))
 
 func NewProgram(timeout time.Duration, label Label) *Program {
-	return &Program{timeout, label, []*script{}}
+	return &Program{timeout, label, []*script{}, nil}
 }
 
 func (p *Program) Add(s *script) *Program {
@@ -108,15 +102,6 @@ func (p Program) PrintPreambled(w io.Writer, n int) {
 	fmt.Fprintf(w, "trap handledTrouble INT TERM\n")
 	p.PrintNormal(w)
 	fmt.Fprintf(w, "%s\n", hereDocName)
-}
-
-func write(writer io.Writer, output string) {
-	n, err := writer.Write([]byte(output))
-	if err != nil {
-		glog.Fatalf("Could not write %d bytes: %v", len(output), err)
-	} else if n != len(output) {
-		glog.Fatalf("Expected to write %d bytes, wrote %d", len(output), n)
-	}
 }
 
 // check reports the error fatally if it's non-nil.
@@ -347,18 +332,25 @@ func (p *Program) RunInSubShell() (result *RunResult) {
 	return
 }
 
+func write(writer io.Writer, output string) {
+	n, err := writer.Write([]byte(output))
+	if err != nil {
+		glog.Fatalf("Could not write %d bytes: %v", len(output), err)
+	}
+	if n != len(output) {
+		glog.Fatalf("Expected to write %d bytes, wrote %d", len(output), n)
+	}
+}
+
 // Serve offers an http service.
-func (p *Program) Serve(hostAndPort string) {
-	_, err := exec.LookPath(tmux)
-	check("Must install "+tmux, err)
+// A handler writes command blocks to an executor for execution.
+func (p *Program) Serve(executor io.Writer, hostAndPort string) {
 	http.HandleFunc("/", p.foo)
 	http.HandleFunc("/favicon.ico", p.favicon)
 	http.HandleFunc("/image", p.image)
-	http.HandleFunc("/runblock", p.runblock)
+	http.HandleFunc("/runblock", p.makeBlockRunner(executor))
 	http.HandleFunc("/q", p.quit)
 	fmt.Println("Serving at http://" + hostAndPort)
-	fmt.Println("Be sure tmux is running.")
-	fmt.Printf("Sending commands to tmux pane Id %s.\n", paneId)
 	fmt.Println()
 	glog.Info("Serving at " + hostAndPort)
 	glog.Fatal(http.ListenAndServe(hostAndPort, nil))
@@ -442,7 +434,8 @@ pre.codeblock {
 }
 </style>
 <script type="text/javascript">
-  var blockUx = false // Not needed if pasting to tmux
+  // blockUx, which may cause screen flicker, not needed if write is very fast.
+  var blockUx = false
   var runButtons = []
   var requestRunning = false
   function onLoad() {
@@ -507,45 +500,21 @@ pre.codeblock {
 </head>
 `
 
-// Send a specific code block to a tmux session for execution.
-//
-// Uses a kludge to write the block to a temp file, then tell tmux to
-// load that file into a tmux paste buffer then 'paste' it into a
-// session for what looks a lot like an intuitive user-directed
-// action.
-//
-// Would writing to a tmux socket or fd directly have the same effect
-// and be less 'shelly'?
-func (p *Program) runblock(w http.ResponseWriter, r *http.Request) {
-	indexScript := getIntParam("sid", r, -1)
-	indexBlock := getIntParam("bid", r, -1)
+func (p *Program) makeBlockRunner(executor io.Writer) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// TODO(jregan): 404 on bad params
+		indexScript := getIntParam("sid", r, -1)
+		indexBlock := getIntParam("bid", r, -1)
+		block := p.scripts[indexScript].Blocks()[indexBlock]
 
-	tmpFile, err := ioutil.TempFile("", "mdrip-block-")
-	check("create temp file", err)
-	check("chmod temp file", os.Chmod(tmpFile.Name(), 0644))
-	defer func() {
-		check("delete temp file", os.Remove(tmpFile.Name()))
-	}()
+		glog.Info("Running ", block.Name())
+		_, err := executor.Write(block.Code().Bytes())
 
-	// Not checking param values because.
-	block := p.scripts[indexScript].Blocks()[indexBlock]
-	glog.Info(block.Name(), " from ", tmpFile.Name())
-
-	write(tmpFile, block.Code().String())
-
-	cmd := exec.Command(tmux, "load-buffer", tmpFile.Name())
-	out, err := cmd.Output()
-	if err == nil {
-		cmd = exec.Command(tmux, "paste-buffer", "-t", paneId)
-		out, err = cmd.Output()
-	}
-	if err == nil {
+		if err != nil {
+			fmt.Fprintln(w, err)
+			return
+		}
 		fmt.Fprintln(w, "Ok")
-	} else {
-		glog.Info("cmd = ", cmd.Args)
-		glog.Info("out = ", out)
-		glog.Info("err = ", err)
-		fmt.Fprintln(w, err)
 	}
 }
 

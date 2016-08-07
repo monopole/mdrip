@@ -7,11 +7,15 @@ import (
 
 // opaqueCode is an opaque, uninterpreted, unknown block of text that
 // is presumably shell commands parsed from markdown.  Fed into a
-// shell interpretet, the entire thing either succeeds or fails.
+// shell interpreter, the entire thing either succeeds or fails.
 type opaqueCode string
 
 func (c opaqueCode) String() string {
 	return string(c)
+}
+
+func (c opaqueCode) Bytes() []byte {
+	return []byte(c)
 }
 
 // CommandBlock groups opaqueCode with its labels.
