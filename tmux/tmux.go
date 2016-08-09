@@ -10,33 +10,46 @@ import (
 )
 
 type Tmux struct {
-	paneId string
+	programName string
+	paneId      string
+	okay        bool
 }
 
 const (
-	programName = "tmux"
+	ProgramName = "tmux"
+	SessionName = "mdrip"
 )
 
-func NewTmux() *Tmux {
-	return &Tmux{"0"}
+func NewTmux(programName string) *Tmux {
+	return &Tmux{programName, "0", true}
 }
 
-func (t Tmux) Initialize() {
-	_, err := exec.LookPath(programName)
+func (t Tmux) Ok() bool {
+	return t.okay
+}
+
+func (t Tmux) Refresh() error {
+	_, err := exec.LookPath(t.programName)
 	if err != nil {
-		fmt.Printf("Unable to find %s: %v\n", programName, err)
-		glog.Fatal(err)
+		fmt.Printf("Unable to find %s: %v\n", t.programName, err)
+		t.okay = false
+		return err
 	}
-	fmt.Println("Be sure tmux is running.")
-	fmt.Printf("Sending commands to tmux pane Id %s.\n", t.paneId)
+	fmt.Printf("Be sure %s is running.\n", t.programName)
+	fmt.Printf("Sending commands to %s pane Id %s.\n", t.programName, t.paneId)
+	return nil
 }
 
-// Write bytes to a tmux session for interpretation / execution as shell commands.
+// Write bytes to a tmux session for interpretation as shell commands.
 //
-// Uses a kludge to write the block to a temp file, then tell tmux to
-// load that file into a tmux paste buffer then 'paste' it into a
-// session for what looks a lot like an intuitive user-directed
-// action.
+// Uses this kludge:
+//
+//  writes bytes to a temp file,
+//
+//  tells tmux to load that file into a tmux paste buffer,
+//
+//  then tells tmux to 'paste' it into a session for what looks a lot
+//  like use-behavior.  yay tmux.
 //
 // TODO: look for a better tmux api (dbus?)
 func (t Tmux) Write(bytes []byte) (n int, err error) {
@@ -56,10 +69,10 @@ func (t Tmux) Write(bytes []byte) (n int, err error) {
 		glog.Fatalf("Expected to write %d bytes, wrote %d", len(bytes), n)
 	}
 
-	cmd := exec.Command(programName, "load-buffer", tmpFile.Name())
+	cmd := exec.Command(t.programName, "load-buffer", tmpFile.Name())
 	out, err := cmd.Output()
 	if err == nil {
-		cmd = exec.Command(programName, "paste-buffer", "-t", t.paneId)
+		cmd = exec.Command(t.programName, "paste-buffer", "-t", t.paneId)
 		out, err = cmd.Output()
 	}
 
@@ -68,6 +81,27 @@ func (t Tmux) Write(bytes []byte) (n int, err error) {
 		glog.Info("out = ", out)
 	}
 	return len(bytes), err
+}
+
+func (t Tmux) Start() error {
+	cmd := exec.Command(t.programName, "new", "-s", SessionName, "-d")
+	out, err := cmd.Output()
+	glog.Info("Starting ", out)
+	return err
+}
+
+func (t Tmux) Stop() error {
+	cmd := exec.Command(t.programName, "kill-session", "-t", SessionName)
+	out, err := cmd.Output()
+	glog.Info("Stopping ", out)
+	return err
+}
+
+func (t Tmux) ListSessions() (string, error) {
+	cmd := exec.Command(t.programName, "list-sessions")
+	raw, err := cmd.Output()
+	glog.Info("List ", string(raw))
+	return string(raw), err
 }
 
 // check reports the error fatally if it's non-nil.

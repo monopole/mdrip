@@ -38,8 +38,11 @@ func main() {
 
 	switch c.Mode() {
 	case config.ModeTmux:
-		t := tmux.NewTmux()
-		t.Initialize()
+		t := tmux.NewTmux(tmux.ProgramName)
+		err := t.Refresh()
+		if err != nil {
+			log.Fatal(err)
+		}
 		p.Serve(t, c.HostAndPort())
 	case config.ModeTest:
 		if r := p.RunInSubShell(); r.Problem() != nil {
