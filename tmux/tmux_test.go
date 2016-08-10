@@ -10,7 +10,16 @@ import (
 const (
 	badName     = "nonsensicalFakeHopeNotInstalledPgmName"
 	sessionName = "tmuxTestSessionThatShouldNotSurviveTest"
+	skipMessage = "skipping test; $TMUX not set"
 )
+
+var (
+	shouldSkip bool
+)
+
+func init() {
+	shouldSkip = !IsProgramInstalled(ProgramName)
+}
 
 func TestBadName(t *testing.T) {
 	x := NewTmux(badName)
@@ -21,6 +30,9 @@ func TestBadName(t *testing.T) {
 }
 
 func TestTmuxInstalled(t *testing.T) {
+	if shouldSkip {
+		t.Skip(skipMessage)
+	}
 	x := NewTmux(ProgramName)
 	err := x.Refresh()
 	if err != nil {
@@ -29,6 +41,9 @@ func TestTmuxInstalled(t *testing.T) {
 }
 
 func TestStartAndStopTmuxSession(t *testing.T) {
+	if shouldSkip {
+		t.Skip(skipMessage)
+	}
 	x := NewTmux(ProgramName)
 	var out string
 	err := x.Start()

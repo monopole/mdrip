@@ -12,7 +12,6 @@ import (
 type Tmux struct {
 	programName string
 	paneId      string
-	okay        bool
 }
 
 const (
@@ -21,18 +20,18 @@ const (
 )
 
 func NewTmux(programName string) *Tmux {
-	return &Tmux{programName, "0", true}
+	return &Tmux{programName, "0"}
 }
 
-func (t Tmux) Ok() bool {
-	return t.okay
+func IsProgramInstalled(programName string) bool {
+	_, err := exec.LookPath(programName)
+	return err == nil
 }
 
 func (t Tmux) Refresh() error {
 	_, err := exec.LookPath(t.programName)
 	if err != nil {
 		fmt.Printf("Unable to find %s: %v\n", t.programName, err)
-		t.okay = false
 		return err
 	}
 	fmt.Printf("Be sure %s is running.\n", t.programName)
