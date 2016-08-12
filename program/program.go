@@ -1,4 +1,4 @@
-package model
+package program
 
 import (
 	"bytes"
@@ -17,22 +17,25 @@ import (
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/scanner"
 	"github.com/monopole/mdrip/util"
+	"github.com/monopole/mdrip/lexer"
+	"github.com/monopole/mdrip/model"
 )
 
 // Program is a list of scripts, each from their own file.
 type Program struct {
 	blockTimeout time.Duration
-	label        Label
-	scripts      []*script
+	label        model.Label
+	fileNames    []model.FileName
+	Scripts      []*model.Script
 }
 
 const (
 	tmplNameProgram = "program"
 	tmplBodyProgram = `
 {{define "` + tmplNameProgram + `"}}
-{{range $i, $s := .Scripts}}
+{{range $i, $s := .AllScripts}}
   <div data-id="{{$i}}">
-  {{ template "` + tmplNameScript + `" $s }}
+  {{ template "` + model.TmplNameScript + `" $s }}
   </div>
 {{end}}
 {{end}}
@@ -41,29 +44,52 @@ const (
 
 var templates = template.Must(
 	template.New("main").Parse(
-		tmplBodyCommandBlock + tmplBodyScript + tmplBodyProgram))
+		model.TmplBodyCommandBlock + model.TmplBodyScript + tmplBodyProgram))
 
-func NewProgram(timeout time.Duration, label Label) *Program {
-	return &Program{timeout, label, []*script{}}
+func NewProgram(timeout time.Duration, label model.Label, fileNames []model.FileName) *Program {
+	return &Program{timeout, label, fileNames, []*model.Script{}}
 }
 
-func (p *Program) Add(s *script) *Program {
-	p.scripts = append(p.scripts, s)
+// Build program code from blocks extracted from markdown files.
+func (p *Program) Reload() {
+	p.Scripts = []*model.Script{}
+	for _, fileName := range p.fileNames {
+		contents, err := ioutil.ReadFile(string(fileName))
+		if err != nil {
+			glog.Warning("Unable to read file \"%s\".", fileName)
+		}
+		m := lexer.Parse(string(contents))
+		if blocks, ok := m[p.label]; ok {
+			p.Add(model.NewScript(fileName, blocks))
+		}
+	}
+
+	if p.ScriptCount() < 1 {
+		if p.label.IsAny() {
+			glog.Fatal("No blocks found in the given files.")
+		} else {
+			glog.Fatalf("No blocks labelled %q found in the given files.", p.label)
+		}
+	}
+}
+
+func (p *Program) Add(s *model.Script) *Program {
+	p.Scripts = append(p.Scripts, s)
 	return p
 }
 
 // Exported only for the template.
-func (p *Program) Scripts() []*script {
-	return p.scripts
+func (p *Program) AllScripts() []*model.Script {
+	return p.Scripts
 }
 
 func (p *Program) ScriptCount() int {
-	return len(p.scripts)
+	return len(p.Scripts)
 }
 
 // PrintNormal simply prints the contents of a program.
 func (p Program) PrintNormal(w io.Writer) {
-	for _, s := range p.scripts {
+	for _, s := range p.Scripts {
 		s.Print(w, p.label, 0)
 	}
 	fmt.Fprintf(w, "echo \" \"\n")
@@ -90,7 +116,7 @@ func (p Program) PrintNormal(w io.Writer) {
 // survive any errors in that subshell with a modified environment.
 func (p Program) PrintPreambled(w io.Writer, n int) {
 	// Write the first n blocks if the first script normally.
-	p.scripts[0].Print(w, p.label, n)
+	p.Scripts[0].Print(w, p.label, n)
 	// Followed by everything appearing in a bash subshell.
 	hereDocName := "HANDLED_SCRIPT"
 	fmt.Fprintf(w, " bash -euo pipefail <<'%s'\n", hereDocName)
@@ -126,8 +152,8 @@ func check(msg string, err error) {
 // On a sad path, an accumulation of strings is sent with a success ==
 // false flag attached, and the function exits early, before it's
 // input channel closes.
-func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
-	out := make(chan *BlockOutput)
+func accumulateOutput(prefix string, in <-chan string) <-chan *model.BlockOutput {
+	out := make(chan *model.BlockOutput)
 	var accum bytes.Buffer
 	go func() {
 		defer close(out)
@@ -138,7 +164,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 				if glog.V(2) {
 					glog.Info("accumulateOutput %s: Timeout return.", prefix)
 				}
-				out <- NewFailureOutput(accum.String())
+				out <- model.NewFailureOutput(accum.String())
 				return
 			}
 			if strings.HasPrefix(line, scanner.MsgError) {
@@ -146,14 +172,14 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 				if glog.V(2) {
 					glog.Info("accumulateOutput %s: Error return.", prefix)
 				}
-				out <- NewFailureOutput(accum.String())
+				out <- model.NewFailureOutput(accum.String())
 				return
 			}
 			if strings.HasPrefix(line, scanner.MsgHappy) {
 				if glog.V(2) {
 					glog.Info("accumulateOutput %s: %s", prefix, line)
 				}
-				out <- NewSuccessOutput(accum.String())
+				out <- model.NewSuccessOutput(accum.String())
 				accum.Reset()
 			} else {
 				if glog.V(2) {
@@ -173,7 +199,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 					"accumulateOutput %s: Erroneous (missing-happy) output [%s]",
 					prefix, accum.String())
 			}
-			out <- NewFailureOutput(accum.String())
+			out <- model.NewFailureOutput(accum.String())
 		} else {
 			if glog.V(2) {
 				glog.Info("accumulateOutput %s: Nothing trailing.", prefix)
@@ -191,7 +217,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 // It writes command blocks to shell, then waits after  each block to
 // see if the block worked.  If the block appeared to complete without
 // error, the routine sends the next block, else it exits early.
-func (p *Program) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunResult) {
+func (p *Program) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *model.RunResult) {
 
 	chOut := scanner.BuffScanner(p.blockTimeout, "stdout", stdOut)
 	chErr := scanner.BuffScanner(1*time.Minute, "stderr", stdErr)
@@ -199,8 +225,8 @@ func (p *Program) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunResu
 	chAccOut := accumulateOutput("stdOut", chOut)
 	chAccErr := accumulateOutput("stdErr", chErr)
 
-	errResult = NewRunResult()
-	for _, script := range p.scripts {
+	errResult = model.NewRunResult()
+	for _, script := range p.Scripts {
 		numBlocks := len(script.Blocks())
 		for i, block := range script.Blocks() {
 			glog.Info("Running %s (%d/%d) from %s\n",
@@ -224,9 +250,9 @@ func (p *Program) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunResu
 					if glog.V(2) {
 						glog.Info("userBehavior: stdout Result: %s", result.Output())
 					}
-					errResult.setOutput(result.Output()).setMessage(result.Output())
+					errResult.SetOutput(result.Output()).SetMessage(result.Output())
 				}
-				errResult.setFileName(script.FileName()).setIndex(i).setBlock(block)
+				errResult.SetFileName(script.FileName()).SetIndex(i).SetBlock(block)
 				fillErrResult(chAccErr, errResult)
 				return
 			}
@@ -237,16 +263,16 @@ func (p *Program) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunResu
 }
 
 // fillErrResult fills an instance of RunResult.
-func fillErrResult(chAccErr <-chan *BlockOutput, errResult *RunResult) {
+func fillErrResult(chAccErr <-chan *model.BlockOutput, errResult *model.RunResult) {
 	result := <-chAccErr
 	if result == nil {
 		if glog.V(2) {
 			glog.Info("userBehavior: stderr Result == nil.")
 		}
-		errResult.setProblem(errors.New("unknown"))
+		errResult.SetProblem(errors.New("unknown"))
 		return
 	}
-	errResult.setProblem(errors.New(result.Output())).setMessage(result.Output())
+	errResult.SetProblem(errors.New(result.Output())).SetMessage(result.Output())
 	if glog.V(2) {
 		glog.Info("userBehavior: stderr Result: %s", result.Output())
 	}
@@ -269,12 +295,12 @@ func fillErrResult(chAccErr <-chan *BlockOutput, errResult *RunResult) {
 // Error reporting works by discarding output from command blocks that
 // succeeded, and only reporting the contents of stdout and stderr
 // when the subprocess exits on error.
-func (p *Program) RunInSubShell() (result *RunResult) {
+func (p *Program) RunInSubShell() (result *model.RunResult) {
 	// Write program to a file to be executed.
 	tmpFile, err := ioutil.TempFile("", "mdrip-script-")
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(tmpFile.Name(), 0744))
-	for _, script := range p.scripts {
+	for _, script := range p.Scripts {
 		for _, block := range script.Blocks() {
 			write(tmpFile, block.Code().String())
 			write(tmpFile, "\n")
@@ -322,7 +348,7 @@ func (p *Program) RunInSubShell() (result *RunResult) {
 	}
 	waitError := shell.Wait()
 	if result.Problem() == nil {
-		result.setProblem(waitError)
+		result.SetProblem(waitError)
 	}
 	if glog.V(2) {
 		glog.Info("RunInSubShell:  Shell done.")
@@ -345,7 +371,7 @@ func write(writer io.Writer, output string) {
 // Serve offers an http service.
 // A handler writes command blocks to an executor for execution.
 func (p *Program) Serve(executor io.Writer, hostAndPort string) {
-	http.HandleFunc("/", p.foo)
+	http.HandleFunc("/", p.showControlPage)
 	http.HandleFunc("/favicon.ico", p.favicon)
 	http.HandleFunc("/image", p.image)
 	http.HandleFunc("/runblock", p.makeBlockRunner(executor))
@@ -357,11 +383,11 @@ func (p *Program) Serve(executor io.Writer, hostAndPort string) {
 }
 
 func (p *Program) favicon(w http.ResponseWriter, r *http.Request) {
-	Lissajous(w, 7, 3, 1)
+	model.Lissajous(w, 7, 3, 1)
 }
 
 func (p *Program) image(w http.ResponseWriter, r *http.Request) {
-	Lissajous(w,
+	model.Lissajous(w,
 		getIntParam("s", r, 300),
 		getIntParam("c", r, 30),
 		getIntParam("n", r, 100))
@@ -505,7 +531,7 @@ func (p *Program) makeBlockRunner(executor io.Writer) func(w http.ResponseWriter
 		// TODO(jregan): 404 on bad params
 		indexScript := getIntParam("sid", r, -1)
 		indexBlock := getIntParam("bid", r, -1)
-		block := p.scripts[indexScript].Blocks()[indexBlock]
+		block := p.Scripts[indexScript].Blocks()[indexBlock]
 
 		glog.Info("Running ", block.Name())
 		_, err := executor.Write(block.Code().Bytes())
@@ -518,7 +544,8 @@ func (p *Program) makeBlockRunner(executor io.Writer) func(w http.ResponseWriter
 	}
 }
 
-func (p *Program) foo(w http.ResponseWriter, r *http.Request) {
+func (p *Program) showControlPage(w http.ResponseWriter, r *http.Request) {
+	p.Reload()
 	fmt.Fprintln(w, `<html>`+headerHtml+`<body onload="onLoad()">`)
 	if err := templates.ExecuteTemplate(w, tmplNameProgram, p); err != nil {
 		glog.Fatal(err)

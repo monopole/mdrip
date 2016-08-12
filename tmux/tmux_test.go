@@ -10,7 +10,7 @@ import (
 const (
 	badName     = "nonsensicalFakeHopeNotInstalledPgmName"
 	sessionName = "tmuxTestSessionThatShouldNotSurviveTest"
-	skipMessage = "skipping test; $TMUX not set"
+	skipMessage = "skipping test since tmux not found"
 )
 
 var (

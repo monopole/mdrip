@@ -174,7 +174,7 @@ func determineFiles() []model.FileName {
 type Config struct {
 	scriptName model.Label
 	mode       ModeType
-	FileNames  []model.FileName
+	fileNames  []model.FileName
 }
 
 func (c *Config) BlockTimeOut() time.Duration {
@@ -207,6 +207,10 @@ func (c *Config) IgnoreTestFailure() bool {
 
 func (c *Config) ScriptName() model.Label {
 	return c.scriptName
+}
+
+func (c *Config) FileNames() []model.FileName {
+	return c.fileNames
 }
 
 func GetConfig() *Config {

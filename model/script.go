@@ -8,15 +8,15 @@ import (
 
 // script associates a list of CommandBlocks with the name of the
 // file they came from.
-type script struct {
+type Script struct {
 	fileName FileName
 	blocks   []*CommandBlock
 }
 
 const (
-	tmplNameScript = "script"
-	tmplBodyScript = `
-{{define "` + tmplNameScript + `"}}
+	TmplNameScript = "script"
+	TmplBodyScript = `
+{{define "` + TmplNameScript + `"}}
 <h2>mdrip {{.FileName}}</h2>
 {{range $i, $b := .Blocks}}
   <div class="commandBlock" data-id="{{$i}}">
@@ -27,15 +27,15 @@ const (
 `
 )
 
-func NewScript(fileName FileName, blocks []*CommandBlock) *script {
-	return &script{fileName, blocks}
+func NewScript(fileName FileName, blocks []*CommandBlock) *Script {
+	return &Script{fileName, blocks}
 }
 
-func (s script) FileName() FileName {
+func (s Script) FileName() FileName {
 	return s.fileName
 }
 
-func (s script) Blocks() []*CommandBlock {
+func (s Script) Blocks() []*CommandBlock {
 	return s.blocks
 }
 
@@ -45,7 +45,7 @@ func (s script) Blocks() []*CommandBlock {
 //
 // n is a count not an index, so to print only the first two blocks,
 // pass n==2, not n==1.
-func (s script) Print(w io.Writer, label Label, n int) {
+func (s Script) Print(w io.Writer, label Label, n int) {
 	fmt.Fprintf(w, "#\n# Script @%s from %s \n#\n", label, s.FileName())
 	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d of %d\n"
 	blockCount := len(s.blocks)

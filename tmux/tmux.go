@@ -15,7 +15,7 @@ type Tmux struct {
 }
 
 const (
-	ProgramName = "tmux"
+	ProgramName = "/usr/bin/tmux"
 	SessionName = "mdrip"
 )
 

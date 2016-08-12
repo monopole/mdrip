@@ -74,7 +74,7 @@ func (x *RunResult) Problem() error {
 	return x.problem
 }
 
-func (x *RunResult) setProblem(e error) *RunResult {
+func (x *RunResult) SetProblem(e error) *RunResult {
 	x.problem = e
 	return x
 }
@@ -83,12 +83,12 @@ func (x *RunResult) Message() string {
 	return x.message
 }
 
-func (x *RunResult) setMessage(m string) *RunResult {
+func (x *RunResult) SetMessage(m string) *RunResult {
 	x.message = m
 	return x
 }
 
-func (x *RunResult) setOutput(m string) *RunResult {
+func (x *RunResult) SetOutput(m string) *RunResult {
 	x.output = m
 	return x
 }
@@ -97,17 +97,17 @@ func (x *RunResult) Index() int {
 	return x.index
 }
 
-func (x *RunResult) setIndex(i int) *RunResult {
+func (x *RunResult) SetIndex(i int) *RunResult {
 	x.index = i
 	return x
 }
 
-func (x *RunResult) setBlock(b *CommandBlock) *RunResult {
+func (x *RunResult) SetBlock(b *CommandBlock) *RunResult {
 	x.block = b
 	return x
 }
 
-func (x *RunResult) setFileName(n FileName) *RunResult {
+func (x *RunResult) SetFileName(n FileName) *RunResult {
 	x.fileName = n
 	return x
 }
