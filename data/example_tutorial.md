@@ -1,4 +1,6 @@
-First do some setup:
+Follow these instructions to write a Go program.
+
+First create a directory to work in.
 
 <!-- @init @lesson1 @cleanup -->
 ```
@@ -6,7 +8,7 @@ DEMO_DIR=/tmp/mdrip_example
 mkdir -p $DEMO_DIR/src/example
 ```
 
-Write a *Go* function...
+Then write a *Go* function:
 
 <!-- @makeAdder @lesson1 -->
 ```
@@ -19,7 +21,7 @@ echo "the next command intended to fail"
 badCommandToTriggerTestFailure
 ```
 
-...and a main program to call it:
+Then write a main program to call it:
 
 <!-- @makeMain @lesson1 -->
 ```

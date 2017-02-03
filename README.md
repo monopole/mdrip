@@ -4,35 +4,28 @@
 
 `mdrip` rips labeled command blocks from markdown files for execution.
 
-If you find markdown an effective means to document why and how to run arbitrary
-sequences of commands, then _mdrip_ makes it easy to place your documentation
-under test.
-
-Alternatively, _mrdip_ can be viewed as a means to write high level _integration
-tests_ via shell commands in a self-documenting, easily rendered markdown file.
+It allows one to place markdown-based documentation under test, or (equivalently) structure
+high level _integration tests_ as shell commands in a self-documenting markdown file.
 
 ## Execution
 
-`mdrip` accepts one _label_ argument and any number of _file name_
+`mdrip` accepts any number of _file name_
 arguments, where the files are assumed to contain markdown.
 
-> `mdrip {label} {file.md} [{file2.md}...]`
+> `mdrip [--label {label}] {file.md} [{file2.md}...]`
 
-The program scans the files for
+It scans the files for
 [fenced code blocks](https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks)
 immediately preceded by an HTML comment with embedded _@labels_.
 
-If one of the block labels matches the _{label}_ argument to the
-command line, the associated block is extracted.
+If one of the block labels matches the `--label` flag argument,
+the associated block is extracted.
 
-Extracted blocks are emitted to `stdout` (where they can be piped to
-an interpreter), or, if `--subshell` is specified, concatenated to run
-as a subprocess.
+Extracted blocks are concatenated to `stdout`, or, if `--subshell` is
+specified, concatenated to a bash subprocess.
 
 This is a markdown-based instance of language-independent
-[literate programming](http://en.wikipedia.org/wiki/Literate_programming)
-(for perspective, see the latex-based
-[noweb](http://en.wikipedia.org/wiki/Noweb)).
+[literate programming](http://en.wikipedia.org/wiki/Literate_programming).
 It's language independent because shell scripts can
 make, build and run programs in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
@@ -50,7 +43,7 @@ $MDRIP/go/bin/mdrip   # Shows usage.
 
 ## Example
 
-This [example tutorial][example-tutorial] (raw markdown [here][raw-example])
+Consider this short [Go tutorial][example-tutorial]. (raw markdown [here][raw-example])
 has bash code blocks that write, compile and run a Go program.
 
 Send code from that file to `stdout`:

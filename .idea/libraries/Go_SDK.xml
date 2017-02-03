@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="Go SDK">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../../../../../../../../lib/google-golang/src" />
+    </CLASSES>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../../../../../../../../lib/google-golang/src" />
+    </SOURCES>
+  </library>
+</component>
