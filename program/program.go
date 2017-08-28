@@ -527,20 +527,17 @@ pre.codeblock {
 `
 
 func (p *Program) makeBlockRunner(executor io.Writer) func(w http.ResponseWriter, r *http.Request) {
-	if executor == nil {
-		return func(w http.ResponseWriter, r *http.Request) {
-			glog.Info("No tmux; would run ", block.Name())
-		}
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO(jregan): 404 on bad params
 		indexScript := getIntParam("sid", r, -1)
 		indexBlock := getIntParam("bid", r, -1)
 		block := p.Scripts[indexScript].Blocks()[indexBlock]
-
+		if executor == nil {
+			glog.Info("No executor; would run ", block.Name())
+			return
+		}
 		glog.Info("Running ", block.Name())
 		_, err := executor.Write(block.Code().Bytes())
-
 		if err != nil {
 			fmt.Fprintln(w, err)
 			return
