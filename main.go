@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -16,16 +17,16 @@ func main() {
 
 	switch c.Mode() {
 	case config.ModeTmux:
+		w := ioutil.Discard
 		t := tmux.NewTmux(tmux.ProgramName)
 		if tmux.IsProgramInstalled(tmux.ProgramName) {
 			err := t.Refresh()
 			if err != nil {
 				log.Fatal(err)
 			}
-		} else {
-			t = nil
+			w = t
 		}
-		p.Serve(t, c.HostAndPort())
+		p.Serve(w, c.HostAndPort())
 	case config.ModeTest:
 		p.Reload()
 		if r := p.RunInSubShell(); r.Problem() != nil {

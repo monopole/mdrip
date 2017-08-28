@@ -527,11 +527,6 @@ pre.codeblock {
 `
 
 func (p *Program) makeBlockRunner(executor io.Writer) func(w http.ResponseWriter, r *http.Request) {
-	if executor == nil || *executor == nil {
-		return func(w http.ResponseWriter, r *http.Request) {
-			glog.Info("No executor.")
-		}
-	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO(jregan): 404 on bad params
 		indexScript := getIntParam("sid", r, -1)
