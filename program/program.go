@@ -376,7 +376,7 @@ func (p *Program) Serve(executor io.Writer, hostAndPort string) {
 	http.HandleFunc("/image", p.image)
 	http.HandleFunc("/runblock", p.makeBlockRunner(executor))
 	http.HandleFunc("/q", p.quit)
-	fmt.Println("Serving at http://" + hostAndPort)
+	fmt.Println("Serving at " + hostAndPort)
 	fmt.Println()
 	glog.Info("Serving at " + hostAndPort)
 	glog.Fatal(http.ListenAndServe(hostAndPort, nil))
@@ -527,15 +527,16 @@ pre.codeblock {
 `
 
 func (p *Program) makeBlockRunner(executor io.Writer) func(w http.ResponseWriter, r *http.Request) {
+	if executor == nil {
+		return func(w http.ResponseWriter, r *http.Request) {
+			glog.Info("No executor.")
+		}
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO(jregan): 404 on bad params
 		indexScript := getIntParam("sid", r, -1)
 		indexBlock := getIntParam("bid", r, -1)
 		block := p.Scripts[indexScript].Blocks()[indexBlock]
-		if executor == nil {
-			glog.Info("No executor; would run ", block.Name())
-			return
-		}
 		glog.Info("Running ", block.Name())
 		_, err := executor.Write(block.Code().Bytes())
 		if err != nil {

@@ -186,7 +186,7 @@ func (c *Config) Preambled() int {
 }
 
 func (c *Config) HostAndPort() string {
-	hostname := "" // localhost
+	hostname := "" // docker breaks if one uses localhost here
 	if *useHostname {
 		var err error
 		hostname, err = os.Hostname()
