@@ -17,9 +17,13 @@ func main() {
 	switch c.Mode() {
 	case config.ModeTmux:
 		t := tmux.NewTmux(tmux.ProgramName)
-		err := t.Refresh()
-		if err != nil {
-			log.Fatal(err)
+		if tmux.IsProgramInstalled(tmux.ProgramName) {
+			err := t.Refresh()
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			t = nil
 		}
 		p.Serve(t, c.HostAndPort())
 	case config.ModeTest:

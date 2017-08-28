@@ -15,10 +15,10 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/monopole/mdrip/scanner"
-	"github.com/monopole/mdrip/util"
 	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/scanner"
+	"github.com/monopole/mdrip/util"
 )
 
 // Program is a list of scripts, each from their own file.
@@ -480,7 +480,7 @@ pre.codeblock {
   function addCheck(el) {
     var t = 'span';
     var c = document.createElement(t);
-    c.setAttribute('class', 'didit');        
+    c.setAttribute('class', 'didit');
     el.appendChild(c);
   }
   function onRunBlockClick(event) {
@@ -527,6 +527,11 @@ pre.codeblock {
 `
 
 func (p *Program) makeBlockRunner(executor io.Writer) func(w http.ResponseWriter, r *http.Request) {
+	if executor == nil {
+		return func(w http.ResponseWriter, r *http.Request) {
+			glog.Info("No tmux; would run ", block.Name())
+		}
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO(jregan): 404 on bad params
 		indexScript := getIntParam("sid", r, -1)
