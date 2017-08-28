@@ -64,7 +64,7 @@ Modes:
 
    Print extracted script to stdout.
 
-   Use 
+   Use
       eval "$(mdrip file.md)"
    to run in current terminal, impacting your environment.
 
@@ -186,7 +186,7 @@ func (c *Config) Preambled() int {
 }
 
 func (c *Config) HostAndPort() string {
-	hostname := "localhost"
+	hostname := "" // localhost
 	if *useHostname {
 		var err error
 		hostname, err = os.Hostname()
