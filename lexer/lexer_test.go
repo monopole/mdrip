@@ -23,30 +23,38 @@ var (
 
 var lexTests = []lexTest{
 	{"empty", "", []item{tEOF}},
-	{"spaces", " \t\n", []item{tEOF}},
-	{"text", "blah blah blinkity blah", []item{tEOF}},
+	{"spaces", " \t\n", []item{{itemProse, " \t\n"}, tEOF}},
+	{"text", "blah blah",
+		[]item{{itemProse, "blah blah"}, tEOF}},
 	{"comment1", "<!-- -->", []item{tEOF}},
-	{"comment2", "a <!-- --> b", []item{tEOF}},
-	{"block1", "aa <!-- @1 -->\n" +
+	{"comment2", "a <!-- --> b", []item{{itemProse, "a "}, {itemProse, " b"}, tEOF}},
+	{"block1", "fred <!-- @1 -->\n" +
 		"```\n" + block1 + "```\n bbb",
-		[]item{{itemBlockLabel, "1"},
+		[]item{
+			{itemProse, "fred "},
+			{itemBlockLabel, "1"},
 			{itemCommandBlock, block1},
+			{itemProse, "\n bbb"},
 			tEOF}},
 	{"block2", "aa <!-- @1 @2-->\n" +
 		"```\n" + block1 + "```\n bb cc\n" +
 		"dd <!-- @3 @4-->\n" +
 		"```\n" + block2 + "```\n ee ff\n",
 		[]item{
+			{itemProse, "aa "},
 			{itemBlockLabel, "1"},
 			{itemBlockLabel, "2"},
 			{itemCommandBlock, block1},
+			{itemProse, "\n bb cc\ndd "},
 			{itemBlockLabel, "3"},
 			{itemBlockLabel, "4"},
 			{itemCommandBlock, block2},
+			{itemProse, "\n ee ff\n"},
 			tEOF}},
 	{"blockWithLangName", "Hello <!-- @1 -->\n" +
 		"```java\nvoid main whatever\n```",
 		[]item{
+			{itemProse, "Hello "},
 			{itemBlockLabel, "1"},
 			{itemCommandBlock, "void main whatever\n"},
 			tEOF}},
@@ -91,6 +99,9 @@ func TestLex(t *testing.T) {
 		got := collect(&test)
 		if !equal(got, test.want) {
 			t.Errorf("%s:\ngot\n\t%+v\nexpected\n\t%v", test.name, got, test.want)
+			for i, c := range got {
+				t.Errorf("    %v  \"%v\"\n", i, c)
+			}
 		}
 	}
 }

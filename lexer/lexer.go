@@ -50,6 +50,9 @@ const (
 	commentOpen  = "<!--"
 	commentClose = "-->"
 	codeFence    = "```"
+	// All punctuation except for <, so we can watch for markdown comments.
+	mdPunct           = "!->@#$%^&*()_=+\\|`~{}[];:'`\",.?/ "
+	lettersAndNumbers = "012345789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
 const eof = -1
@@ -114,10 +117,6 @@ func (l *lexer) acceptRun(valid string) {
 	l.backup()
 }
 
-func (l *lexer) acceptWord() {
-	l.acceptRun("012345789abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-}
-
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
@@ -172,7 +171,7 @@ func lexText(l *lexer) stateFn {
 			l.emit(itemEOF)
 			return nil
 		}
-		l.acceptWord()
+		l.acceptRun(mdPunct + lettersAndNumbers)
 	}
 }
 
@@ -217,7 +216,7 @@ func lexBlockLabels(l *lexer) stateFn {
 			l.ignore()
 		case r == labelMarker:
 			l.ignore()
-			l.acceptWord()
+			l.acceptRun("_" + lettersAndNumbers)
 			if l.width == 0 {
 				return l.errorf("empty block label")
 			}
