@@ -2,6 +2,8 @@ package model
 
 import (
 	"fmt"
+	"github.com/russross/blackfriday"
+	"html/template"
 	"io"
 )
 
@@ -22,12 +24,14 @@ func (c opaqueCode) Bytes() []byte {
 type CommandBlock struct {
 	labels []Label
 	code   opaqueCode
+	prose  string
 }
 
 const (
 	tmplNameCommandBlock = "commandblock"
 	TmplBodyCommandBlock = `
 {{define "` + tmplNameCommandBlock + `"}}
+<div class="proseblock"> {{.Prose}} </div>
 <h3 id="control" class="control">
   <span class="blockButton" onclick="onRunBlockClick(event)">
      {{ .Name }}
@@ -41,12 +45,12 @@ const (
 `
 )
 
-func NewCommandBlock(labels []Label, code string) *CommandBlock {
+func NewCommandBlock(labels []Label, code, prose string) *CommandBlock {
 	if len(labels) < 1 {
 		// Assure at least one label.
 		labels = []Label{Label("unknown")}
 	}
-	return &CommandBlock{labels, opaqueCode(code)}
+	return &CommandBlock{labels, opaqueCode(code), prose}
 }
 
 // GetName returns the name of the command block.
@@ -63,6 +67,10 @@ func (x CommandBlock) Labels() []Label {
 
 func (x CommandBlock) Code() opaqueCode {
 	return x.code
+}
+
+func (x CommandBlock) Prose() template.HTML {
+	return template.HTML(string(blackfriday.MarkdownCommon([]byte(x.prose))))
 }
 
 func (x CommandBlock) Print(

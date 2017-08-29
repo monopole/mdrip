@@ -18,6 +18,7 @@ type itemType int
 
 const (
 	itemError        itemType = iota
+	itemProse                 // Prose between command blocks.
 	itemBlockLabel            // Label for a command block
 	itemCommandBlock          // All lines between codeFence marks
 	itemEOF
@@ -158,13 +159,20 @@ func isEndOfLine(r rune) bool {
 func lexText(l *lexer) stateFn {
 	for {
 		if strings.HasPrefix(l.input[l.current:], commentOpen) {
+			if l.current > l.start {
+				l.emit(itemProse)
+			}
 			return lexPutativeComment
 		}
 		if l.next() == eof {
+			if l.current > l.start {
+				l.emit(itemProse)
+			}
 			l.ignore()
 			l.emit(itemEOF)
 			return nil
 		}
+		l.acceptWord()
 	}
 }
 
@@ -279,6 +287,7 @@ func freshLabels() []model.Label {
 // order they appeared in the input.
 func Parse(s string) (result map[model.Label][]*model.CommandBlock) {
 	result = make(map[model.Label][]*model.CommandBlock)
+	prose := ""
 	currentLabels := freshLabels()
 	l := newLex(s)
 	for {
@@ -288,6 +297,8 @@ func Parse(s string) (result map[model.Label][]*model.CommandBlock) {
 			return
 		case item.typ == itemBlockLabel:
 			currentLabels = append(currentLabels, model.Label(item.val))
+		case item.typ == itemProse:
+			prose = item.val
 		case item.typ == itemCommandBlock:
 			// Always add AnyLabel at the end, so one can extract all blocks.
 			currentLabels = append(currentLabels, model.AnyLabel)
@@ -297,7 +308,7 @@ func Parse(s string) (result map[model.Label][]*model.CommandBlock) {
 			if shouldSleep(currentLabels) {
 				item.val = item.val + "sleep 2s # Added by mdrip\n"
 			}
-			newBlock := model.NewCommandBlock(currentLabels, item.val)
+			newBlock := model.NewCommandBlock(currentLabels, item.val, prose)
 			for _, label := range currentLabels {
 				blocks, ok := result[label]
 				if ok {

@@ -54,7 +54,7 @@ type RunResult struct {
 func NewRunResult() *RunResult {
 	noLabels := []Label{}
 	blockOutput := NewFailureOutput("")
-	return &RunResult{*blockOutput, "", -1, NewCommandBlock(noLabels, ""), nil, ""}
+	return &RunResult{*blockOutput, "", -1, NewCommandBlock(noLabels, "", ""), nil, ""}
 }
 
 // For tests.
@@ -63,7 +63,7 @@ func NoCommandsRunResult(
 	noLabels := []Label{}
 	return &RunResult{
 		*blockOutput, fileName, index,
-		NewCommandBlock(noLabels, ""), nil, message}
+		NewCommandBlock(noLabels, "", ""), nil, message}
 }
 
 func (x *RunResult) FileName() FileName {

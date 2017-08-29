@@ -419,16 +419,6 @@ div.commandBlock {
   padding: 0px;
 }
 
-.control {
-  font-family: "Times New Roman", Times, sans-serif;
-  font-size: 1.4em;
-  font-weight: bold;
-  font-style: oblique;
-  margin: 15px 10px 12px 0px;
-  border: 0px;
-  padding: 0px;
-}
-
 .blockButton {
   height: 100%;
   cursor: pointer;
@@ -439,6 +429,21 @@ div.commandBlock {
   width: 5px;
 }
 
+div.proseblock {
+  font-size: 1.2em;
+  /* top rig bot lef */
+  padding: 10px 20px 0px 0px;
+}
+
+.control {
+  font-family: "Times New Roman", Times, sans-serif;
+  font-size: 1.4em;
+  font-weight: bold;
+  /* font-style: oblique; */
+  margin: 15px 10px 12px 20px;
+  padding: 0px;
+}
+
 pre.codeblock {
   font-family: "Lucida Console", Monaco, monospace;
   font-size: 0.8em;
@@ -446,7 +451,7 @@ pre.codeblock {
   background-color: black;
   /* top rig bot lef */
   padding: 10px 20px 0px 20px;
-  margin: 0px;
+  margin: 0px 0px 0px 20px;
   border: 0px;
 }
 
@@ -523,7 +528,8 @@ pre.codeblock {
     }
     var b = event.target;
     var commandBlockDiv = b.parentNode.parentNode;
-    var codeBody = commandBlockDiv.childNodes[3].firstChild;
+    // Sorry about the fragility here :P
+    var codeBody = commandBlockDiv.childNodes[5].firstChild;
     attemptCopyToBuffer(codeBody.textContent)
     var blockId = getId(commandBlockDiv);
     var scriptId = getId(commandBlockDiv.parentNode);
