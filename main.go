@@ -18,8 +18,8 @@ func main() {
 	switch c.Mode() {
 	case config.ModeTmux:
 		w := ioutil.Discard
-		t := tmux.NewTmux(tmux.ProgramName)
 		if tmux.IsProgramInstalled(tmux.ProgramName) {
+			t := tmux.NewTmux(tmux.ProgramName)
 			err := t.Refresh()
 			if err != nil {
 				log.Fatal(err)

@@ -483,6 +483,31 @@ pre.codeblock {
     c.setAttribute('class', 'didit');
     el.appendChild(c);
   }
+  function attemptCopyToBuffer(text) {
+    // https://stackoverflow.com/questions/400212
+    var tA = document.createElement("textarea");
+    tA.style.position = 'fixed';
+    tA.style.top = 0;
+    tA.style.left = 0;
+    tA.style.width = '2em';
+    tA.style.height = '2em';
+    tA.style.padding = 0;
+    tA.style.border = 'none';
+    tA.style.outline = 'none';
+    tA.style.boxShadow = 'none';
+    tA.style.background = 'transparent';
+    tA.value = text;
+    document.body.appendChild(tA);
+    tA.select();
+    try {
+      var successful = document.execCommand('copy');
+      var msg = successful ? 'successful' : 'unsuccessful';
+      console.log('Copying text command was ' + msg);
+    } catch (err) {
+      console.log('Oops, unable to copy');
+    }
+    document.body.removeChild(tA);
+  }
   function onRunBlockClick(event) {
     if (!(event && event.target)) {
       alert('no event!');
@@ -497,8 +522,11 @@ pre.codeblock {
       setRunButtonsDisabled(true)
     }
     var b = event.target;
-    blockId = getId(b.parentNode.parentNode);
-    scriptId = getId(b.parentNode.parentNode.parentNode);
+    var commandBlockDiv = b.parentNode.parentNode;
+    var codeBody = commandBlockDiv.childNodes[3].firstChild;
+    attemptCopyToBuffer(codeBody.textContent)
+    var blockId = getId(commandBlockDiv);
+    var scriptId = getId(commandBlockDiv.parentNode);
     var oldColor = b.style.color;
     var oldValue = b.value;
     if (blockUx) {
