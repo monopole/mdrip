@@ -409,11 +409,12 @@ const headerHtml = `
 <head>
 <style type="text/css">
 body {
-  background-color: antiquewhite;
+  font-family: "Veranda", Veranda, sans-serif;
+  /* background-color: antiquewhite; */
+  background-color: white;
 }
 
 div.commandBlock {
-  /* background-color: red; */
   margin: 0px;
   border: 0px;
   padding: 0px;
@@ -436,18 +437,20 @@ div.proseblock {
 }
 
 .control {
-  font-family: "Times New Roman", Times, sans-serif;
-  font-size: 1.4em;
-  font-weight: bold;
+  /* font-family: "Courier New", Courier, monospace; */
+  font-family: "Lucida Console", Monaco, monospace;
+  font-size: 1.0em;
+  /* font-weight: bold; */
   /* font-style: oblique; */
-  margin: 15px 10px 12px 20px;
+  margin: 20px 10px 12px 20px;
   padding: 0px;
 }
 
 pre.codeblock {
   font-family: "Lucida Console", Monaco, monospace;
-  font-size: 0.8em;
+  font-size: 0.9em;
   color: #33ff66;
+  /* color: orange; */
   background-color: black;
   /* top rig bot lef */
   padding: 10px 20px 0px 20px;
@@ -458,7 +461,7 @@ pre.codeblock {
 .didit {
   display: inline-block;
   width: 24px;
-  height: 20px;
+  height: 15px;
   background-repeat: no-repeat;
   background-size: contain;
   background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAWCAMAAADto6y6AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAQtQTFRFAAAAAH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//////BQzC2AAAAFd0Uk5TAAADLy4QZVEHKp8FAUnHbeJ3BAh68IYGC4f4nQyM/LkYCYnXf/rvAm/2/oFY7rcTPuHkOCEky3YjlW4Pqbww0MVTfUZA96p061Xs3mz1e4P70R2aHJYf2KM0AgAAAAFiS0dEWO21xI4AAAAJcEhZcwAAEysAABMrAbkohUIAAADTSURBVCjPbdDZUsJAEAXQXAgJIUDCogHBkbhFEIgCsqmo4MImgij9/39iUT4Qkp63OV0zfbsliTkIhWWOEVHUKOdaTNER9HgiaYQY1xUzlWY8kz04tBjP5Y8KRc6PxUmJcftUnMkIFGCdX1yqjDtX5cp1MChQrVHd3Xn8/y1wc0uNpuejZmt7Ae7aJDreBt1e3wVw/0D06HobYPD0/GI7Q0G10V4i4NV8e/8YE/V8KwImUxJEM82fFM78k4gW3MhfS1p9B3ckobgWBpiChJ/fjc//AJIfFr4X0swAAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE2LTA3LTMwVDE0OjI3OjUxLTA3OjAwUzMirAAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNi0wNy0zMFQxNDoyNzo0NC0wNzowMLz8tSkAAAAZdEVYdFNvZnR3YXJlAHd3dy5pbmtzY2FwZS5vcmeb7jwaAAAAFXRFWHRUaXRsZQBibHVlIENoZWNrIG1hcmsiA8jIAAAAAElFTkSuQmCC);
