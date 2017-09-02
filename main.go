@@ -1,25 +1,75 @@
 package main
 
 import (
+	"log"
+	"os"
+
+	"time"
+
+	"github.com/gorilla/websocket"
 	"github.com/monopole/mdrip/config"
 	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/subshell"
-	"github.com/monopole/mdrip/tmux"
 	"github.com/monopole/mdrip/webserver"
-	"io"
-	"io/ioutil"
-	"log"
-	"os"
 )
 
-// make a tmux writer.  If no tmux, return a discarder.
-func makeWriter() io.Writer {
-	if up, err := tmux.IsTmuxUp(tmux.Path); !up {
-		log.Print(err)
-		log.Print("Will run anyway, discarding scripts.")
-		return ioutil.Discard
+func closeSocket(c *websocket.Conn, done chan struct{}) {
+	defer c.Close()
+	// Send a close frame, wait for the other side to close the connection.
+	err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if err != nil {
+		log.Println("write close:", err)
+		return
 	}
-	return tmux.NewTmuxByName(tmux.Path)
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+	}
+}
+
+func runProxy(addr string) {
+	done := make(chan struct{})
+
+	log.Printf("connecting to %s", addr)
+
+	c, _, err := websocket.DefaultDialer.Dial(addr, nil)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+	defer closeSocket(c, done)
+
+	messages := make(chan string)
+
+	go func() {
+		defer close(done)
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				return
+			}
+			messages <- string(message)
+		}
+	}()
+
+	err = c.WriteMessage(websocket.TextMessage, []byte("hey there"))
+	if err != nil {
+		log.Println("trouble saying hello:", err)
+		return
+	}
+
+	for {
+		select {
+		case m := <-messages:
+			log.Printf("recv: %s", m)
+			// TODO: Cancel previous timeout, start new one ??
+		case <-done:
+			return
+		case <-time.After(10 * time.Minute):
+			// *Always* stop after this super-timeout.
+			return
+		}
+	}
 }
 
 func main() {
@@ -27,8 +77,10 @@ func main() {
 	p := program.NewProgram(c.ScriptName(), c.FileNames())
 
 	switch c.Mode() {
-	case config.ModeTmux:
-		webserver.NewWebserver(p).Serve(makeWriter(), c.HostAndPort())
+	case config.ModeTmuxProxy:
+		runProxy(string(c.FileNames()[0]))
+	case config.ModeServer:
+		webserver.NewWebserver(p).Serve(c.HostAndPort())
 	case config.ModeTest:
 		p.Reload()
 		s := subshell.NewSubshell(c.BlockTimeOut(), p)

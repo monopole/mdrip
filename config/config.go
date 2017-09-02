@@ -72,11 +72,10 @@ Modes:
       mdrip file.md | source /dev/stdin
    to run in a piped shell that exits with extracted code status.
 
- --mode tmux
+ --mode server
 
    Starts a web server at http://localhost:8000 to offer a UX
-   facilitating execution of command blocks in an existing tmux
-   session.
+   facilitating execution of command blocks.
 
    Change port using --port flag.
 
@@ -110,13 +109,14 @@ type ModeType int
 const (
 	ModeUnknown ModeType = iota
 	ModePrint
-	ModeTmux
+	ModeServer
+	ModeTmuxProxy
 	ModeTest
 )
 
 var (
 	mode = flag.String("mode", "print",
-		`Mode is print, test or tmux.`)
+		`Mode is print, test, server or tmuxproxy.`)
 
 	label = flag.String("label", "",
 		`Using "--label foo" means extract only blocks annotated with "<!-- @foo -->".`)
@@ -125,10 +125,10 @@ var (
 		`In --mode print, run the first {n} blocks in the current shell, and the rest in a trapped subshell.`)
 
 	useHostname = flag.Bool("useHostname", false,
-		`In --mode tmux, use the hostname utility to specify where to serve, else implicitly use localhost.`)
+		`In --mode server, use the hostname utility to specify where to serve, else implicitly use localhost.`)
 
 	port = flag.Int("port", 8000,
-		`In --mode tmux, use given port for the local web server.`)
+		`In --mode server, expose HTTP at the given port.`)
 
 	blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
 		`In --mode test, the max amount of time to wait for a command block to exit.`)
@@ -142,15 +142,17 @@ func determineMode() ModeType {
 	if len(*mode) == 0 {
 		return ModePrint
 	}
-	if len(*mode) < 2 {
+	if len(*mode) < 3 {
 		return ModeUnknown
 	}
-	// Use 2nd letter since test and tmux start with t.
-	switch unicode.ToLower([]rune(*mode)[1]) {
-	case 'e': // test
+	// Use 3rd letter since test and tmux start with t.
+	switch unicode.ToLower([]rune(*mode)[2]) {
+	case 's': // test
 		return ModeTest
-	case 'm': // tmux
-		return ModeTmux
+	case 'r': // server
+		return ModeServer
+	case 'u': // tmuxproxy
+		return ModeTmuxProxy
 	default:
 		return ModePrint
 	}
@@ -226,7 +228,7 @@ func GetConfig() *Config {
 
 	desiredMode := determineMode()
 	if desiredMode == ModeUnknown {
-		fmt.Fprintln(os.Stderr, `For mode, specify print, test or tmux.`)
+		fmt.Fprintln(os.Stderr, `For mode, specify print, test, server or tmuxproxy.`)
 		usage()
 		os.Exit(1)
 	}

@@ -32,6 +32,7 @@ const (
 
 func NewProgram(label model.Label, fileNames []model.FileName) *Program {
 	return &Program{label, fileNames, []*model.Script{}}
+
 }
 
 // Build program code from blocks extracted from markdown files.

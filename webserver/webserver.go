@@ -1,28 +1,63 @@
 package webserver
 
 import (
+	"crypto/rand"
 	"fmt"
+
 	"html/template"
 	"io"
 	"net/http"
 
+	"errors"
+	"io/ioutil"
 	"os"
 	"strconv"
 
 	"github.com/golang/glog"
-
+	"github.com/gorilla/websocket"
 	// "github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
+	"github.com/monopole/mdrip/tmux"
 )
 
-type Webserver struct {
-	store sessions.Store
-	p     *program.Program
+// A program and anything that needs to be rendered with it.
+type Control struct {
+	SessionId sessionId
+	Pgm       *program.Program
 }
 
-const cookieName = "mdrip"
+type Webserver struct {
+	store       sessions.Store
+	upgrader    websocket.Upgrader
+	control     Control
+	connections map[sessionId]*websocket.Conn
+}
+
+const (
+	cookieName = "mdrip"
+	sessIdKey  = "sessId"
+)
+
+const (
+	tmplNameControl = "control"
+	tmplBodyControl = `
+{{define "` + tmplNameControl + `"}}
+<html>
+<head>` + headerHtml + `</head>
+<body onload="onLoad()">
+<pre>
+ mdrip --mode tmuxproxy ws://localhost:8000/ws?id={{.SessionId}}
+</pre>
+{{ template "` + program.TmplNameProgram + `" .Pgm }}
+</body>
+</html>
+{{end}}
+`
+)
+
+type sessionId string
 
 // var keyAuth = securecookie.GenerateRandomKey(16)
 var keyAuth = []byte("static-visible-secret")
@@ -30,51 +65,88 @@ var keyEncrypt = []byte(nil)
 
 var templates = template.Must(
 	template.New("main").Parse(
-		model.TmplBodyCommandBlock + model.TmplBodyScript + program.TmplBodyProgram))
+		model.TmplBodyCommandBlock + model.TmplBodyScript + program.TmplBodyProgram + tmplBodyControl))
 
 func NewWebserver(p *program.Program) *Webserver {
-s := sessions.NewCookieStore(keyAuth, keyEncrypt)
+	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
 		Domain:   "localhost",
 		Path:     "/",
 		MaxAge:   3600 * 8, // 8 hours
 		HttpOnly: true,
 	}
-	return &Webserver{s, p}
+	return &Webserver{s, websocket.Upgrader{}, Control{"blood", p}, make(map[sessionId]*websocket.Conn)}
 }
 
-func (ws *Webserver) secret(w http.ResponseWriter, r *http.Request) {
-	session, _ := ws.store.Get(r, cookieName)
-
-	// Check if user is authenticated
-	if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
+func getSessionId(s *sessions.Session) sessionId {
+	if c, ok := s.Values[sessIdKey].(string); ok {
+		return sessionId(c)
 	}
+	return ""
+}
 
-	// Print secret message
-	fmt.Fprintln(w, "The cake is a lie!")
+func assureSessionId(s *sessions.Session) sessionId {
+	c := getSessionId(s)
+	if c == "" {
+		c = makeSessionId()
+		s.Values[sessIdKey] = string(c)
+	}
+	return c
+}
+
+func makeSessionId() sessionId {
+	b := make([]byte, 5)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	return sessionId(fmt.Sprintf("%X", b))
 }
 
 func dumpSessionInfo(s *sessions.Session) {
-	glog.Infof("      Session ID: %v", s.ID)
 	glog.Infof("    Session Name: %v", s.Name())
 	glog.Infof("   Session isNew: %v", s.IsNew)
 	glog.Infof("  Session Values: %v", s.Values)
 }
 
-func setSessionId(s *sessions.Session) {
-	if val, ok := s.Values["myId"].(string); ok {
-		switch val {
-		case "":
-			glog.Infof("    myId is empty?")
-		default:
-			glog.Infof("    myId is %s", val)
-		}
-	} else {
-		s.Values["myId"] = "cheese"
-		glog.Infof("   set myId to cheese")
+func getSessionIdParam(n string, r *http.Request) (sessionId, error) {
+	v := r.URL.Query().Get(n)
+	if v == "" {
+		return "", errors.New("no session Id")
 	}
+	return sessionId(v), nil
+}
+
+// Pull session Id out of request, create a socket connection,
+// store connection in a map.  The block runner will attempt to
+// find the connection and write to it, else fall back to its
+// other behaviors.
+func (ws *Webserver) openWebSocket(w http.ResponseWriter, r *http.Request) {
+	sessId, err := getSessionIdParam("id", r)
+	if err != nil {
+		glog.Errorf("no session Id: %v", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if ws.connections[sessId] != nil {
+		// Already have a session?
+		glog.Info("Wut? session already exists: ", sessId)
+		return
+	}
+	c, err := ws.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		glog.Info("upgrade:", err)
+		return
+	}
+	glog.Info("established connection")
+	go func() {
+		_, message, err := c.ReadMessage()
+		if err == nil {
+			glog.Info("hello message:", message)
+		} else {
+			glog.Info("hello err:", err)
+		}
+	}()
+	ws.connections[sessId] = c
 }
 
 func (ws *Webserver) showControlPage(w http.ResponseWriter, r *http.Request) {
@@ -84,23 +156,31 @@ func (ws *Webserver) showControlPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	setSessionId(session)
 
+	ws.control.SessionId = assureSessionId(session)
 	dumpSessionInfo(session)
 	err = session.Save(r, w)
 	if err != nil {
 		glog.Errorf("Unable to save session: %v", err)
 	}
 
-	ws.p.Reload()
-	fmt.Fprintln(w, `<html>`+headerHtml+`<body onload="onLoad()">`)
-	if err := templates.ExecuteTemplate(w, program.TmplNameProgram, ws.p); err != nil {
+	ws.control.Pgm.Reload()
+	if err := templates.ExecuteTemplate(w, tmplNameControl, ws.control); err != nil {
 		glog.Fatal(err)
 	}
-	fmt.Fprintln(w, `</body></html>`)
 }
 
-func (ws *Webserver) makeBlockRunner(codeRunner io.Writer) func(w http.ResponseWriter, r *http.Request) {
+func (ws *Webserver) getCodeRunner() io.Writer {
+	if up, err := tmux.IsTmuxUp(tmux.Path); !up {
+		glog.Info(err)
+		glog.Info("Will run anyway, discarding scripts.")
+		return ioutil.Discard
+	}
+	return tmux.NewTmuxByName(tmux.Path)
+
+}
+
+func (ws *Webserver) makeBlockRunner() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := ws.store.Get(r, cookieName)
 		if err != nil {
@@ -108,12 +188,23 @@ func (ws *Webserver) makeBlockRunner(codeRunner io.Writer) func(w http.ResponseW
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		setSessionId(session)
+		sessId := assureSessionId(session)
 		// TODO(jregan): 404 on bad params
 		indexScript := getIntParam("sid", r, -1)
 		indexBlock := getIntParam("bid", r, -1)
-		block := ws.p.Scripts[indexScript].Blocks()[indexBlock]
+		block := ws.control.Pgm.Scripts[indexScript].Blocks()[indexBlock]
 		glog.Info("Running ", block.Name())
+
+		c := ws.connections[sessId]
+		if c != nil {
+			err = c.WriteMessage(websocket.TextMessage, block.Code().Bytes())
+			if err != nil {
+				glog.Info("bad socket write:", err)
+			}
+			return
+		}
+
+		codeRunner := ws.getCodeRunner()
 		_, err = codeRunner.Write(block.Code().Bytes())
 		if err != nil {
 			fmt.Fprintln(w, err)
@@ -153,14 +244,17 @@ func getIntParam(n string, r *http.Request, d int) int {
 }
 
 func (ws *Webserver) quit(w http.ResponseWriter, r *http.Request) {
+	for _, c := range ws.connections {
+		c.Close()
+	}
 	os.Exit(0)
 }
 
 // Serve offers an http service.
-// A handler writes command blocks to an executor for execution.
-func (ws *Webserver) Serve(executor io.Writer, hostAndPort string) {
+func (ws *Webserver) Serve(hostAndPort string) {
 	http.HandleFunc("/", ws.showControlPage)
-	http.HandleFunc("/runblock", ws.makeBlockRunner(executor))
+	http.HandleFunc("/runblock", ws.makeBlockRunner())
+	http.HandleFunc("/ws", ws.openWebSocket)
 	http.HandleFunc("/favicon.ico", ws.favicon)
 	http.HandleFunc("/image", ws.image)
 	http.HandleFunc("/q", ws.quit)
@@ -170,7 +264,6 @@ func (ws *Webserver) Serve(executor io.Writer, hostAndPort string) {
 }
 
 const headerHtml = `
-<head>
 <style type="text/css">
 body {
   font-family: "Veranda", Veranda, sans-serif;
@@ -324,5 +417,4 @@ pre.codeblock {
     xhttp.send();
   }
 </script>
-</head>
 `
