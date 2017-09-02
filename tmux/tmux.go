@@ -1,25 +1,29 @@
 package tmux
 
 import (
+	"errors"
 	"fmt"
+	"github.com/golang/glog"
 	"io/ioutil"
 	"os"
 	"os/exec"
-
-	"github.com/golang/glog"
 )
 
 type Tmux struct {
-	programName string
-	paneId      string
+	path   string
+	paneId string
 }
 
 const (
-	ProgramName = "/usr/bin/tmux"
+	Path        = "/usr/bin/tmux"
 	SessionName = "mdrip"
 )
 
-func NewTmux(programName string) *Tmux {
+func NewTmux() *Tmux {
+	return NewTmuxByName(Path)
+}
+
+func NewTmuxByName(programName string) *Tmux {
 	return &Tmux{programName, "0"}
 }
 
@@ -28,15 +32,23 @@ func IsProgramInstalled(programName string) bool {
 	return err == nil
 }
 
-func (t Tmux) Refresh() error {
-	_, err := exec.LookPath(t.programName)
+func (t Tmux) IsRunning() bool {
+	cmd := exec.Command(t.path, "info")
+	_, err := cmd.Output()
+	return err == nil
+}
+
+func IsTmuxUp(programName string) (bool, error) {
+	_, err := exec.LookPath(programName)
 	if err != nil {
-		fmt.Printf("Unable to find %s: %v\n", t.programName, err)
-		return err
+		return false, err
 	}
-	fmt.Printf("Be sure %s is running.\n", t.programName)
-	fmt.Printf("Sending commands to %s pane Id %s.\n", t.programName, t.paneId)
-	return nil
+	cmd := exec.Command(programName, "info")
+	outPut, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, errors.New(string(outPut))
+	}
+	return true, nil
 }
 
 // Write bytes to a tmux session for interpretation as shell commands.
@@ -68,10 +80,10 @@ func (t Tmux) Write(bytes []byte) (n int, err error) {
 		glog.Fatalf("Expected to write %d bytes, wrote %d", len(bytes), n)
 	}
 
-	cmd := exec.Command(t.programName, "load-buffer", tmpFile.Name())
+	cmd := exec.Command(t.path, "load-buffer", tmpFile.Name())
 	out, err := cmd.Output()
 	if err == nil {
-		cmd = exec.Command(t.programName, "paste-buffer", "-t", t.paneId)
+		cmd = exec.Command(t.path, "paste-buffer", "-t", t.paneId)
 		out, err = cmd.Output()
 	}
 
@@ -83,21 +95,21 @@ func (t Tmux) Write(bytes []byte) (n int, err error) {
 }
 
 func (t Tmux) Start() error {
-	cmd := exec.Command(t.programName, "new", "-s", SessionName, "-d")
+	cmd := exec.Command(t.path, "new", "-s", SessionName, "-d")
 	out, err := cmd.Output()
 	glog.Info("Starting ", out)
 	return err
 }
 
 func (t Tmux) Stop() error {
-	cmd := exec.Command(t.programName, "kill-session", "-t", SessionName)
+	cmd := exec.Command(t.path, "kill-session", "-t", SessionName)
 	out, err := cmd.Output()
 	glog.Info("Stopping ", out)
 	return err
 }
 
 func (t Tmux) ListSessions() (string, error) {
-	cmd := exec.Command(t.programName, "list-sessions")
+	cmd := exec.Command(t.path, "list-sessions")
 	raw, err := cmd.Output()
 	glog.Info("List ", string(raw))
 	return string(raw), err

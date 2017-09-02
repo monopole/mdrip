@@ -8,47 +8,43 @@ import (
 )
 
 const (
-	badName     = "nonsensicalFakeHopeNotInstalledPgmName"
-	sessionName = "tmuxTestSessionThatShouldNotSurviveTest"
-	skipMessage = "skipping test since tmux not found"
+	badName            = "nonsensicalFakeHopeNotInstalledPgmName"
+	skipAlreadyRunning = "skipping since tmux already running"
+	skipNoTmux         = "skipping since tmux not found"
 )
-
-var (
-	shouldSkip bool
-)
-
-func init() {
-	shouldSkip = !IsProgramInstalled(ProgramName)
-}
 
 func TestBadName(t *testing.T) {
-	x := NewTmux(badName)
-	err := x.Refresh()
+	_, err := IsTmuxUp(badName)
 	if err == nil {
 		t.Errorf("Should fail using a nonsensical name like \"%s\".", badName)
 	}
 }
 
-func TestTmuxInstalled(t *testing.T) {
-	if shouldSkip {
-		t.Skip(skipMessage)
+func TestAssureNotUp(t *testing.T) {
+	if !IsProgramInstalled(Path) {
+		t.Skip(skipNoTmux)
 	}
-	x := NewTmux(ProgramName)
-	err := x.Refresh()
-	if err != nil {
-		t.Errorf("\"%s\" not installed?", ProgramName)
+	up, _ := IsTmuxUp(Path)
+	if up {
+		t.Error("tmux must not be up during test runs")
 	}
 }
 
 func TestStartAndStopTmuxSession(t *testing.T) {
-	if shouldSkip {
-		t.Skip(skipMessage)
+	if !IsProgramInstalled(Path) {
+		t.Skip(skipNoTmux)
 	}
-	x := NewTmux(ProgramName)
+	x := NewTmuxByName(Path)
+	if x.IsRunning() {
+		t.Skip(skipAlreadyRunning)
+	}
 	var out string
 	err := x.Start()
 	if err != nil {
 		t.Errorf("unable to start session: %s", err)
+	}
+	if !x.IsRunning() {
+		t.Errorf("tmux should appear as running: %s", err)
 	}
 	out, err = x.ListSessions()
 	if err != nil {

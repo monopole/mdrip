@@ -1,35 +1,38 @@
 package main
 
 import (
+	"github.com/monopole/mdrip/config"
+	"github.com/monopole/mdrip/program"
+	"github.com/monopole/mdrip/subshell"
+	"github.com/monopole/mdrip/tmux"
+	"github.com/monopole/mdrip/webserver"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
-
-	"github.com/monopole/mdrip/config"
-	"github.com/monopole/mdrip/program"
-	"github.com/monopole/mdrip/tmux"
 )
+
+// make a tmux writer.  If no tmux, return a discarder.
+func makeWriter() io.Writer {
+	if up, err := tmux.IsTmuxUp(tmux.Path); !up {
+		log.Print(err)
+		log.Print("Will run anyway, discarding scripts.")
+		return ioutil.Discard
+	}
+	return tmux.NewTmuxByName(tmux.Path)
+}
 
 func main() {
 	c := config.GetConfig()
-	// A program has a timeout and a name.
-	p := program.NewProgram(c.BlockTimeOut(), c.ScriptName(), c.FileNames())
+	p := program.NewProgram(c.ScriptName(), c.FileNames())
 
 	switch c.Mode() {
 	case config.ModeTmux:
-		w := ioutil.Discard
-		if tmux.IsProgramInstalled(tmux.ProgramName) {
-			t := tmux.NewTmux(tmux.ProgramName)
-			err := t.Refresh()
-			if err != nil {
-				log.Fatal(err)
-			}
-			w = t
-		}
-		p.Serve(w, c.HostAndPort())
+		webserver.NewWebserver(p).Serve(makeWriter(), c.HostAndPort())
 	case config.ModeTest:
 		p.Reload()
-		if r := p.RunInSubShell(); r.Problem() != nil {
+		s := subshell.NewSubshell(c.BlockTimeOut(), p)
+		if r := s.Run(); r.Problem() != nil {
 			r.Print(c.ScriptName())
 			if !c.IgnoreTestFailure() {
 				log.Fatal(r.Problem())

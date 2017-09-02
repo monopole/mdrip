@@ -24,7 +24,8 @@ func (c opaqueCode) Bytes() []byte {
 type CommandBlock struct {
 	labels []Label
 	code   opaqueCode
-	prose  string
+	// prose is human language documentation for the opaqueCode
+	prose string
 }
 
 const (
