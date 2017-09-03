@@ -71,13 +71,33 @@ Modes:
    Use
       mdrip file.md | source /dev/stdin
    to run in a piped shell that exits with extracted code status.
+   Does not impact your current shell.
 
- --mode server
+ --mode web
 
-   Starts a web server at http://localhost:8000 to offer a UX
-   facilitating execution of command blocks.
+   Starts a web server at http://localhost:8000 to offer a rendered
+   version of the markdown facilitating execution of command blocks.
 
-   Change port using --port flag.
+   Change port using --port flag.  See also flag --hostname.
+
+ --mode tmux
+
+   Only useful if both a local tmux instance is running, and somewhere
+   on the net mdrip is running in '--mode web'.
+
+   In this mode the first argument to mdrip, normally treated as a
+   markdown filename, is treated as a URL.  mdrip attempts to open a
+   websocket to that URL.
+
+   Meanwhile, when a web user clicks on a code block served by mdrip
+   (in --mode web) an attempt is made to find a websocket associated
+   with the user's web session.
+
+   If a socket is found, the code block is sent to the socket.  Upon
+   receipt, mdrip (in --mode tmux) sends the block to local tmux as if
+   the user had typed it.
+
+   This results in 'one click' behavior that's surprisingly handy.
 
  --mode test
 
@@ -109,14 +129,14 @@ type ModeType int
 const (
 	ModeUnknown ModeType = iota
 	ModePrint
-	ModeServer
-	ModeTmuxProxy
 	ModeTest
+	ModeWeb
+	ModeTmux
 )
 
 var (
 	mode = flag.String("mode", "print",
-		`Mode is print, test, server or tmuxproxy.`)
+		`Mode is print, test, web or tmux.`)
 
 	label = flag.String("label", "",
 		`Using "--label foo" means extract only blocks annotated with "<!-- @foo -->".`)
@@ -125,10 +145,10 @@ var (
 		`In --mode print, run the first {n} blocks in the current shell, and the rest in a trapped subshell.`)
 
 	useHostname = flag.Bool("useHostname", false,
-		`In --mode server, use the hostname utility to specify where to serve, else implicitly use localhost.`)
+		`In --mode web, use the hostname utility to specify where to serve, else implicitly use localhost.`)
 
 	port = flag.Int("port", 8000,
-		`In --mode server, expose HTTP at the given port.`)
+		`In --mode web, expose HTTP at the given port.`)
 
 	blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
 		`In --mode test, the max amount of time to wait for a command block to exit.`)
@@ -145,14 +165,15 @@ func determineMode() ModeType {
 	if len(*mode) < 3 {
 		return ModeUnknown
 	}
-	// Use 3rd letter since test and tmux start with t.
+	// Use 3rd letter since test and tmux have `t` as char 1,
+	// and test and web have `e` as char 2.
 	switch unicode.ToLower([]rune(*mode)[2]) {
 	case 's': // test
 		return ModeTest
-	case 'r': // server
-		return ModeServer
-	case 'u': // tmuxproxy
-		return ModeTmuxProxy
+	case 'b': // web
+		return ModeWeb
+	case 'u': // tmux
+		return ModeTmux
 	default:
 		return ModePrint
 	}
@@ -228,7 +249,7 @@ func GetConfig() *Config {
 
 	desiredMode := determineMode()
 	if desiredMode == ModeUnknown {
-		fmt.Fprintln(os.Stderr, `For mode, specify print, test, server or tmuxproxy.`)
+		fmt.Fprintln(os.Stderr, `For mode, specify print, test, web or tmux.`)
 		usage()
 		os.Exit(1)
 	}

@@ -1,12 +1,14 @@
 package tmux
 
 import (
-	"errors"
 	"fmt"
 	"github.com/golang/glog"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 type Tmux struct {
@@ -19,11 +21,7 @@ const (
 	SessionName = "mdrip"
 )
 
-func NewTmux() *Tmux {
-	return NewTmuxByName(Path)
-}
-
-func NewTmuxByName(programName string) *Tmux {
+func NewTmux(programName string) *Tmux {
 	return &Tmux{programName, "0"}
 }
 
@@ -32,23 +30,76 @@ func IsProgramInstalled(programName string) bool {
 	return err == nil
 }
 
-func (t Tmux) IsRunning() bool {
+func (t Tmux) IsUp() bool {
+	if _, err := exec.LookPath(t.path); err != nil {
+		return false
+	}
 	cmd := exec.Command(t.path, "info")
-	_, err := cmd.Output()
-	return err == nil
+	if _, err := cmd.CombinedOutput(); err != nil {
+		return false
+	}
+	return true
 }
 
-func IsTmuxUp(programName string) (bool, error) {
-	_, err := exec.LookPath(programName)
+func closeSocket(c *websocket.Conn, done chan struct{}) {
+	defer c.Close()
+	// Send a close frame, wait for the other side to close the connection.
+	err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
-		return false, err
+		glog.Error("write close:", err)
+		return
 	}
-	cmd := exec.Command(programName, "info")
-	outPut, err := cmd.CombinedOutput()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+	}
+}
+
+func (t Tmux) Adapt(addr string) {
+	done := make(chan struct{})
+
+	glog.Info("connecting to %s", addr)
+
+	c, _, err := websocket.DefaultDialer.Dial(addr, nil)
 	if err != nil {
-		return false, errors.New(string(outPut))
+		glog.Fatal("dial:", err)
 	}
-	return true, nil
+	defer closeSocket(c, done)
+
+	messages := make(chan []byte)
+
+	go func() {
+		defer close(done)
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				glog.Info("error on read:", err)
+				return
+			}
+			messages <- message
+		}
+	}()
+
+	err = c.WriteMessage(
+		websocket.TextMessage, []byte("greetings from mdrip --mode tmux"))
+	if err != nil {
+		glog.Error("trouble saying hello:", err)
+		return
+	}
+
+	for {
+		select {
+		case m := <-messages:
+			glog.Info("received: ", string(m))
+			t.Write(m)
+			// TODO: Cancel previous timeout, start new one ??
+		case <-done:
+			return
+		case <-time.After(10 * time.Minute):
+			// *Always* stop after this super-timeout.
+			return
+		}
+	}
 }
 
 // Write bytes to a tmux session for interpretation as shell commands.

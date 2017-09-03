@@ -14,8 +14,7 @@ const (
 )
 
 func TestBadName(t *testing.T) {
-	_, err := IsTmuxUp(badName)
-	if err == nil {
+	if IsProgramInstalled(badName) {
 		t.Errorf("Should fail using a nonsensical name like \"%s\".", badName)
 	}
 }
@@ -24,8 +23,8 @@ func TestAssureNotUp(t *testing.T) {
 	if !IsProgramInstalled(Path) {
 		t.Skip(skipNoTmux)
 	}
-	up, _ := IsTmuxUp(Path)
-	if up {
+	x := NewTmux(Path)
+	if x.IsUp() {
 		t.Error("tmux must not be up during test runs")
 	}
 }
@@ -34,8 +33,8 @@ func TestStartAndStopTmuxSession(t *testing.T) {
 	if !IsProgramInstalled(Path) {
 		t.Skip(skipNoTmux)
 	}
-	x := NewTmuxByName(Path)
-	if x.IsRunning() {
+	x := NewTmux(Path)
+	if x.IsUp() {
 		t.Skip(skipAlreadyRunning)
 	}
 	var out string
@@ -43,7 +42,7 @@ func TestStartAndStopTmuxSession(t *testing.T) {
 	if err != nil {
 		t.Errorf("unable to start session: %s", err)
 	}
-	if !x.IsRunning() {
+	if !x.IsUp() {
 		t.Errorf("tmux should appear as running: %s", err)
 	}
 	out, err = x.ListSessions()

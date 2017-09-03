@@ -15,16 +15,17 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/gorilla/websocket"
-	// "github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/tmux"
 )
 
+type TypeSessId string
+
 // A program and anything that needs to be rendered with it.
 type Control struct {
-	SessionId sessionId
+	SessId TypeSessId
 	Pgm       *program.Program
 }
 
@@ -32,12 +33,12 @@ type Webserver struct {
 	store       sessions.Store
 	upgrader    websocket.Upgrader
 	control     Control
-	connections map[sessionId]*websocket.Conn
+	connections map[TypeSessId]*websocket.Conn
 }
 
 const (
 	cookieName = "mdrip"
-	sessIdKey  = "sessId"
+	keySessId  = "sessId"
 )
 
 const (
@@ -47,17 +48,25 @@ const (
 <html>
 <head>` + headerHtml + `</head>
 <body onload="onLoad()">
+<p>
+For one-click (no copy/paste usage):
+<ul>
+<li>Install <a href="https://github.com/tmux/tmux/wiki">tmux</a>
+</li>
+<li>In some shell, run
 <pre>
- mdrip --mode tmuxproxy ws://localhost:8000/ws?id={{.SessionId}}
+  GOPATH=/tmp/mdrip go install github.com/monopole/mdrip
+  /tmp/mdrip/bin/mdrip --mode tmux ws://localhost:8000/ws?id={{.SessId}}
 </pre>
+</li>
+<li>Click command block headers below and see them execute in tmux.</li>
+</ul>
 {{ template "` + program.TmplNameProgram + `" .Pgm }}
 </body>
 </html>
 {{end}}
 `
 )
-
-type sessionId string
 
 // var keyAuth = securecookie.GenerateRandomKey(16)
 var keyAuth = []byte("static-visible-secret")
@@ -75,31 +84,31 @@ func NewWebserver(p *program.Program) *Webserver {
 		MaxAge:   3600 * 8, // 8 hours
 		HttpOnly: true,
 	}
-	return &Webserver{s, websocket.Upgrader{}, Control{"blood", p}, make(map[sessionId]*websocket.Conn)}
+	return &Webserver{s, websocket.Upgrader{}, Control{"blood", p}, make(map[TypeSessId]*websocket.Conn)}
 }
 
-func getSessionId(s *sessions.Session) sessionId {
-	if c, ok := s.Values[sessIdKey].(string); ok {
-		return sessionId(c)
+func getSessionId(s *sessions.Session) TypeSessId {
+	if c, ok := s.Values[keySessId].(string); ok {
+		return TypeSessId(c)
 	}
 	return ""
 }
 
-func assureSessionId(s *sessions.Session) sessionId {
+func assureSessionId(s *sessions.Session) TypeSessId {
 	c := getSessionId(s)
 	if c == "" {
 		c = makeSessionId()
-		s.Values[sessIdKey] = string(c)
+		s.Values[keySessId] = string(c)
 	}
 	return c
 }
 
-func makeSessionId() sessionId {
+func makeSessionId() TypeSessId {
 	b := make([]byte, 5)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-	return sessionId(fmt.Sprintf("%X", b))
+	return TypeSessId(fmt.Sprintf("%X", b))
 }
 
 func dumpSessionInfo(s *sessions.Session) {
@@ -108,12 +117,12 @@ func dumpSessionInfo(s *sessions.Session) {
 	glog.Infof("  Session Values: %v", s.Values)
 }
 
-func getSessionIdParam(n string, r *http.Request) (sessionId, error) {
+func getSessionIdParam(n string, r *http.Request) (TypeSessId, error) {
 	v := r.URL.Query().Get(n)
 	if v == "" {
 		return "", errors.New("no session Id")
 	}
-	return sessionId(v), nil
+	return TypeSessId(v), nil
 }
 
 // Pull session Id out of request, create a socket connection,
@@ -137,13 +146,13 @@ func (ws *Webserver) openWebSocket(w http.ResponseWriter, r *http.Request) {
 		glog.Info("upgrade:", err)
 		return
 	}
-	glog.Info("established connection")
+	glog.Info("established websocket")
 	go func() {
 		_, message, err := c.ReadMessage()
 		if err == nil {
-			glog.Info("hello message:", message)
+			glog.Info("handshake: ", string(message))
 		} else {
-			glog.Info("hello err:", err)
+			glog.Info("websocket err:", err)
 		}
 	}()
 	ws.connections[sessId] = c
@@ -157,7 +166,7 @@ func (ws *Webserver) showControlPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ws.control.SessionId = assureSessionId(session)
+	ws.control.SessId = assureSessionId(session)
 	dumpSessionInfo(session)
 	err = session.Save(r, w)
 	if err != nil {
@@ -171,13 +180,12 @@ func (ws *Webserver) showControlPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ws *Webserver) getCodeRunner() io.Writer {
-	if up, err := tmux.IsTmuxUp(tmux.Path); !up {
-		glog.Info(err)
-		glog.Info("Will run anyway, discarding scripts.")
+	t := tmux.NewTmux(tmux.Path)
+	if !t.IsUp() {
+		glog.Info("tmux not up, will run anyway, discarding scripts.")
 		return ioutil.Discard
 	}
-	return tmux.NewTmuxByName(tmux.Path)
-
+	return t
 }
 
 func (ws *Webserver) makeBlockRunner() func(w http.ResponseWriter, r *http.Request) {
@@ -195,8 +203,12 @@ func (ws *Webserver) makeBlockRunner() func(w http.ResponseWriter, r *http.Reque
 		block := ws.control.Pgm.Scripts[indexScript].Blocks()[indexBlock]
 		glog.Info("Running ", block.Name())
 
+		/// TODO: bury this behind io.Writer, and return it from getCodeRunner.
 		c := ws.connections[sessId]
-		if c != nil {
+		if c == nil {
+			glog.Infof("No socket found for ID %v", sessId)
+		} else {
+			glog.Infof("Attempting write to %v", sessId)
 			err = c.WriteMessage(websocket.TextMessage, block.Code().Bytes())
 			if err != nil {
 				glog.Info("bad socket write:", err)
