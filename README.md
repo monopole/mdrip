@@ -30,6 +30,15 @@ It's language independent because shell scripts can
 make, build and run programs in any programming language, via [_here_
 documents](http://tldp.org/LDP/abs/html/here-docs.html) and what not.
 
+### Demo mode
+
+[tmux]: https://github.com/tmux/tmux/wiki
+
+`mdrip --mode web {filename}` serves rendered markdown with clickable command blocks.
+Clicking copies the code to your clipboard.  You can also run `mdrip --mode tmux {websocket address}`
+to run an adapter that will run clicked command blocks directly in a local [tmux] window.
+See `mdrip --help` for more info.
+
 ## Build
 
 Assuming Go installed:
@@ -108,4 +117,3 @@ cleanup.  A block that does cleanup can be added to the markdown.
 [travis-mdrip]: https://travis-ci.org/monopole/mdrip
 [example-tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
 [raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md
-

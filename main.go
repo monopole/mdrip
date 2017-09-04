@@ -21,7 +21,7 @@ func main() {
 		if !t.IsUp() {
 			glog.Fatal(tmux.Path, " not running")
 		}
-		// Cheat and steal the first fileName as a host address argument.
+		// Steal the first fileName as a host address argument.
 		t.Adapt(string(c.FileNames()[0]))
 	case config.ModeWeb:
 		webserver.NewWebserver(p).Serve(c.HostAndPort())

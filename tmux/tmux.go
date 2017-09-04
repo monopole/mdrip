@@ -58,11 +58,11 @@ func closeSocket(c *websocket.Conn, done chan struct{}) {
 func (t Tmux) Adapt(addr string) {
 	done := make(chan struct{})
 
-	glog.Info("connecting to %s", addr)
+	glog.Info("connecting to ", addr)
 
 	c, _, err := websocket.DefaultDialer.Dial(addr, nil)
 	if err != nil {
-		glog.Fatal("dial:", err)
+		glog.Fatal("dial: ", err)
 	}
 	defer closeSocket(c, done)
 
