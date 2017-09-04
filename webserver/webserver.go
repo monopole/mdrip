@@ -47,20 +47,7 @@ const (
 {{define "` + tmplNameControl + `"}}
 <html>
 <head>` + headerHtml + `</head>
-<body onload="onLoad()">
-<p>
-For one-click (no copy/paste usage):
-<ul>
-<li>Install <a href="https://github.com/tmux/tmux/wiki">tmux</a>
-</li>
-<li>In some shell, run
-<pre>
-  GOPATH=/tmp/mdrip go install github.com/monopole/mdrip
-  /tmp/mdrip/bin/mdrip --mode tmux ws://localhost:8000/ws?id={{.SessId}}
-</pre>
-</li>
-<li>Click command block headers below and see them execute in tmux.</li>
-</ul>
+<body onload="onLoad()"> ` + instructionsHtml + `
 {{ template "` + program.TmplNameProgram + `" .Pgm }}
 </body>
 </html>
@@ -275,12 +262,46 @@ func (ws *Webserver) Serve(hostAndPort string) {
 	glog.Fatal(http.ListenAndServe(hostAndPort, nil))
 }
 
+const instructionsHtml = `
+<blockquote>
+<p>This a tutorial with command blocks tested to run
+on a linux system.</p>
+<p>
+Clicking on a command block header copies the block into your clipboard,
+which you can then paste into a shell.</p>
+<p>
+For surprisingly pleasant one-click (auto-paste) usage do this:
+<ul>
+<li>
+Install <code><a href="https://github.com/tmux/tmux/wiki">tmux</a></code>.
+</li>
+<li>In any shell, within or outside <code>tmux</code>, run
+<pre>
+  GOPATH=/tmp/mdrip go install github.com/monopole/mdrip
+  /tmp/mdrip/bin/mdrip --mode tmux ws://localhost:8000/ws?id={{.SessId}}
+</pre>
+</li>
+<li>
+Establish focus in any <code>tmux</code> shell.
+<li>
+Click any command block header below.
+</li>
+</ul>
+The block is then sent over the websocket established above,
+then <em>pasted</em> to your focussed <code>tmux</code> pane.
+</blockquote>
+`
+
 const headerHtml = `
 <style type="text/css">
 body {
   font-family: "Veranda", Veranda, sans-serif;
   /* background-color: antiquewhite; */
   background-color: white;
+}
+
+blockquote {
+  font-size: 0.7em;
 }
 
 div.commandBlock {

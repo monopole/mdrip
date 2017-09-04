@@ -145,21 +145,21 @@ func (t Tmux) Write(bytes []byte) (n int, err error) {
 	return len(bytes), err
 }
 
-func (t Tmux) Start() error {
+func (t Tmux) start() error {
 	cmd := exec.Command(t.path, "new", "-s", SessionName, "-d")
 	out, err := cmd.Output()
 	glog.Info("Starting ", out)
 	return err
 }
 
-func (t Tmux) Stop() error {
+func (t Tmux) stop() error {
 	cmd := exec.Command(t.path, "kill-session", "-t", SessionName)
 	out, err := cmd.Output()
 	glog.Info("Stopping ", out)
 	return err
 }
 
-func (t Tmux) ListSessions() (string, error) {
+func (t Tmux) listSessions() (string, error) {
 	cmd := exec.Command(t.path, "list-sessions")
 	raw, err := cmd.Output()
 	glog.Info("List ", string(raw))

@@ -38,21 +38,21 @@ func TestStartAndStopTmuxSession(t *testing.T) {
 		t.Skip(skipAlreadyRunning)
 	}
 	var out string
-	err := x.Start()
+	err := x.start()
 	if err != nil {
 		t.Errorf("unable to start session: %s", err)
 	}
 	if !x.IsUp() {
 		t.Errorf("tmux should appear as running: %s", err)
 	}
-	out, err = x.ListSessions()
+	out, err = x.listSessions()
 	if err != nil {
 		t.Errorf("unable to list session: %s", err)
 	}
 	if !strings.Contains(out, SessionName+":") {
 		t.Errorf("Expected %s:, got %s", SessionName, out)
 	}
-	err = x.Stop()
+	err = x.stop()
 	if err != nil {
 		t.Errorf("unable to stop session: %s", err)
 	}
