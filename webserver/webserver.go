@@ -317,7 +317,7 @@ href="https://golang.org/doc/install">Go</a></code>
 and the
 <code><a target="_blank"
 href="https://github.com/tmux/tmux/wiki">tmux</a></code>
-terminal multipler.</li>
+terminal multiplexer.</li>
 <li>Install the <code>tmux</code>
 websocket adapter
 <code><a target="_blank"
