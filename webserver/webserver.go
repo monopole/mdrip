@@ -314,10 +314,10 @@ For one-click usage (preferable for demos):
 <li>
 Install <code><a target="_blank"
 href="https://golang.org/doc/install">Go</a></code>
-and the
+(the programming language) and
 <code><a target="_blank"
 href="https://github.com/tmux/tmux/wiki">tmux</a></code>
-terminal multiplexer.</li>
+(the terminal multiplexer).</li>
 <li>Install the <code>tmux</code>
 websocket adapter
 <code><a target="_blank"
