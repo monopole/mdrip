@@ -307,9 +307,9 @@ Meta Instructions</button>
 in bash on a linux system.</p>
 <p>Clicking on a command block header
 copies the block to your clipboard so you can mouse over
-and paste it into a shell.</p>
+to a shell and click again to paste it for execution.</p>
 <p>
-For one-click usage (preferable for demos):
+For one-click usage (preferred for demos):
 <ul>
 <li>
 Install <code><a target="_blank"
@@ -335,10 +335,10 @@ href="https://github.com/monopole/mdrip">mdrip</a></code>:
 Run <code>tmux</code>.
 </ul>
 <p>
-Clicking a command block header sends the block
-over a websocket to <code>mdrip</code>.
-Then <code>mdrip</code>
-'pastes' the block to the active <code>tmux</code> pane.
+Now, clicking a command block header sends the block
+from this page's server over a websocket to your local
+<code>mdrip</code>, which then  'pastes' the block
+to your active <code>tmux</code> pane.</p><p>
 The socket evaporates after a period of inactivity,
 and can be restarted with the same command.</p>
 </div>
