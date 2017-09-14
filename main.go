@@ -44,8 +44,8 @@ func realMain(c *config.Config) {
 	}
 }
 
-func testLoader() {
-	t, err := program.Load("./")
+func testLoader(c *config.Config) {
+	t, err := program.LoadMany(c.FileNames())
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -56,6 +56,6 @@ func testLoader() {
 
 func main() {
 	c := config.GetConfig()
-	// testLoader()
+	testLoader(c)
 	realMain(c)
 }

@@ -18,6 +18,8 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
+	"github.com/monopole/mdrip/util"
+
 	"github.com/monopole/mdrip/tmux"
 	"time"
 )
@@ -185,6 +187,23 @@ func (ws *Webserver) showControlPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (ws *Webserver) showDebugPage(w http.ResponseWriter, r *http.Request) {
+	ws.control.Pgm.Reload()
+	fmt.Fprintf(w, "script count %d\n\n", ws.control.Pgm.ScriptCount())
+	// for i, n in range 	//	block := ws.control.Pgm.Scripts[indexScript].Blocks()[indexBlock]
+	for i, s := range ws.control.Pgm.AllScripts() {
+		fmt.Fprintf(w, "script %d: %s\n", i, s.FileName())
+		for j, b := range s.Blocks() {
+			fmt.Fprintf(w, "  block %d content: %s\n", j, util.SampleString(string(b.Code()), 50))
+			fmt.Fprintf(w, "  num labels: %d\n", len(b.Labels()))
+			for k, l := range b.Labels() {
+				fmt.Fprintf(w, "    label %d:  %s\n", k, string(l))
+			}
+			fmt.Fprintln(w)
+		}
+	}
+}
+
 // Returns a writer one can write a code block to for execution.
 // First tries to find a session socket.  Failing that, try to find
 // a locally running instance of tmux.  Failing that, returns a
@@ -289,6 +308,7 @@ func (ws *Webserver) startConnReaper() {
 func (ws *Webserver) Serve(hostAndPort string) {
 	http.HandleFunc("/", ws.showControlPage)
 	http.HandleFunc("/runblock", ws.makeBlockRunner())
+	http.HandleFunc("/debug", ws.showDebugPage)
 	http.HandleFunc("/ws", ws.openWebSocket)
 	http.HandleFunc("/favicon.ico", ws.favicon)
 	http.HandleFunc("/image", ws.image)

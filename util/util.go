@@ -38,3 +38,24 @@ func killProcesssGroup(pgid int) {
 	killer := exec.Command("/bin/kill", "-TERM", "--", fmt.Sprintf("-%v", pgid))
 	killer.Start()
 }
+
+// Convert tabs, newlines, etc. to normal blanks.
+func convertBadWhiteSpaceToBlanks(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case 0x000A, 0x000B, 0x000C, 0x000D, 0x0085, 0x2028, 0x2029:
+			return ' '
+		default:
+			return r
+		}
+	}, s)
+}
+
+// Convert long multi-line string to a short one-line sample.
+func SampleString(incoming string, max int) string {
+	s := len(incoming)
+	if s > max {
+		s = max
+	}
+	return convertBadWhiteSpaceToBlanks(strings.TrimSpace(incoming[:s]))
+}

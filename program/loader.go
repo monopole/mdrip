@@ -3,13 +3,14 @@ package program
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/golang/glog"
+	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/util"
 )
 
 // Tutorial UX Overview.
@@ -124,30 +125,11 @@ type Lesson struct {
 	content string
 }
 
-func filterNewLines(s string) string {
-	return strings.Map(func(r rune) rune {
-		switch r {
-		case 0x000A, 0x000B, 0x000C, 0x000D, 0x0085, 0x2028, 0x2029:
-			return ' '
-		default:
-			return r
-		}
-	}, s)
-}
-
-const maxSummaryLen = 50
-
 func (l *Lesson) Name() string         { return l.name }
 func (l *Lesson) Content() string      { return l.content }
 func (l *Lesson) Children() []Tutorial { return []Tutorial{} }
 func (l *Lesson) Print(indent int) {
-	s := len(l.content)
-	if s > maxSummaryLen {
-		s = maxSummaryLen
-	}
-	z := strings.TrimSpace(l.content[:s])
-	z = filterNewLines(z)
-	fmt.Printf(spaces(indent)+"%s --- %s...\n", l.name, z)
+	fmt.Printf(spaces(indent)+"%s --- %s...\n", l.name, util.SampleString(l.content, 50))
 }
 
 // A Course, or directory, has a name, no content, and an ordered list of
@@ -190,8 +172,8 @@ func (t *TopCourse) Print(indent int) {
 
 const badLeadingChar = "~.#"
 
-func isDesirableFile(n string) bool {
-	s, err := os.Stat(n)
+func isDesirableFile(n model.FileName) bool {
+	s, err := os.Stat(string(n))
 	if err != nil {
 		glog.Info("Stat error on "+s.Name(), err)
 		return false
@@ -216,8 +198,8 @@ func isDesirableFile(n string) bool {
 	return true
 }
 
-func isDesirableDir(n string) bool {
-	s, err := os.Stat(n)
+func isDesirableDir(n model.FileName) bool {
+	s, err := os.Stat(string(n))
 	if err != nil {
 		glog.Info("Stat error on "+s.Name(), err)
 		return false
@@ -227,7 +209,7 @@ func isDesirableDir(n string) bool {
 		return false
 	}
 	if s.Name() == "." || s.Name() == "./" || s.Name() == ".." {
-		// Allow special names.
+		// Allow special dir names.
 		return true
 	}
 	if strings.HasPrefix(filepath.Base(s.Name()), ".") {
@@ -238,14 +220,14 @@ func isDesirableDir(n string) bool {
 	return true
 }
 
-func scanDir(d string) (*Course, error) {
-	files, err := ioutil.ReadDir(d)
+func scanDir(d model.FileName) (*Course, error) {
+	files, err := d.ReadDir()
 	if err != nil {
 		return nil, err
 	}
 	var items = []Tutorial{}
 	for _, f := range files {
-		p := filepath.Join(d, f.Name())
+		p := d.Join(f)
 		if isDesirableFile(p) {
 			l, err := scanFile(p)
 			if err != nil {
@@ -263,20 +245,20 @@ func scanDir(d string) (*Course, error) {
 		}
 	}
 	if len(items) > 0 {
-		return &Course{filepath.Base(d), items}, nil
+		return &Course{d.Base(), items}, nil
 	}
 	return nil, nil
 }
 
-func scanFile(n string) (*Lesson, error) {
-	contents, err := ioutil.ReadFile(n)
+func scanFile(n model.FileName) (*Lesson, error) {
+	contents, err := n.Read()
 	if err != nil {
 		return nil, err
 	}
-	return &Lesson{filepath.Base(n), string(contents)}, nil
+	return &Lesson{n.Base(), contents}, nil
 }
 
-func Load(root string) (Tutorial, error) {
+func LoadOne(root model.FileName) (Tutorial, error) {
 	if isDesirableFile(root) {
 		return scanFile(root)
 	}
@@ -289,5 +271,30 @@ func Load(root string) (Tutorial, error) {
 			return &TopCourse{c.children}, nil
 		}
 	}
-	return nil, errors.New("Cannot process " + root)
+	return nil, errors.New("Cannot process " + string(root))
+}
+
+func LoadMany(fileNames []model.FileName) (Tutorial, error) {
+	var items = []Tutorial{}
+	for _, f := range fileNames {
+		if isDesirableFile(f) {
+			l, err := scanFile(f)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, l)
+		} else if isDesirableDir(f) {
+			c, err := scanDir(f)
+			if err != nil {
+				return nil, err
+			}
+			if c != nil {
+				items = append(items, c)
+			}
+		}
+	}
+	if len(items) > 0 {
+		return &TopCourse{items}, nil
+	}
+	return nil, errors.New("Nothing useful found")
 }

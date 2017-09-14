@@ -32,7 +32,6 @@ const (
 
 func NewProgram(label model.Label, fileNames []model.FileName) *Program {
 	return &Program{label, fileNames, []*model.Script{}}
-
 }
 
 // Build program code from blocks extracted from markdown files.
@@ -44,6 +43,12 @@ func (p *Program) Reload() {
 			glog.Warning("Unable to read file \"%s\".", fileName)
 		}
 		m := lexer.Parse(string(contents))
+		// Parse returns a map of label to array of block for the given file.
+		// Here we discard ALL block arrays except for one - the one associated with desired label.
+		// We end up with a list of scripts.  Each block in each "script"
+		// has the desired label.  The accompanying script object only interesting
+		// in that it holds the name of the file from which the block array
+		// came from - useful for error reporting - and maybe rendering.
 		if blocks, ok := m[p.label]; ok {
 			p.Add(model.NewScript(fileName, blocks))
 		}

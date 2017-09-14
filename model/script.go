@@ -7,8 +7,8 @@ import (
 )
 
 // script associates a list of CommandBlocks with the name of the
-// file they came from.
-type Script struct {
+// file they came from.  Maybe rename to FileExtraction?
+type  Script struct {
 	fileName FileName
 	blocks   []*CommandBlock
 }
