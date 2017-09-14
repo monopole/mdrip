@@ -4,6 +4,7 @@ import (
 	"github.com/golang/glog"
 	"os"
 
+	"fmt"
 	"github.com/monopole/mdrip/config"
 	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/subshell"
@@ -11,8 +12,7 @@ import (
 	"github.com/monopole/mdrip/webserver"
 )
 
-func main() {
-	c := config.GetConfig()
+func realMain(c *config.Config) {
 	p := program.NewProgram(c.ScriptName(), c.FileNames())
 
 	switch c.Mode() {
@@ -42,4 +42,20 @@ func main() {
 			p.PrintNormal(os.Stdout)
 		}
 	}
+}
+
+func testLoader() {
+	t, err := program.Load("./")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	t.Print(0)
+
+}
+
+func main() {
+	c := config.GetConfig()
+	// testLoader()
+	realMain(c)
 }

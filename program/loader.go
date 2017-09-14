@@ -1,6 +1,16 @@
 package program
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	"github.com/golang/glog"
+)
 
 // Tutorial UX Overview.
 //
@@ -36,15 +46,15 @@ import "errors"
 //     [netherlands] |       {main page             h2, h3 etc.}
 //      luxembourg   |      content here}
 //
-// At all times _one_ of the left nav choices is selected and highlighted,
-// and the main page shows content associated with that selection.  That's
-// a core interaction - the content shown is known to be associated with a
-// highlighted element in the left nav.  It's obvious how to get back to it
-// if something else is clicked.
+// The core interaction here is that
+//   * At all times exactly one of the left nav choices is selected.
+//   * The main page shows content associated with that selection.
+// It's always obvious where you are, where you can go, and how to get back.
 //
-// The overview is the initial highlight.  If one hits the domain without a
-// REST path, one is redirected to /overview and that item is highlighted in
-// the menu, and its content is shown.
+// The first item, in this case "overview" is the initial highlight.
+// If one hits the domain without a REST path, one is redirected to
+// /overview and that item is highlighted in the menu, and its
+// content is shown.
 //
 // Items in the left nav either name content and show it when clicked, or
 // they name sub-tutorials and expand sub-tutorial choices when clicked.
@@ -78,6 +88,9 @@ import "errors"
 //         02_flevoland.md
 //       ...
 //
+// Where, say README (a github name convention) is converted to "overview"
+// by a file loader.
+//
 // The proposed command line to read and serve content is
 //
 //      mdrip --mode web /foo/benelux
@@ -94,56 +107,187 @@ import "errors"
 // Errors in tree structure dealt with reasonably or cause immediate server
 // failure.
 //
-// If only one file is read, then only that is shown - no left nav needed.
-
-// Key data structure for the tree, used to build three things:
-//
-// A Course, or directory, has a name, no content, and at least one child
+// If only one file is read, then only that content is shown -
+// no left nav needed.
 
 type Tutorial interface {
 	Name() string
 	Content() string
 	// The order matters.
 	Children() []Tutorial
+	Print(indent int)
 }
 
 // A Lesson, or file, must have a name, must have content and zero children.
 type Lesson struct {
-	name string
+	name    string
 	content string
 }
-func (l Lesson) Name() string { return l.name }
-func (l Lesson) Content() string { return l.content }
-func (l Lesson) Children() []Tutorial { return []Tutorial{} }
+
+func filterNewLines(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case 0x000A, 0x000B, 0x000C, 0x000D, 0x0085, 0x2028, 0x2029:
+			return ' '
+		default:
+			return r
+		}
+	}, s)
+}
+
+const maxSummaryLen = 50
+
+func (l *Lesson) Name() string         { return l.name }
+func (l *Lesson) Content() string      { return l.content }
+func (l *Lesson) Children() []Tutorial { return []Tutorial{} }
+func (l *Lesson) Print(indent int) {
+	s := len(l.content)
+	if s > maxSummaryLen {
+		s = maxSummaryLen
+	}
+	z := strings.TrimSpace(l.content[:s])
+	z = filterNewLines(z)
+	fmt.Printf(spaces(indent)+"%s --- %s...\n", l.name, z)
+}
 
 // A Course, or directory, has a name, no content, and an ordered list of
 // Lessons and Courses. If the list is empty, the Course is dropped.
 type Course struct {
-	name string
+	name     string
 	children []Tutorial
 }
-func (c Course) Name() string { return c.name }
-func (c Course) Content() string { return "" }
-func (c Course) Children() []Tutorial { return c.children }
+
+func spaces(indent int) string {
+	if indent < 1 {
+		return ""
+	}
+	return fmt.Sprintf("%"+strconv.Itoa(indent)+"s", " ")
+}
+
+func (c *Course) Name() string         { return c.name }
+func (c *Course) Content() string      { return "" }
+func (c *Course) Children() []Tutorial { return c.children }
+func (c *Course) Print(indent int) {
+	fmt.Printf(spaces(indent)+"%s\n", c.name)
+	for _, x := range c.children {
+		x.Print(indent + 3)
+	}
+}
 
 // A TopCourse is a Course with no name - it's the root of the tree (benelux).
 type TopCourse struct {
 	children []Tutorial
 }
-func (t TopCourse) Name() string { return "" }
-func (t TopCourse) Content() string { return "" }
-func (t TopCourse) Children() []Tutorial { return t.children }
 
-func isDirectory(name string) bool { return true }
-func isTextFile(name string) bool { return true }
+func (t *TopCourse) Name() string         { return "" }
+func (t *TopCourse) Content() string      { return "" }
+func (t *TopCourse) Children() []Tutorial { return t.children }
+func (t *TopCourse) Print(indent int) {
+	for _, x := range t.children {
+		x.Print(indent)
+	}
+}
 
-// Load loads a tutorial tree from disk.
-func Load(name string) (Tutorial, error) {
-	if isDirectory(name) {
-		return TopCourse{[]Tutorial{}}, nil
+const badLeadingChar = "~.#"
+
+func isDesirableFile(n string) bool {
+	s, err := os.Stat(n)
+	if err != nil {
+		glog.Info("Stat error on "+s.Name(), err)
+		return false
 	}
-	if isTextFile(name) {
-		return Lesson{name, "some content"}, nil
+	if s.IsDir() {
+		glog.Info("Ignoring NON-file " + s.Name())
+		return false
 	}
-	return nil, errors.New("arg is neither file or directory")
+	if !s.Mode().IsRegular() {
+		glog.Info("Ignoring irregular file " + s.Name())
+		return false
+	}
+	if filepath.Ext(s.Name()) != ".md" {
+		glog.Info("Ignoring non markdown file " + s.Name())
+		return false
+	}
+	base := filepath.Base(s.Name())
+	if strings.Index(badLeadingChar, string(base[0])) > -1 {
+		glog.Info("Ignoring because bad leading char: " + s.Name())
+		return false
+	}
+	return true
+}
+
+func isDesirableDir(n string) bool {
+	s, err := os.Stat(n)
+	if err != nil {
+		glog.Info("Stat error on "+s.Name(), err)
+		return false
+	}
+	if !s.IsDir() {
+		glog.Info("Ignoring NON-dir " + s.Name())
+		return false
+	}
+	if s.Name() == "." || s.Name() == "./" || s.Name() == ".." {
+		// Allow special names.
+		return true
+	}
+	if strings.HasPrefix(filepath.Base(s.Name()), ".") {
+		glog.Info("Ignoring dot dir " + s.Name())
+		// Ignore .git, etc.
+		return false
+	}
+	return true
+}
+
+func scanDir(d string) (*Course, error) {
+	files, err := ioutil.ReadDir(d)
+	if err != nil {
+		return nil, err
+	}
+	var items = []Tutorial{}
+	for _, f := range files {
+		p := filepath.Join(d, f.Name())
+		if isDesirableFile(p) {
+			l, err := scanFile(p)
+			if err != nil {
+				return nil, err
+			}
+			items = append(items, l)
+		} else if isDesirableDir(p) {
+			c, err := scanDir(p)
+			if err != nil {
+				return nil, err
+			}
+			if c != nil {
+				items = append(items, c)
+			}
+		}
+	}
+	if len(items) > 0 {
+		return &Course{filepath.Base(d), items}, nil
+	}
+	return nil, nil
+}
+
+func scanFile(n string) (*Lesson, error) {
+	contents, err := ioutil.ReadFile(n)
+	if err != nil {
+		return nil, err
+	}
+	return &Lesson{filepath.Base(n), string(contents)}, nil
+}
+
+func Load(root string) (Tutorial, error) {
+	if isDesirableFile(root) {
+		return scanFile(root)
+	}
+	if isDesirableDir(root) {
+		c, err := scanDir(root)
+		if err != nil {
+			return nil, err
+		}
+		if c != nil {
+			return &TopCourse{c.children}, nil
+		}
+	}
+	return nil, errors.New("Cannot process " + root)
 }
