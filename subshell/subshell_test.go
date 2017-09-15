@@ -54,7 +54,6 @@ func checkFail(t *testing.T, got, want *model.RunResult) {
 }
 
 func TestStartWithABadCommand(t *testing.T) {
-
 	want := model.NoCommandsRunResult(
 		model.NewFailureOutput("dunno"),
 		"fileNameTestStartWithABadCommand",
@@ -68,7 +67,6 @@ func TestStartWithABadCommand(t *testing.T) {
 }
 
 func TestBadCommandInTheMiddle(t *testing.T) {
-
 	want := model.NoCommandsRunResult(
 		model.NewFailureOutput("dunno"),
 		"fileNameTestBadCommandInTheMiddle",
