@@ -26,7 +26,7 @@ func TestRunnerWithNothing(t *testing.T) {
 }
 
 func doIt(blocks []*model.CommandBlock) *model.RunResult {
-	p := program.NewProgram(labels[0], []model.FileName{}).Add(model.NewScript("iAmFileName", blocks))
+	p := program.NewProgram(labels[0], []model.FileName{}).Add(model.NewParsedFile("iAmFileName", blocks))
 	return NewSubshell(timeout, p).Run()
 }
 
@@ -46,7 +46,7 @@ func checkFail(t *testing.T, got, want *model.RunResult) {
 		t.Fail()
 	}
 	if got.Index() != want.Index() {
-		t.Errorf("%s got\n\t%v\nwant\n\t%v", "script", got.Index(), want.Index())
+		t.Errorf("%s got\n\t%v\nwant\n\t%v", "file", got.Index(), want.Index())
 	}
 	if !strings.Contains(got.Message(), want.Message()) {
 		t.Errorf("%s got\n\t%v\nwant\n\t%v", "message", got.Message(), want.Message())

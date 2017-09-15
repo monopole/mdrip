@@ -13,7 +13,7 @@ import (
 )
 
 func realMain(c *config.Config) {
-	p := program.NewProgram(c.ScriptName(), c.FileNames())
+	p := program.NewProgram(c.Label(), c.FileNames())
 
 	switch c.Mode() {
 	case config.ModeTmux:
@@ -29,7 +29,7 @@ func realMain(c *config.Config) {
 		p.Reload()
 		s := subshell.NewSubshell(c.BlockTimeOut(), p)
 		if r := s.Run(); r.Problem() != nil {
-			r.Print(c.ScriptName())
+			r.Print(c.Label())
 			if !c.IgnoreTestFailure() {
 				glog.Fatal(r.Problem())
 			}

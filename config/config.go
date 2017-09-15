@@ -62,7 +62,7 @@ Modes:
 
  --mode print  (the default)
 
-   Print extracted script to stdout.
+   Print extracted code to stdout.
 
    Use
       eval "$(mdrip file.md)"
@@ -219,9 +219,9 @@ func determineFiles() []model.FileName {
 }
 
 type Config struct {
-	scriptName model.Label
-	mode       ModeType
-	fileNames  []model.FileName
+	label     model.Label
+	mode      ModeType
+	fileNames []model.FileName
 }
 
 func (c *Config) BlockTimeOut() time.Duration {
@@ -252,8 +252,8 @@ func (c *Config) IgnoreTestFailure() bool {
 	return *ignoreTestFailure
 }
 
-func (c *Config) ScriptName() model.Label {
-	return c.scriptName
+func (c *Config) Label() model.Label {
+	return c.label
 }
 
 func (c *Config) FileNames() []model.FileName {

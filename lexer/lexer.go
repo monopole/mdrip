@@ -175,7 +175,7 @@ func lexText(l *lexer) stateFn {
 	}
 }
 
-// Move to lexing a command block intended for a particular script, or to
+// Move to lexing a command block intended for a particular label, or to
 // lexing a simple comment.  Comment opener known to be present.
 func lexPutativeComment(l *lexer) stateFn {
 	l.current += position(len(commentOpen))

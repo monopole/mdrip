@@ -10,20 +10,20 @@ import (
 	"github.com/monopole/mdrip/model"
 )
 
-// Program is a list of scripts, each from their own file.
+// Program is a list of ParsedFiles.
 type Program struct {
-	label     model.Label
-	fileNames []model.FileName
-	Scripts   []*model.Script
+	label       model.Label
+	fileNames   []model.FileName
+	ParsedFiles []*model.ParsedFile
 }
 
 const (
 	TmplNameProgram = "program"
 	TmplBodyProgram = `
 {{define "` + TmplNameProgram + `"}}
-{{range $i, $s := .AllScripts}}
+{{range $i, $s := .AllParsedFiles}}
   <div data-id="{{$i}}">
-  {{ template "` + model.TmplNameScript + `" $s }}
+  {{ template "` + model.TmplNameParsedFile + `" $s }}
   </div>
 {{end}}
 {{end}}
@@ -31,12 +31,12 @@ const (
 )
 
 func NewProgram(label model.Label, fileNames []model.FileName) *Program {
-	return &Program{label, fileNames, []*model.Script{}}
+	return &Program{label, fileNames, []*model.ParsedFile{}}
 }
 
 // Build program code from blocks extracted from markdown files.
 func (p *Program) Reload() {
-	p.Scripts = []*model.Script{}
+	p.ParsedFiles = []*model.ParsedFile{}
 	for _, fileName := range p.fileNames {
 		contents, err := ioutil.ReadFile(string(fileName))
 		if err != nil {
@@ -44,20 +44,22 @@ func (p *Program) Reload() {
 		}
 		m := lexer.Parse(string(contents))
 		// Parse returns a map of label to array of block for the given file.
-		// Here we discard ALL block arrays except for one - the one associated with desired label.
-		// We end up with a list of scripts.  Each block in each "script"
-		// has the desired label.  The accompanying script object only interesting
-		// in that it holds the name of the file from which the block array
-		// came from - useful for error reporting - and maybe rendering.
+		// The next line discards ALL block arrays save the one associated
+		// with desired label.
+		// We end up with a list of ParsedFiles, Each block in each ParsedFile
+		// has the desired label.  The accompanying ParsedFile object only
+		// interesting in that it holds the name of the file from which
+		// the block array came from - useful for reported in errors and
+		// maybe on a rendering of the file contents.
 		if blocks, ok := m[p.label]; ok {
-			p.Add(model.NewScript(fileName, blocks))
+			p.Add(model.NewParsedFile(fileName, blocks))
 		}
 	}
 }
 
 // Check dies if program is empty.
 func (p *Program) DieIfEmpty() {
-	if p.ScriptCount() < 1 {
+	if p.ParsedFileCount() < 1 {
 		if p.label.IsAny() {
 			glog.Fatal("No blocks found in the given files.")
 		} else {
@@ -66,38 +68,40 @@ func (p *Program) DieIfEmpty() {
 	}
 }
 
-func (p *Program) Add(s *model.Script) *Program {
-	p.Scripts = append(p.Scripts, s)
+func (p *Program) Add(s *model.ParsedFile) *Program {
+	p.ParsedFiles = append(p.ParsedFiles, s)
 	return p
 }
 
 // Exported only for the template.
-func (p *Program) AllScripts() []*model.Script {
-	return p.Scripts
+func (p *Program) AllParsedFiles() []*model.ParsedFile {
+	return p.ParsedFiles
 }
 
-func (p *Program) ScriptCount() int {
-	return len(p.Scripts)
+func (p *Program) ParsedFileCount() int {
+	return len(p.ParsedFiles)
 }
 
 // PrintNormal simply prints the contents of a program.
 func (p Program) PrintNormal(w io.Writer) {
-	for _, s := range p.Scripts {
+	for _, s := range p.ParsedFiles {
 		s.Print(w, p.label, 0)
 	}
 	fmt.Fprintf(w, "echo \" \"\n")
 	fmt.Fprintf(w, "echo \"All done.  No errors.\"\n")
 }
 
-// PrintPreambled emits the first n blocks of a script normally, then
-// emits the n blocks _again_, as well as all the remaining scripts,
-// so that they run in a subshell with signal handling.
+// PrintPreambled emits the first n blocks of a file normally, then
+// emits the n blocks _again_, as well as all the remaining blocks
+// from remaining files, so that they run in a subshell with signal
+// handling.
 //
-// This allows the aggregrate script to be structured as 1) a preamble
-// initialization script that impacts the environment of the active
-// shell, followed by 2) a script that executes as a subshell that
-// exits on error.  An exit in (2) won't cause the active shell
-// to close (annoying if it is a terminal).
+// This allows the aggregrate program (series of blocks) to be
+// structured as 1) a preamble initialization that impacts the
+// environment of the active shell, followed by 2) everything
+// else executing in a subshell that exits on error.  An exit
+// in (2) won't cause the active shell to close - very annoying
+// if one is running in a terminal.
 //
 // It's up to the markdown author to assure that the n blocks can
 // always complete without exit on error because they will run in the
@@ -108,8 +112,8 @@ func (p Program) PrintNormal(w io.Writer) {
 // environment, and run remaining code in a trapped subshell, and
 // survive any errors in that subshell with a modified environment.
 func (p Program) PrintPreambled(w io.Writer, n int) {
-	// Write the first n blocks if the first script normally.
-	p.Scripts[0].Print(w, p.label, n)
+	// Write the first n blocks of the first file normally.
+	p.ParsedFiles[0].Print(w, p.label, n)
 	// Followed by everything appearing in a bash subshell.
 	hereDocName := "HANDLED_SCRIPT"
 	fmt.Fprintf(w, " bash -euo pipefail <<'%s'\n", hereDocName)

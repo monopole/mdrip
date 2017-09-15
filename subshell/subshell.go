@@ -53,11 +53,11 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *model.
 	chAccErr := accumulateOutput("stdErr", chErr)
 
 	errResult = model.NewRunResult()
-	for _, script := range s.p.Scripts {
-		numBlocks := len(script.Blocks())
-		for i, block := range script.Blocks() {
+	for _, file := range s.p.ParsedFiles {
+		numBlocks := len(file.Blocks())
+		for i, block := range file.Blocks() {
 			glog.Info("Running %s (%d/%d) from %s\n",
-				block.Name(), i+1, numBlocks, script.FileName())
+				block.Name(), i+1, numBlocks, file.FileName())
 			if glog.V(2) {
 				glog.Info("userBehavior: sending \"%s\"", block.Code())
 			}
@@ -79,7 +79,7 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *model.
 					}
 					errResult.SetOutput(result.Output()).SetMessage(result.Output())
 				}
-				errResult.SetFileName(script.FileName()).SetIndex(i).SetBlock(block)
+				errResult.SetFileName(file.FileName()).SetIndex(i).SetBlock(block)
 				fillErrResult(chAccErr, errResult)
 				return
 			}
@@ -124,11 +124,11 @@ func fillErrResult(chAccErr <-chan *model.BlockOutput, errResult *model.RunResul
 // when the subprocess exits on error.
 func (s *Subshell) Run() (result *model.RunResult) {
 	// Write program to a file to be executed.
-	tmpFile, err := ioutil.TempFile("", "mdrip-script-")
+	tmpFile, err := ioutil.TempFile("", "mdrip-file-")
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(tmpFile.Name(), 0744))
-	for _, script := range s.p.Scripts {
-		for _, block := range script.Blocks() {
+	for _, file := range s.p.ParsedFiles {
+		for _, block := range file.Blocks() {
 			write(tmpFile, block.Code().String())
 			write(tmpFile, "\n")
 			write(tmpFile, "echo "+scanner.MsgHappy+" "+block.Name().String()+"\n")

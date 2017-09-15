@@ -6,17 +6,16 @@ import (
 	"strings"
 )
 
-// script associates a list of CommandBlocks with the name of the
-// file they came from.  Maybe rename to FileExtraction?
-type  Script struct {
+// ParsedFile associates a file's name with its parsed content.
+type  ParsedFile struct {
 	fileName FileName
 	blocks   []*CommandBlock
 }
 
 const (
-	TmplNameScript = "script"
-	TmplBodyScript = `
-{{define "` + TmplNameScript + `"}}
+	TmplNameParsedFile = "parsedFile"
+	TmplBodyParsedFile = `
+{{define "` + TmplNameParsedFile + `"}}
 <!-- <h2>mdrip {{.FileName}}</h2> -->
 {{range $i, $b := .Blocks}}
   <div class="commandBlock" data-id="{{$i}}">
@@ -27,15 +26,15 @@ const (
 `
 )
 
-func NewScript(fileName FileName, blocks []*CommandBlock) *Script {
-	return &Script{fileName, blocks}
+func NewParsedFile(fileName FileName, blocks []*CommandBlock) *ParsedFile {
+	return &ParsedFile{fileName, blocks}
 }
 
-func (s Script) FileName() FileName {
+func (s ParsedFile) FileName() FileName {
 	return s.fileName
 }
 
-func (s Script) Blocks() []*CommandBlock {
+func (s ParsedFile) Blocks() []*CommandBlock {
 	return s.blocks
 }
 
@@ -45,8 +44,8 @@ func (s Script) Blocks() []*CommandBlock {
 //
 // n is a count not an index, so to print only the first two blocks,
 // pass n==2, not n==1.
-func (s Script) Print(w io.Writer, label Label, n int) {
-	fmt.Fprintf(w, "#\n# Script @%s from %s \n#\n", label, s.FileName())
+func (s ParsedFile) Print(w io.Writer, label Label, n int) {
+	fmt.Fprintf(w, "#\n# ParsedFile @%s from %s \n#\n", label, s.FileName())
 	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d of %d\n"
 	blockCount := len(s.blocks)
 	for i, block := range s.blocks {

@@ -81,7 +81,7 @@ var keyEncrypt = []byte(nil)
 
 var templates = template.Must(
 	template.New("main").Parse(
-		model.TmplBodyCommandBlock + model.TmplBodyScript + program.TmplBodyProgram + tmplBodyControl))
+		model.TmplBodyCommandBlock + model.TmplBodyParsedFile + program.TmplBodyProgram + tmplBodyControl))
 
 func NewWebserver(p *program.Program) *Webserver {
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
@@ -189,10 +189,9 @@ func (ws *Webserver) showControlPage(w http.ResponseWriter, r *http.Request) {
 
 func (ws *Webserver) showDebugPage(w http.ResponseWriter, r *http.Request) {
 	ws.control.Pgm.Reload()
-	fmt.Fprintf(w, "script count %d\n\n", ws.control.Pgm.ScriptCount())
-	// for i, n in range 	//	block := ws.control.Pgm.Scripts[indexScript].Blocks()[indexBlock]
-	for i, s := range ws.control.Pgm.AllScripts() {
-		fmt.Fprintf(w, "script %d: %s\n", i, s.FileName())
+	fmt.Fprintf(w, "file count %d\n\n", ws.control.Pgm.ParsedFileCount())
+	for i, s := range ws.control.Pgm.AllParsedFiles() {
+		fmt.Fprintf(w, "file %d: %s\n", i, s.FileName())
 		for j, b := range s.Blocks() {
 			fmt.Fprintf(w, "  block %d content: %s\n", j, util.SampleString(string(b.Code()), 50))
 			fmt.Fprintf(w, "  num labels: %d\n", len(b.Labels()))
@@ -233,17 +232,17 @@ func (ws *Webserver) makeBlockRunner() func(w http.ResponseWriter, r *http.Reque
 		}
 		sessId := assureSessionId(session)
 		// TODO(jregan): 404 on bad params
-		indexScript := getIntParam("sid", r, -1)
-		glog.Info("sid = ", indexScript)
+		indexFile := getIntParam("fid", r, -1)
+		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
 		glog.Info("bid = ", indexBlock)
-		block := ws.control.Pgm.Scripts[indexScript].Blocks()[indexBlock]
+		block := ws.control.Pgm.ParsedFiles[indexFile].Blocks()[indexBlock]
 		_, err = ws.getCodeRunner(sessId).Write(block.Code().Bytes())
 		if err != nil {
 			fmt.Fprintln(w, err)
 			return
 		}
-		session.Values["script"] = strconv.Itoa(indexScript)
+		session.Values["file"] = strconv.Itoa(indexFile)
 		session.Values["block"] = strconv.Itoa(indexBlock)
 		err = session.Save(r, w)
 		if err != nil {
@@ -518,7 +517,7 @@ div.instructions {
     var codeBody = commandBlockDiv.childNodes[5].firstChild;
     attemptCopyToBuffer(codeBody.textContent)
     var blockId = getId(commandBlockDiv);
-    var scriptId = getId(commandBlockDiv.parentNode);
+    var fileId = getId(commandBlockDiv.parentNode);
     var oldColor = b.style.color;
     var oldValue = b.value;
     if (blockUx) {
@@ -539,7 +538,7 @@ div.instructions {
         }
       }
     };
-    xhttp.open('GET', '/runblock?sid=' + scriptId + '&bid=' + blockId, true);
+    xhttp.open('GET', '/runblock?fid=' + fileId + '&bid=' + blockId, true);
     xhttp.send();
   }
 </script>
