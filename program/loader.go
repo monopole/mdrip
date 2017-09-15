@@ -172,7 +172,7 @@ func (t *TopCourse) Print(indent int) {
 
 const badLeadingChar = "~.#"
 
-func isDesirableFile(n model.FileName) bool {
+func isDesirableFile(n model.FilePath) bool {
 	s, err := os.Stat(string(n))
 	if err != nil {
 		glog.Info("Stat error on "+s.Name(), err)
@@ -198,7 +198,7 @@ func isDesirableFile(n model.FileName) bool {
 	return true
 }
 
-func isDesirableDir(n model.FileName) bool {
+func isDesirableDir(n model.FilePath) bool {
 	s, err := os.Stat(string(n))
 	if err != nil {
 		glog.Info("Stat error on "+s.Name(), err)
@@ -220,7 +220,7 @@ func isDesirableDir(n model.FileName) bool {
 	return true
 }
 
-func scanDir(d model.FileName) (*Course, error) {
+func scanDir(d model.FilePath) (*Course, error) {
 	files, err := d.ReadDir()
 	if err != nil {
 		return nil, err
@@ -250,7 +250,7 @@ func scanDir(d model.FileName) (*Course, error) {
 	return nil, nil
 }
 
-func scanFile(n model.FileName) (*Lesson, error) {
+func scanFile(n model.FilePath) (*Lesson, error) {
 	contents, err := n.Read()
 	if err != nil {
 		return nil, err
@@ -258,7 +258,7 @@ func scanFile(n model.FileName) (*Lesson, error) {
 	return &Lesson{n.Base(), contents}, nil
 }
 
-func LoadOne(root model.FileName) (Tutorial, error) {
+func LoadOne(root model.FilePath) (Tutorial, error) {
 	if isDesirableFile(root) {
 		return scanFile(root)
 	}
@@ -274,7 +274,7 @@ func LoadOne(root model.FileName) (Tutorial, error) {
 	return nil, errors.New("Cannot process " + string(root))
 }
 
-func LoadMany(fileNames []model.FileName) (Tutorial, error) {
+func LoadMany(fileNames []model.FilePath) (Tutorial, error) {
 	var items = []Tutorial{}
 	for _, f := range fileNames {
 		if isDesirableFile(f) {

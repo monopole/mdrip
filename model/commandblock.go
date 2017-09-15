@@ -75,7 +75,7 @@ func (x CommandBlock) Prose() template.HTML {
 }
 
 func (x CommandBlock) Print(
-	w io.Writer, prefix string, n int, label Label, fileName FileName) {
+	w io.Writer, prefix string, n int, label Label, fileName FilePath) {
 	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n",
 		prefix, x.Name(), n, label, fileName)
 	fmt.Fprint(w, x.Code())

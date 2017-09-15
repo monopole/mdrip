@@ -8,6 +8,6 @@ import (
 
 // TODO: add some real tests
 func TestReload(t *testing.T) {
-	p := NewProgram(model.Label("foo"), []model.FileName{})
+	p := NewProgram(model.Label("foo"), []model.FilePath{})
 	p.Reload()
 }

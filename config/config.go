@@ -201,12 +201,12 @@ func isFile(name string) bool {
 	return true
 }
 
-func determineFiles() []model.FileName {
-	f := make([]model.FileName, flag.NArg())
+func determineFiles() []model.FilePath {
+	f := make([]model.FilePath, flag.NArg())
 	problem := false
 	for i, n := range flag.Args() {
 		if isFile(n) {
-			f[i] = model.FileName(n)
+			f[i] = model.FilePath(n)
 		} else {
 			glog.Error("Unable to read file ", n)
 			problem = true
@@ -221,7 +221,7 @@ func determineFiles() []model.FileName {
 type Config struct {
 	label     model.Label
 	mode      ModeType
-	fileNames []model.FileName
+	fileNames []model.FilePath
 }
 
 func (c *Config) BlockTimeOut() time.Duration {
@@ -256,7 +256,7 @@ func (c *Config) Label() model.Label {
 	return c.label
 }
 
-func (c *Config) FileNames() []model.FileName {
+func (c *Config) FileNames() []model.FilePath {
 	return c.fileNames
 }
 

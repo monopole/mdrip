@@ -13,7 +13,7 @@ import (
 // Program is a list of ParsedFiles.
 type Program struct {
 	label       model.Label
-	fileNames   []model.FileName
+	fileNames   []model.FilePath
 	ParsedFiles []*model.ParsedFile
 }
 
@@ -30,7 +30,7 @@ const (
 `
 )
 
-func NewProgram(label model.Label, fileNames []model.FileName) *Program {
+func NewProgram(label model.Label, fileNames []model.FilePath) *Program {
 	return &Program{label, fileNames, []*model.ParsedFile{}}
 }
 

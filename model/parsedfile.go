@@ -8,7 +8,7 @@ import (
 
 // ParsedFile associates a file's name with its parsed content.
 type  ParsedFile struct {
-	fileName FileName
+	fileName FilePath
 	blocks   []*CommandBlock
 }
 
@@ -16,7 +16,7 @@ const (
 	TmplNameParsedFile = "parsedFile"
 	TmplBodyParsedFile = `
 {{define "` + TmplNameParsedFile + `"}}
-<!-- <h2>mdrip {{.FileName}}</h2> -->
+<!-- <h2>mdrip {{.FilePath}}</h2> -->
 {{range $i, $b := .Blocks}}
   <div class="commandBlock" data-id="{{$i}}">
   {{ template "` + tmplNameCommandBlock + `" $b }}
@@ -26,11 +26,11 @@ const (
 `
 )
 
-func NewParsedFile(fileName FileName, blocks []*CommandBlock) *ParsedFile {
+func NewParsedFile(fileName FilePath, blocks []*CommandBlock) *ParsedFile {
 	return &ParsedFile{fileName, blocks}
 }
 
-func (s ParsedFile) FileName() FileName {
+func (s ParsedFile) FileName() FilePath {
 	return s.fileName
 }
 

@@ -19,14 +19,14 @@ func makeCommandBlock(labels []model.Label, code string) *model.CommandBlock {
 }
 
 func TestRunnerWithNothing(t *testing.T) {
-	p := program.NewProgram(labels[0], []model.FileName{})
+	p := program.NewProgram(labels[0], []model.FilePath{})
 	if NewSubshell(timeout, p).Run().Problem() != nil {
 		t.Fail()
 	}
 }
 
 func doIt(blocks []*model.CommandBlock) *model.RunResult {
-	p := program.NewProgram(labels[0], []model.FileName{}).Add(model.NewParsedFile("iAmFileName", blocks))
+	p := program.NewProgram(labels[0], []model.FilePath{}).Add(model.NewParsedFile("iAmFileName", blocks))
 	return NewSubshell(timeout, p).Run()
 }
 

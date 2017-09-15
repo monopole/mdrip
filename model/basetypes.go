@@ -7,21 +7,21 @@ import (
 	"os"
 )
 
-type FileName string
+type FilePath string
 
-func (n FileName) ReadDir() ([]os.FileInfo, error) {
+func (n FilePath) ReadDir() ([]os.FileInfo, error) {
 	return ioutil.ReadDir(string(n))
 }
 
-func (n FileName) Base() string {
+func (n FilePath) Base() string {
 	return filepath.Base(string(n))
 }
 
-func (n FileName) Join(info os.FileInfo) FileName {
-	return FileName(filepath.Join(string(n), info.Name()))
+func (n FilePath) Join(info os.FileInfo) FilePath {
+	return FilePath(filepath.Join(string(n), info.Name()))
 }
 
-func (n FileName) Read() (string, error) {
+func (n FilePath) Read() (string, error) {
 	contents, err := ioutil.ReadFile(string(n))
 	if err != nil {
 		return "", err
