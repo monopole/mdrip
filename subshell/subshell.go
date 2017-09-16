@@ -57,7 +57,7 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *model.
 		numBlocks := len(file.Blocks())
 		for i, block := range file.Blocks() {
 			glog.Info("Running %s (%d/%d) from %s\n",
-				block.Name(), i+1, numBlocks, file.FileName())
+				block.Name(), i+1, numBlocks, file.Path())
 			if glog.V(2) {
 				glog.Info("userBehavior: sending \"%s\"", block.Code())
 			}
@@ -79,7 +79,7 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *model.
 					}
 					errResult.SetOutput(result.Output()).SetMessage(result.Output())
 				}
-				errResult.SetFileName(file.FileName()).SetIndex(i).SetBlock(block)
+				errResult.SetFileName(file.Path()).SetIndex(i).SetBlock(block)
 				fillErrResult(chAccErr, errResult)
 				return
 			}

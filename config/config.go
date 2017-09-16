@@ -186,17 +186,12 @@ func determineLabel() model.Label {
 	return model.Label(*label)
 }
 
-func isFile(name string) bool {
-	info, err := os.Stat(name)
+func isOk(name string) bool {
+	_, err := os.Stat(name)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false
 		}
-	}
-	if info.IsDir() {
-		// Not tackling directories yet.
-		glog.Error("appears to be a directory: ", name)
-		return false
 	}
 	return true
 }
@@ -205,7 +200,7 @@ func determineFiles() []model.FilePath {
 	f := make([]model.FilePath, flag.NArg())
 	problem := false
 	for i, n := range flag.Args() {
-		if isFile(n) {
+		if isOk(n) {
 			f[i] = model.FilePath(n)
 		} else {
 			glog.Error("Unable to read file ", n)

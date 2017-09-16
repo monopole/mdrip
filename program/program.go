@@ -12,6 +12,7 @@ import (
 type Program struct {
 	label       model.Label
 	fileNames   []model.FilePath
+	tutorial Tutorial
 	ParsedFiles []*model.ParsedFile
 }
 
@@ -29,19 +30,25 @@ const (
 )
 
 func NewProgram(label model.Label, fileNames []model.FilePath) *Program {
-	return &Program{label, fileNames, []*model.ParsedFile{}}
+	return &Program{label, fileNames, nil, []*model.ParsedFile{}}
+}
+
+// Build program code from blocks extracted from markdown files.
+func (p *Program) GetTutorial() Tutorial {
+	return p.tutorial
 }
 
 // Build program code from blocks extracted from markdown files.
 func (p *Program) Reload() {
 	p.ParsedFiles = []*model.ParsedFile{}
-	t, err := LoadMany(p.fileNames)
+	var err error
+		p.tutorial, err = LoadMany(p.fileNames)
 	if err != nil {
 		glog.Warning("Trouble reading files.")
 		return
 	}
 	v := NewTutorialParser(p.label)
-	t.Accept(v)
+	p.tutorial.Accept(v)
 	p.ParsedFiles = v.Files()
 }
 
@@ -84,7 +91,7 @@ func (p Program) PrintNormal(w io.Writer) {
 // from remaining files, so that they run in a subshell with signal
 // handling.
 //
-// This allows the aggregrate program (series of blocks) to be
+// This allows the aggregate program (series of blocks) to be
 // structured as 1) a preamble initialization that impacts the
 // environment of the active shell, followed by 2) everything
 // else executing in a subshell that exits on error.  An exit

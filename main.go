@@ -50,7 +50,7 @@ func testLoader(c *config.Config) {
 		fmt.Println(err)
 		return
 	}
-	t.Accept(&program.TutorialPrinter{})
+	t.Accept(program.NewTutorialPrinter(os.Stdout))
 }
 
 func main() {

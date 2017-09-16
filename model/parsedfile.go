@@ -8,7 +8,7 @@ import (
 
 // ParsedFile associates a file's name with its parsed content.
 type  ParsedFile struct {
-	fileName FilePath
+	filePath  FilePath
 	blocks   []*CommandBlock
 }
 
@@ -16,7 +16,7 @@ const (
 	TmplNameParsedFile = "parsedFile"
 	TmplBodyParsedFile = `
 {{define "` + TmplNameParsedFile + `"}}
-<!-- <h2>mdrip {{.FilePath}}</h2> -->
+<!-- <h2>mdrip {{.Path}}</h2> -->
 {{range $i, $b := .Blocks}}
   <div class="commandBlock" data-id="{{$i}}">
   {{ template "` + tmplNameCommandBlock + `" $b }}
@@ -30,11 +30,11 @@ func NewParsedFile(fileName FilePath, blocks []*CommandBlock) *ParsedFile {
 	return &ParsedFile{fileName, blocks}
 }
 
-func (s ParsedFile) FileName() FilePath {
-	return s.fileName
+func (s *ParsedFile) Path() FilePath {
+	return s.filePath
 }
 
-func (s ParsedFile) Blocks() []*CommandBlock {
+func (s *ParsedFile) Blocks() []*CommandBlock {
 	return s.blocks
 }
 
@@ -44,8 +44,8 @@ func (s ParsedFile) Blocks() []*CommandBlock {
 //
 // n is a count not an index, so to print only the first two blocks,
 // pass n==2, not n==1.
-func (s ParsedFile) Print(w io.Writer, label Label, n int) {
-	fmt.Fprintf(w, "#\n# ParsedFile @%s from %s \n#\n", label, s.FileName())
+func (s *ParsedFile) Print(w io.Writer, label Label, n int) {
+	fmt.Fprintf(w, "#\n# ParsedFile @%s from %s \n#\n", label, s.filePath)
 	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d of %d\n"
 	blockCount := len(s.blocks)
 	for i, block := range s.blocks {
@@ -53,7 +53,7 @@ func (s ParsedFile) Print(w io.Writer, label Label, n int) {
 			break
 		}
 		fmt.Fprintf(w, delimFmt, "Start", i+1, blockCount)
-		block.Print(w, "#", i+1, label, s.FileName())
+		block.Print(w, "#", i+1, label, s.filePath)
 		fmt.Fprintf(w, delimFmt, "End", i+1, blockCount)
 		fmt.Fprintln(w)
 	}

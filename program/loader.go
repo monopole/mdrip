@@ -12,6 +12,7 @@ import (
 	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/util"
+	"io"
 )
 
 // Tutorial UX Overview.
@@ -120,6 +121,11 @@ type TutVisitor interface {
 
 type TutorialPrinter struct {
 	indent int
+	w io.Writer
+}
+
+func NewTutorialPrinter (w io.Writer) *TutorialPrinter  {
+	return &TutorialPrinter{0, w}
 }
 
 func (v *TutorialPrinter) spaces(indent int) string {
@@ -130,13 +136,13 @@ func (v *TutorialPrinter) spaces(indent int) string {
 }
 
 func (v *TutorialPrinter) VisitLesson(l *Lesson) {
-	fmt.Printf(
+	fmt.Fprintf(v.w,
 		v.spaces(v.indent)+"%s --- %s...\n",
 		l.Name(), util.SampleString(l.Content(), 60))
 }
 
 func (v *TutorialPrinter) VisitCourse(c *Course) {
-	fmt.Printf(v.spaces(v.indent)+"%s\n", c.Name())
+	fmt.Fprintf(v.w, v.spaces(v.indent)+"%s\n", c.Name())
 	v.indent += 3
 	for _, x := range c.children {
 		x.Accept(v)
@@ -342,6 +348,12 @@ func LoadOne(root model.FilePath) (Tutorial, error) {
 }
 
 func LoadMany(fileNames []model.FilePath) (Tutorial, error) {
+	if len(fileNames) == 0 {
+		return nil, errors.New("no files?")
+	}
+	if len(fileNames) == 1 {
+		return LoadOne(fileNames[0])
+	}
 	var items = []Tutorial{}
 	for _, f := range fileNames {
 		if isDesirableFile(f) {

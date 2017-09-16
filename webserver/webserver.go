@@ -189,9 +189,11 @@ func (ws *Webserver) showControlPage(w http.ResponseWriter, r *http.Request) {
 
 func (ws *Webserver) showDebugPage(w http.ResponseWriter, r *http.Request) {
 	ws.control.Pgm.Reload()
+	ws.control.Pgm.GetTutorial().Accept(program.NewTutorialPrinter(w))
+
 	fmt.Fprintf(w, "file count %d\n\n", ws.control.Pgm.ParsedFileCount())
 	for i, s := range ws.control.Pgm.AllParsedFiles() {
-		fmt.Fprintf(w, "file %d: %s\n", i, s.FileName())
+		fmt.Fprintf(w, "file %d: %s\n", i, s.Path())
 		for j, b := range s.Blocks() {
 			fmt.Fprintf(w, "  block %d content: %s\n", j, util.SampleString(string(b.Code()), 50))
 			fmt.Fprintf(w, "  num labels: %d\n", len(b.Labels()))
