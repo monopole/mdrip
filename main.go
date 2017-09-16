@@ -50,8 +50,7 @@ func testLoader(c *config.Config) {
 		fmt.Println(err)
 		return
 	}
-	t.Print(0)
-
+	t.Accept(&program.TutorialPrinter{})
 }
 
 func main() {

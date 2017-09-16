@@ -3,10 +3,8 @@ package program
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/golang/glog"
-	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
 )
 
@@ -37,24 +35,14 @@ func NewProgram(label model.Label, fileNames []model.FilePath) *Program {
 // Build program code from blocks extracted from markdown files.
 func (p *Program) Reload() {
 	p.ParsedFiles = []*model.ParsedFile{}
-	for _, fileName := range p.fileNames {
-		contents, err := ioutil.ReadFile(string(fileName))
-		if err != nil {
-			glog.Warning("Unable to read file \"%s\".", fileName)
-		}
-		m := lexer.Parse(string(contents))
-		// Parse returns a map of label to array of block for the given file.
-		// The next line discards ALL block arrays save the one associated
-		// with desired label.
-		// We end up with a list of ParsedFiles, Each block in each ParsedFile
-		// has the desired label.  The accompanying ParsedFile object only
-		// interesting in that it holds the name of the file from which
-		// the block array came from - useful for reported in errors and
-		// maybe on a rendering of the file contents.
-		if blocks, ok := m[p.label]; ok {
-			p.Add(model.NewParsedFile(fileName, blocks))
-		}
+	t, err := LoadMany(p.fileNames)
+	if err != nil {
+		glog.Warning("Trouble reading files.")
+		return
 	}
+	v := NewTutorialParser(p.label)
+	t.Accept(v)
+	p.ParsedFiles = v.Files()
 }
 
 // Check dies if program is empty.

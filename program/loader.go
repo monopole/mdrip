@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/util"
 )
@@ -111,63 +112,129 @@ import (
 // If only one file is read, then only that content is shown -
 // no left nav needed.
 
-type Tutorial interface {
-	Name() string
-	Content() string
-	// The order matters.
-	Children() []Tutorial
-	Print(indent int)
+type TutVisitor interface {
+	VisitLesson(l *Lesson)
+	VisitCourse(c *Course)
+	VisitTopCourse(t *TopCourse)
 }
 
-// A Lesson, or file, must have a name, must have content and zero children.
-type Lesson struct {
-	name    string
-	content string
+type TutorialPrinter struct {
+	indent int
 }
 
-func (l *Lesson) Name() string         { return l.name }
-func (l *Lesson) Content() string      { return l.content }
-func (l *Lesson) Children() []Tutorial { return []Tutorial{} }
-func (l *Lesson) Print(indent int) {
-	fmt.Printf(spaces(indent)+"%s --- %s...\n", l.name, util.SampleString(l.content, 50))
-}
-
-// A Course, or directory, has a name, no content, and an ordered list of
-// Lessons and Courses. If the list is empty, the Course is dropped.
-type Course struct {
-	name     string
-	children []Tutorial
-}
-
-func spaces(indent int) string {
+func (v *TutorialPrinter) spaces(indent int) string {
 	if indent < 1 {
 		return ""
 	}
 	return fmt.Sprintf("%"+strconv.Itoa(indent)+"s", " ")
 }
 
-func (c *Course) Name() string         { return c.name }
+func (v *TutorialPrinter) VisitLesson(l *Lesson) {
+	fmt.Printf(
+		v.spaces(v.indent)+"%s --- %s...\n",
+		l.Name(), util.SampleString(l.Content(), 60))
+}
+
+func (v *TutorialPrinter) VisitCourse(c *Course) {
+	fmt.Printf(v.spaces(v.indent)+"%s\n", c.Name())
+	v.indent += 3
+	for _, x := range c.children {
+		x.Accept(v)
+	}
+	v.indent -= 3
+}
+
+func (v *TutorialPrinter) VisitTopCourse(t *TopCourse) {
+	for _, x := range t.children {
+		x.Accept(v)
+	}
+}
+
+type TutorialParser struct {
+	label       model.Label
+	parsedFiles []*model.ParsedFile
+}
+
+func NewTutorialParser(l model.Label) *TutorialParser {
+	return &TutorialParser{l, []*model.ParsedFile{}}
+}
+
+func (v *TutorialParser) Files() []*model.ParsedFile {
+	return v.parsedFiles
+}
+
+func (v *TutorialParser) VisitLesson(l *Lesson) {
+	m := lexer.Parse(l.Content())
+	// Parse returns a map of label to array of block for the given content.
+	// The next line discards ALL block arrays save the one associated
+	// with desired label, and accumulates that array.
+	if blocks, ok := m[v.label]; ok {
+		v.parsedFiles = append(v.parsedFiles, model.NewParsedFile(l.Path(), blocks))
+	}
+}
+
+func (v *TutorialParser) VisitCourse(c *Course) {
+	for _, x := range c.children {
+		x.Accept(v)
+	}
+}
+
+func (v *TutorialParser) VisitTopCourse(t *TopCourse) {
+	for _, x := range t.children {
+		x.Accept(v)
+	}
+}
+
+type Tutorial interface {
+	Name() string
+	Path() model.FilePath
+	Content() string
+	// The order matters.
+	Children() []Tutorial
+	Accept(v TutVisitor)
+}
+
+// A Lesson, or file, must have a name, must have content and zero children.
+type Lesson struct {
+	filepath model.FilePath
+	content  string
+}
+
+func (l *Lesson) Name() string         { return l.filepath.Base() }
+func (l *Lesson) Path() model.FilePath { return l.filepath }
+func (l *Lesson) Content() string      { return l.content }
+func (l *Lesson) Children() []Tutorial { return []Tutorial{} }
+func (l *Lesson) Accept(v TutVisitor) {
+	v.VisitLesson(l)
+}
+
+// A Course, or directory, has a name, no content, and an ordered list of
+// Lessons and Courses. If the list is empty, the Course is dropped.
+type Course struct {
+	filepath model.FilePath
+	children []Tutorial
+}
+
+func (c *Course) Name() string         { return c.filepath.Base() }
+func (c *Course) Path() model.FilePath { return c.filepath }
 func (c *Course) Content() string      { return "" }
 func (c *Course) Children() []Tutorial { return c.children }
-func (c *Course) Print(indent int) {
-	fmt.Printf(spaces(indent)+"%s\n", c.name)
-	for _, x := range c.children {
-		x.Print(indent + 3)
-	}
+func (c *Course) Accept(v TutVisitor) {
+	v.VisitCourse(c)
 }
 
 // A TopCourse is a Course with no name - it's the root of the tree (benelux).
 type TopCourse struct {
+	filepath model.FilePath
 	children []Tutorial
 }
 
 func (t *TopCourse) Name() string         { return "" }
+func (t *TopCourse) Path() model.FilePath { return t.filepath }
 func (t *TopCourse) Content() string      { return "" }
 func (t *TopCourse) Children() []Tutorial { return t.children }
-func (t *TopCourse) Print(indent int) {
-	for _, x := range t.children {
-		x.Print(indent)
-	}
+func (t *TopCourse) Accept(v TutVisitor) {
+	v.VisitTopCourse(t)
 }
 
 const badLeadingChar = "~.#"
@@ -245,7 +312,7 @@ func scanDir(d model.FilePath) (*Course, error) {
 		}
 	}
 	if len(items) > 0 {
-		return &Course{d.Base(), items}, nil
+		return &Course{d, items}, nil
 	}
 	return nil, nil
 }
@@ -255,7 +322,7 @@ func scanFile(n model.FilePath) (*Lesson, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Lesson{n.Base(), contents}, nil
+	return &Lesson{n, contents}, nil
 }
 
 func LoadOne(root model.FilePath) (Tutorial, error) {
@@ -268,7 +335,7 @@ func LoadOne(root model.FilePath) (Tutorial, error) {
 			return nil, err
 		}
 		if c != nil {
-			return &TopCourse{c.children}, nil
+			return &TopCourse{root, c.children}, nil
 		}
 	}
 	return nil, errors.New("Cannot process " + string(root))
@@ -294,7 +361,7 @@ func LoadMany(fileNames []model.FilePath) (Tutorial, error) {
 		}
 	}
 	if len(items) > 0 {
-		return &TopCourse{items}, nil
+		return &TopCourse{model.FilePath(""), items}, nil
 	}
 	return nil, errors.New("Nothing useful found")
 }
