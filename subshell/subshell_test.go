@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/monopole/mdrip/model"
-	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/scanner"
 )
 
@@ -19,15 +18,15 @@ func makeCommandBlock(labels []model.Label, code string) *model.CommandBlock {
 }
 
 func TestRunnerWithNothing(t *testing.T) {
-	p := program.NewProgram(labels[0], []model.FilePath{})
-	if NewSubshell(timeout, p).Run().Problem() != nil {
+	if NewSubshell(timeout, []*model.Script{}).Run().Problem() != nil {
 		t.Fail()
 	}
 }
 
-func doIt(blocks []*model.CommandBlock) *model.RunResult {
-	p := program.NewProgram(labels[0], []model.FilePath{}).Add(model.NewParsedFile("iAmFileName", blocks))
-	return NewSubshell(timeout, p).Run()
+func doIt(blocks []*model.CommandBlock) *RunResult {
+	s := []*model.Script{}
+	s = append(s, model.NewScript("iAmFileName", blocks))
+	return NewSubshell(timeout, s).Run()
 }
 
 func TestRunnerWithGoodStuff(t *testing.T) {
@@ -41,7 +40,7 @@ func TestRunnerWithGoodStuff(t *testing.T) {
 	}
 }
 
-func checkFail(t *testing.T, got, want *model.RunResult) {
+func checkFail(t *testing.T, got, want *RunResult) {
 	if got.Problem() == nil {
 		t.Fail()
 	}
@@ -54,8 +53,8 @@ func checkFail(t *testing.T, got, want *model.RunResult) {
 }
 
 func TestStartWithABadCommand(t *testing.T) {
-	want := model.NoCommandsRunResult(
-		model.NewFailureOutput("dunno"),
+	want := NoCommandsRunResult(
+		NewFailureOutput("dunno"),
 		"fileNameTestStartWithABadCommand",
 		0,
 		"line 1: notagoodcommand: command not found")
@@ -67,8 +66,8 @@ func TestStartWithABadCommand(t *testing.T) {
 }
 
 func TestBadCommandInTheMiddle(t *testing.T) {
-	want := model.NoCommandsRunResult(
-		model.NewFailureOutput("dunno"),
+	want := NoCommandsRunResult(
+		NewFailureOutput("dunno"),
 		"fileNameTestBadCommandInTheMiddle",
 		2,
 		"line 9: lochNessMonster: command not found")
@@ -83,8 +82,8 @@ func TestBadCommandInTheMiddle(t *testing.T) {
 }
 
 func TestTimeOut(t *testing.T) {
-	want := model.NoCommandsRunResult(
-		model.NewFailureOutput("dunno"),
+	want := NoCommandsRunResult(
+		NewFailureOutput("dunno"),
 		"fileNameTestTimeOut",
 		0,
 		scanner.MsgTimeout)

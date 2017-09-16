@@ -29,9 +29,9 @@ type CommandBlock struct {
 }
 
 const (
-	tmplNameCommandBlock = "commandblock"
+	TmplNameCommandBlock = "commandblock"
 	TmplBodyCommandBlock = `
-{{define "` + tmplNameCommandBlock + `"}}
+{{define "` + TmplNameCommandBlock + `"}}
 <div class="proseblock"> {{.Prose}} </div>
 <h3 id="control" class="control">
   <span class="blockButton" onclick="onRunBlockClick(event)">

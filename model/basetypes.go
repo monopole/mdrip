@@ -2,10 +2,11 @@ package model
 
 import (
 	"io/ioutil"
-	"path/filepath"
-
 	"os"
+	"path/filepath"
 )
+
+type TypeSessId string
 
 type FilePath string
 

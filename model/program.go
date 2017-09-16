@@ -1,85 +1,36 @@
-package program
+package model
 
 import (
 	"fmt"
 	"io"
-
-	"github.com/golang/glog"
-	"github.com/monopole/mdrip/model"
 )
 
-// Program is a list of ParsedFiles.
+// Program is a list of scripts with a common label.
 type Program struct {
-	label       model.Label
-	fileNames   []model.FilePath
-	tutorial Tutorial
-	ParsedFiles []*model.ParsedFile
+	label   Label
+	scripts []*Script
 }
+
+func (p *Program) Scripts() []*Script                { return p.scripts }
+func (p *Program) Label() Label                      { return p.label }
+func NewProgram(l Label, scripts []*Script) *Program { return &Program{l, scripts} }
 
 const (
 	TmplNameProgram = "program"
 	TmplBodyProgram = `
 {{define "` + TmplNameProgram + `"}}
-{{range $i, $s := .AllParsedFiles}}
+{{range $i, $s := .Scripts}}
   <div data-id="{{$i}}">
-  {{ template "` + model.TmplNameParsedFile + `" $s }}
+  {{ template "` + TmplNameScript + `" $s }}
   </div>
 {{end}}
 {{end}}
 `
 )
 
-func NewProgram(label model.Label, fileNames []model.FilePath) *Program {
-	return &Program{label, fileNames, nil, []*model.ParsedFile{}}
-}
-
-// Build program code from blocks extracted from markdown files.
-func (p *Program) GetTutorial() Tutorial {
-	return p.tutorial
-}
-
-// Build program code from blocks extracted from markdown files.
-func (p *Program) Reload() {
-	p.ParsedFiles = []*model.ParsedFile{}
-	var err error
-		p.tutorial, err = LoadMany(p.fileNames)
-	if err != nil {
-		glog.Warning("Trouble reading files.")
-		return
-	}
-	v := NewTutorialParser(p.label)
-	p.tutorial.Accept(v)
-	p.ParsedFiles = v.Files()
-}
-
-// Check dies if program is empty.
-func (p *Program) DieIfEmpty() {
-	if p.ParsedFileCount() < 1 {
-		if p.label.IsAny() {
-			glog.Fatal("No blocks found in the given files.")
-		} else {
-			glog.Fatalf("No blocks labelled %q found in the given files.", p.label)
-		}
-	}
-}
-
-func (p *Program) Add(s *model.ParsedFile) *Program {
-	p.ParsedFiles = append(p.ParsedFiles, s)
-	return p
-}
-
-// Exported only for the template.
-func (p *Program) AllParsedFiles() []*model.ParsedFile {
-	return p.ParsedFiles
-}
-
-func (p *Program) ParsedFileCount() int {
-	return len(p.ParsedFiles)
-}
-
 // PrintNormal simply prints the contents of a program.
 func (p Program) PrintNormal(w io.Writer) {
-	for _, s := range p.ParsedFiles {
+	for _, s := range p.scripts {
 		s.Print(w, p.label, 0)
 	}
 	fmt.Fprintf(w, "echo \" \"\n")
@@ -108,7 +59,7 @@ func (p Program) PrintNormal(w io.Writer) {
 // survive any errors in that subshell with a modified environment.
 func (p Program) PrintPreambled(w io.Writer, n int) {
 	// Write the first n blocks of the first file normally.
-	p.ParsedFiles[0].Print(w, p.label, n)
+	p.scripts[0].Print(w, p.label, n)
 	// Followed by everything appearing in a bash subshell.
 	hereDocName := "HANDLED_SCRIPT"
 	fmt.Fprintf(w, " bash -euo pipefail <<'%s'\n", hereDocName)

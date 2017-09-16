@@ -1,7 +1,8 @@
-package model
+package subshell
 
 import (
 	"fmt"
+	"github.com/monopole/mdrip/model"
 	"os"
 	"strings"
 )
@@ -44,29 +45,30 @@ func NewSuccessOutput(output string) *BlockOutput {
 // RunResult pairs BlockOutput with meta data about shell execution.
 type RunResult struct {
 	BlockOutput
-	fileName FilePath      // File in which the error occurred.
-	index    int           // Command block index.
-	block    *CommandBlock // Content of actual command block.
-	problem  error         // Error, if any.
-	message  string        // Detailed error message, if any.
+	fileName model.FilePath      // File in which the error occurred.
+	index    int                 // Command block index.
+	block    *model.CommandBlock // Content of actual command block.
+	problem  error               // Error, if any.
+	message  string              // Detailed error message, if any.
 }
 
 func NewRunResult() *RunResult {
-	noLabels := []Label{}
+	noLabels := []model.Label{}
 	blockOutput := NewFailureOutput("")
-	return &RunResult{*blockOutput, "", -1, NewCommandBlock(noLabels, "", ""), nil, ""}
+	return &RunResult{
+		*blockOutput, "", -1, model.NewCommandBlock(noLabels, "", ""), nil, ""}
 }
 
 // For tests.
 func NoCommandsRunResult(
-	blockOutput *BlockOutput, fileName FilePath, index int, message string) *RunResult {
-	noLabels := []Label{}
+	blockOutput *BlockOutput, path model.FilePath, index int, message string) *RunResult {
+	noLabels := []model.Label{}
 	return &RunResult{
-		*blockOutput, fileName, index,
-		NewCommandBlock(noLabels, "", ""), nil, message}
+		*blockOutput, path, index,
+		model.NewCommandBlock(noLabels, "", ""), nil, message}
 }
 
-func (x *RunResult) FileName() FilePath {
+func (x *RunResult) FileName() model.FilePath {
 	return x.fileName
 }
 
@@ -102,17 +104,17 @@ func (x *RunResult) SetIndex(i int) *RunResult {
 	return x
 }
 
-func (x *RunResult) SetBlock(b *CommandBlock) *RunResult {
+func (x *RunResult) SetBlock(b *model.CommandBlock) *RunResult {
 	x.block = b
 	return x
 }
 
-func (x *RunResult) SetFileName(n FilePath) *RunResult {
+func (x *RunResult) SetFileName(n model.FilePath) *RunResult {
 	x.fileName = n
 	return x
 }
 
-func (x *RunResult) Print(selectedLabel Label) {
+func (x *RunResult) Print(selectedLabel model.Label) {
 	delim := strings.Repeat("-", 70) + "\n"
 	fmt.Fprintf(os.Stderr, delim)
 	x.block.Print(os.Stderr, "Error", x.index+1, selectedLabel, x.fileName)

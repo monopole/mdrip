@@ -13,7 +13,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/model"
-	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/scanner"
 	"github.com/monopole/mdrip/util"
 )
@@ -21,11 +20,11 @@ import (
 // Subshell can run a program
 type Subshell struct {
 	blockTimeout time.Duration
-	p            *program.Program
+	scripts      []*model.Script
 }
 
-func NewSubshell(timeout time.Duration, p *program.Program) *Subshell {
-	return &Subshell{timeout, p}
+func NewSubshell(timeout time.Duration, scripts []*model.Script) *Subshell {
+	return &Subshell{timeout, scripts}
 }
 
 // check reports the error fatally if it's non-nil.
@@ -44,7 +43,7 @@ func check(msg string, err error) {
 // It writes command blocks to shell, then waits after  each block to
 // see if the block worked.  If the block appeared to complete without
 // error, the routine sends the next block, else it exits early.
-func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *model.RunResult) {
+func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunResult) {
 
 	chOut := scanner.BuffScanner(s.blockTimeout, "stdout", stdOut)
 	chErr := scanner.BuffScanner(1*time.Minute, "stderr", stdErr)
@@ -52,8 +51,8 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *model.
 	chAccOut := accumulateOutput("stdOut", chOut)
 	chAccErr := accumulateOutput("stdErr", chErr)
 
-	errResult = model.NewRunResult()
-	for _, file := range s.p.ParsedFiles {
+	errResult = NewRunResult()
+	for _, file := range s.scripts {
 		numBlocks := len(file.Blocks())
 		for i, block := range file.Blocks() {
 			glog.Info("Running %s (%d/%d) from %s\n",
@@ -90,7 +89,7 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *model.
 }
 
 // fillErrResult fills an instance of RunResult.
-func fillErrResult(chAccErr <-chan *model.BlockOutput, errResult *model.RunResult) {
+func fillErrResult(chAccErr <-chan *BlockOutput, errResult *RunResult) {
 	result := <-chAccErr
 	if result == nil {
 		if glog.V(2) {
@@ -122,12 +121,12 @@ func fillErrResult(chAccErr <-chan *model.BlockOutput, errResult *model.RunResul
 // Error reporting works by discarding output from command blocks that
 // succeeded, and only reporting the contents of stdout and stderr
 // when the subprocess exits on error.
-func (s *Subshell) Run() (result *model.RunResult) {
+func (s *Subshell) Run() (result *RunResult) {
 	// Write program to a file to be executed.
 	tmpFile, err := ioutil.TempFile("", "mdrip-file-")
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(tmpFile.Name(), 0744))
-	for _, file := range s.p.ParsedFiles {
+	for _, file := range s.scripts {
 		for _, block := range file.Blocks() {
 			write(tmpFile, block.Code().String())
 			write(tmpFile, "\n")
@@ -209,8 +208,8 @@ func write(writer io.Writer, output string) {
 // On a sad path, an accumulation of strings is sent with a success ==
 // false flag attached, and the function exits early, before it's
 // input channel closes.
-func accumulateOutput(prefix string, in <-chan string) <-chan *model.BlockOutput {
-	out := make(chan *model.BlockOutput)
+func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
+	out := make(chan *BlockOutput)
 	var accum bytes.Buffer
 	go func() {
 		defer close(out)
@@ -221,7 +220,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *model.BlockOutput
 				if glog.V(2) {
 					glog.Info("accumulateOutput %s: Timeout return.", prefix)
 				}
-				out <- model.NewFailureOutput(accum.String())
+				out <- NewFailureOutput(accum.String())
 				return
 			}
 			if strings.HasPrefix(line, scanner.MsgError) {
@@ -229,14 +228,14 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *model.BlockOutput
 				if glog.V(2) {
 					glog.Info("accumulateOutput %s: Error return.", prefix)
 				}
-				out <- model.NewFailureOutput(accum.String())
+				out <- NewFailureOutput(accum.String())
 				return
 			}
 			if strings.HasPrefix(line, scanner.MsgHappy) {
 				if glog.V(2) {
 					glog.Info("accumulateOutput %s: %s", prefix, line)
 				}
-				out <- model.NewSuccessOutput(accum.String())
+				out <- NewSuccessOutput(accum.String())
 				accum.Reset()
 			} else {
 				if glog.V(2) {
@@ -256,7 +255,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *model.BlockOutput
 					"accumulateOutput %s: Erroneous (missing-happy) output [%s]",
 					prefix, accum.String())
 			}
-			out <- model.NewFailureOutput(accum.String())
+			out <- NewFailureOutput(accum.String())
 		} else {
 			if glog.V(2) {
 				glog.Info("accumulateOutput %s: Nothing trailing.", prefix)
