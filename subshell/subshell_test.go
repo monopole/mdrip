@@ -13,8 +13,8 @@ const timeout = 2 * time.Second
 
 var labels = []model.Label{model.Label("foo"), model.Label("bar")}
 
-func makeCommandBlock(labels []model.Label, code string) *model.CommandBlock {
-	return model.NewCommandBlock(labels, code, "")
+func makeCommandBlock(labels []model.Label, code string) *model.OldBlock {
+	return model.NewOldBlock(labels, code, []byte{})
 }
 
 func TestRunnerWithNothing(t *testing.T) {
@@ -23,14 +23,14 @@ func TestRunnerWithNothing(t *testing.T) {
 	}
 }
 
-func doIt(blocks []*model.CommandBlock) *RunResult {
+func doIt(blocks []*model.OldBlock) *RunResult {
 	s := []*model.Script{}
 	s = append(s, model.NewScript("iAmFileName", blocks))
 	return NewSubshell(timeout, s).Run()
 }
 
 func TestRunnerWithGoodStuff(t *testing.T) {
-	blocks := []*model.CommandBlock{
+	blocks := []*model.OldBlock{
 		makeCommandBlock(labels, "echo kale\ndate\n"),
 		makeCommandBlock(labels, "echo beans\necho apple\n"),
 		makeCommandBlock(labels, "echo hasta\necho la vista\n")}
@@ -59,7 +59,7 @@ func TestStartWithABadCommand(t *testing.T) {
 		0,
 		"line 1: notagoodcommand: command not found")
 
-	blocks := []*model.CommandBlock{
+	blocks := []*model.OldBlock{
 		makeCommandBlock(labels, "notagoodcommand\ndate\n"),
 		makeCommandBlock(labels, "echo beans\necho cheese\n")}
 	checkFail(t, doIt(blocks), want)
@@ -72,7 +72,7 @@ func TestBadCommandInTheMiddle(t *testing.T) {
 		2,
 		"line 9: lochNessMonster: command not found")
 
-	blocks := []*model.CommandBlock{
+	blocks := []*model.OldBlock{
 		makeCommandBlock(labels, "echo tofu\ndate\n"),
 		makeCommandBlock(labels, "echo beans\necho kale\n"),
 		makeCommandBlock(labels, "lochNessMonster\n"),
@@ -92,7 +92,7 @@ func TestTimeOut(t *testing.T) {
 	// Arrange to sleep for two seconds longer than the timeout.
 	sleep := timeout + (2 * time.Second)
 
-	blocks := []*model.CommandBlock{
+	blocks := []*model.OldBlock{
 		makeCommandBlock(labels, "date\nsleep "+sleep.String()+"\necho kale"),
 		makeCommandBlock(labels, "echo beans\necho cheese\n")}
 	checkFail(t, doIt(blocks), want)

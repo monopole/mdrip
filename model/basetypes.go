@@ -35,13 +35,17 @@ func (n FilePath) Read() (string, error) {
 type Label string
 
 const (
-	AnyLabel = Label(`__AnyLabel__`)
+	AnyLabel     = Label(`__AnyLabel__`)
+	MistakeLabel = Label(`__MistakeLabel__`)
 )
 
-func (l Label) String() string {
-	return string(l)
-}
+func (l Label) String() string { return string(l) }
+func (l Label) IsAny() bool    { return l == AnyLabel }
 
-func (l Label) IsAny() bool {
-	return l == AnyLabel
-}
+// OpaqueCode is an opaque, uninterpreted, unknown block of text that
+// is presumably shell commands parsed from markdown.  Fed into a
+// shell interpreter, the entire thing either succeeds or fails.
+type OpaqueCode string
+
+func (c OpaqueCode) String() string { return string(c) }
+func (c OpaqueCode) Bytes() []byte  { return []byte(c) }

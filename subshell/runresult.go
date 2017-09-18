@@ -45,18 +45,18 @@ func NewSuccessOutput(output string) *BlockOutput {
 // RunResult pairs BlockOutput with meta data about shell execution.
 type RunResult struct {
 	BlockOutput
-	fileName model.FilePath      // File in which the error occurred.
-	index    int                 // Command block index.
-	block    *model.CommandBlock // Content of actual command block.
-	problem  error               // Error, if any.
-	message  string              // Detailed error message, if any.
+	fileName model.FilePath  // File in which the error occurred.
+	index    int             // Command block index.
+	block    *model.OldBlock // Content of actual command block.
+	problem  error           // Error, if any.
+	message  string          // Detailed error message, if any.
 }
 
 func NewRunResult() *RunResult {
 	noLabels := []model.Label{}
 	blockOutput := NewFailureOutput("")
 	return &RunResult{
-		*blockOutput, "", -1, model.NewCommandBlock(noLabels, "", ""), nil, ""}
+		*blockOutput, "", -1, model.NewOldBlock(noLabels, "", []byte{}), nil, ""}
 }
 
 // For tests.
@@ -65,7 +65,7 @@ func NoCommandsRunResult(
 	noLabels := []model.Label{}
 	return &RunResult{
 		*blockOutput, path, index,
-		model.NewCommandBlock(noLabels, "", ""), nil, message}
+		model.NewOldBlock(noLabels, "", []byte{}), nil, message}
 }
 
 func (x *RunResult) FileName() model.FilePath {
@@ -104,7 +104,7 @@ func (x *RunResult) SetIndex(i int) *RunResult {
 	return x
 }
 
-func (x *RunResult) SetBlock(b *model.CommandBlock) *RunResult {
+func (x *RunResult) SetBlock(b *model.OldBlock) *RunResult {
 	x.block = b
 	return x
 }

@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"io"
 
+	"bytes"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/tutorial"
 )
@@ -16,21 +17,79 @@ type App struct {
 	tmpl   *template.Template
 }
 
-func (app *App) SessId() model.TypeSessId { return app.sessId }
-func (app *App) Host() string             { return app.host }
+func (app *App) SessId() model.TypeSessId    { return app.sessId }
+func (app *App) Host() string                { return app.host }
+func (app *App) Tutorial() tutorial.Tutorial { return app.tut }
 func (app *App) Program() *model.Program {
 	return tutorial.NewProgramFromTutorial(model.AnyLabel, app.tut)
+}
+func (app *App) Lessons() []*tutorial.Lesson {
+	v := tutorial.NewLessonExtractor()
+	app.tut.Accept(v)
+	return v.Lessons()
 }
 
 func (app *App) Render(w io.Writer) error {
 	return app.tmpl.ExecuteTemplate(w, tmplNameWebApp, app)
 }
 
-func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *App {
-	return &App{sessId, host, tut, template.Must(
-		template.New("main").Parse(
-			model.TmplBodyCommandBlock + model.TmplBodyScript + model.TmplBodyProgram + tmplBodyWebApp))}
+func makeNavDiv(tut tutorial.Tutorial) string {
+	var b bytes.Buffer
+	v := tutorial.NewTutorialNavPrinter(&b)
+	tut.Accept(v)
+	return b.String()
 }
+
+func makeMasterTemplate(tut tutorial.Tutorial) *template.Template {
+	return template.Must(
+		template.New("main").Parse(
+			tutorial.TmplBodyLesson +
+				tutorial.TmplBodyCommandBlock +
+				tmplBodyLessonList +
+			makeAppTemplate(
+				makeNavDiv(tut))))
+}
+
+func oldMakeMasterTemplate(tut tutorial.Tutorial) *template.Template {
+	return template.Must(
+		template.New("main").Parse(
+			model.TmplBodyOldBlock +
+				model.TmplBodyScript +
+				model.TmplBodyProgram +
+				tmplBodyWebApp))
+}
+
+const oldWay = true
+
+func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *App {
+	if oldWay {
+		return &App{sessId, host, tut, oldMakeMasterTemplate(tut)}
+	}
+	return &App{sessId, host, tut, makeMasterTemplate(tut)}
+}
+
+// The trouble here is that we're adding all the tutorial data to the template,
+// which is very bad since it has <divs and all sorts of crap in it.
+func makeAppTemplate(navDiv string) string {
+	return `
+{{define "` + tmplNameWebApp + `"}}
+<html>
+<head>
+<style type="text/css">` + headerCss + `
+</style>
+<script type="text/javascript">` + headerJs + `
+</script>
+</head>
+<body onload="onLoad()">
+WOW!
+` + navDiv + `
+{{ template "` + tmplNameLessonList + `" .Lessons }}
+</body>
+</html>
+{{end}}
+`
+}
+
 
 const (
 	tmplNameWebApp = "webApp"
@@ -51,52 +110,18 @@ const (
 `
 )
 
-const instructionsHtml = `
-<div class="topcorner">
-<button onclick="showhide('instructions')" type="button">
-Meta Instructions</button>
-<div class="instructions" onclick="showhide('instructions')">
-<p>You're viewing a tutorial with command blocks tested to run
-in bash on a linux system.</p>
-<p>Clicking on a command block header
-copies the block to your clipboard so you can mouse over
-to a shell and click again to paste it for execution.</p>
-<p>
-For one-click usage (preferred for demos):
-<ul>
-<li>
-Install <code><a target="_blank"
-href="https://golang.org/doc/install">Go</a></code>
-(the programming language) and
-<code><a target="_blank"
-href="https://github.com/tmux/tmux/wiki">tmux</a></code>
-(the terminal multiplexer).</li>
-<li>Install the <code>tmux</code>
-websocket adapter
-<code><a target="_blank"
-href="https://github.com/monopole/mdrip">mdrip</a></code>:
-<pre>
-  GOPATH=/tmp/mdrip go install github.com/monopole/mdrip
-</pre>
-</li>
-<li>Run (in any shell):
-<pre>
-  /tmp/mdrip/bin/mdrip --mode tmux ws://{{.Host}}/ws?id={{.SessId}}
-</pre>
-</li>
-<li>
-Run <code>tmux</code>.
-</ul>
-<p>
-Now, clicking a command block header sends the block
-from this page's server over a websocket to your local
-<code>mdrip</code>, which then  'pastes' the block
-to your active <code>tmux</code> pane.</p><p>
-The socket evaporates after a period of inactivity,
-and can be restarted with the same command.</p>
-</div>
-</div>
+const (
+	tmplNameLessonList = "lessonList"
+	tmplBodyLessonList = `
+{{define "` + tmplNameLessonList + `"}}
+{{range $i, $c := .}}
+  <div class="oneLesson" id="L{{$i}}">
+  {{ template "` + tutorial.TmplNameLesson + `" $c }}
+  </div>
+{{end}}
+{{end}}
 `
+)
 
 const headerCss = `
 body {
@@ -125,6 +150,16 @@ div.proseblock {
   font-size: 1.2em;
   /* top rig bot lef */
   padding: 10px 20px 0px 0px;
+}
+
+div.lnav0 {
+  /* top rig bot lef */
+  padding: 2px 10px 2px 0px;
+}
+
+div.lnav1 {
+  /* top rig bot lef */
+  padding: 2px 0px 2px 20px;
 }
 
 .control {
@@ -182,6 +217,10 @@ const headerJs = `
 function showhide(name) {
   var elements = document.getElementsByClassName(name);
   var e = elements[0];
+  e.style.display = (e.style.display == 'block') ? 'none' : 'block';
+}
+function toggle(name) {
+  var e = document.getElementById(name);
   e.style.display = (e.style.display == 'block') ? 'none' : 'block';
 }
 // blockUx, which may cause screen flicker, not needed if write is very fast.
@@ -275,4 +314,50 @@ function onRunBlockClick(event) {
   xhttp.open('GET', '/runblock?fid=' + fileId + '&bid=' + blockId, true);
   xhttp.send();
 }
+`
+const instructionsHtml = `
+<div class="topcorner">
+<button onclick="showhide('instructions')" type="button">
+Meta Instructions</button>
+<div class="instructions" onclick="showhide('instructions')">
+<p>You're viewing a tutorial with command blocks tested to run
+in bash on a linux system.</p>
+<p>Clicking on a command block header
+copies the block to your clipboard so you can mouse over
+to a shell and click again to paste it for execution.</p>
+<p>
+For one-click usage (preferred for demos):
+<ul>
+<li>
+Install <code><a target="_blank"
+href="https://golang.org/doc/install">Go</a></code>
+(the programming language) and
+<code><a target="_blank"
+href="https://github.com/tmux/tmux/wiki">tmux</a></code>
+(the terminal multiplexer).</li>
+<li>Install the <code>tmux</code>
+websocket adapter
+<code><a target="_blank"
+href="https://github.com/monopole/mdrip">mdrip</a></code>:
+<pre>
+  GOPATH=/tmp/mdrip go install github.com/monopole/mdrip
+</pre>
+</li>
+<li>Run (in any shell):
+<pre>
+  /tmp/mdrip/bin/mdrip --mode tmux ws://{{.Host}}/ws?id={{.SessId}}
+</pre>
+</li>
+<li>
+Run <code>tmux</code>.
+</ul>
+<p>
+Now, clicking a command block header sends the block
+from this page's server over a websocket to your local
+<code>mdrip</code>, which then  'pastes' the block
+to your active <code>tmux</code> pane.</p><p>
+The socket evaporates after a period of inactivity,
+and can be restarted with the same command.</p>
+</div>
+</div>
 `

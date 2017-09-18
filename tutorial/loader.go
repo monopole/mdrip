@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
 )
 
@@ -95,7 +96,9 @@ func scanFile(n model.FilePath) (*Lesson, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewLesson(n, contents), nil
+	var mymap map[model.Label][]*model.OldBlock
+	mymap = lexer.Parse(contents)
+	return NewLesson(n, mymap), nil
 }
 
 func LoadTutorialFromPath(path model.FilePath) (Tutorial, error) {

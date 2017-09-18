@@ -1,8 +1,11 @@
 package tutorial
 
 import (
-	"github.com/monopole/mdrip/lexer"
+	"fmt"
 	"github.com/monopole/mdrip/model"
+	"github.com/russross/blackfriday"
+	"html/template"
+	"io"
 )
 
 // Tutorial UX Overview.
@@ -106,7 +109,6 @@ import (
 type Tutorial interface {
 	Name() string
 	Path() model.FilePath
-	Content() string
 	// The order matters.
 	Children() []Tutorial
 	Accept(v Visitor)
@@ -116,6 +118,7 @@ type Visitor interface {
 	VisitTopCourse(t *TopCourse)
 	VisitCourse(c *Course)
 	VisitLesson(l *Lesson)
+	VisitCommandBlock(b *CommandBlock)
 }
 
 // A TopCourse is a Course with no name - it's the root of the tree (benelux).
@@ -125,11 +128,10 @@ type TopCourse struct {
 }
 
 func NewTopCourse(p model.FilePath, c []Tutorial) *TopCourse { return &TopCourse{p, c} }
+func (t *TopCourse) Accept(v Visitor)                        { v.VisitTopCourse(t) }
 func (t *TopCourse) Name() string                            { return "" }
 func (t *TopCourse) Path() model.FilePath                    { return t.path }
-func (t *TopCourse) Content() string                         { return "" }
 func (t *TopCourse) Children() []Tutorial                    { return t.children }
-func (t *TopCourse) Accept(v Visitor)                        { v.VisitTopCourse(t) }
 
 // A Course, or directory, has a name but no content, and an ordered list of
 // Lessons and Courses. If the list is empty, the Course is dropped (hah!).
@@ -139,25 +141,110 @@ type Course struct {
 }
 
 func NewCourse(p model.FilePath, c []Tutorial) *Course { return &Course{p, c} }
+func (c *Course) Accept(v Visitor)                     { v.VisitCourse(c) }
 func (c *Course) Name() string                         { return c.patrh.Base() }
 func (c *Course) Path() model.FilePath                 { return c.patrh }
-func (c *Course) Content() string                      { return "" }
 func (c *Course) Children() []Tutorial                 { return c.children }
-func (c *Course) Accept(v Visitor)                     { v.VisitCourse(c) }
 
-// A Lesson, or file, must have a name, must have content and zero children.
+// A Lesson, or file, must have a name, and should have blocks.
 type Lesson struct {
 	path      model.FilePath
-	content   string
-	structure map[model.Label][]*model.CommandBlock
+	structure map[model.Label][]*CommandBlock
 }
 
-func NewLesson(p model.FilePath, c string) *Lesson {
-	return &Lesson{p, c, lexer.Parse(c)}
+func convert(m map[model.Label][]*model.OldBlock) map[model.Label][]*CommandBlock {
+	result := make(map[model.Label][]*CommandBlock)
+	for k, v := range m {
+		bar := []*CommandBlock{}
+		for _, z := range v {
+			bar = append(bar, NewCommandBlock(z.Labels(), z.RawProse(), z.Code()))
+		}
+		result[k] = bar
+	}
+	return result
 }
-func (l *Lesson) Name() string                                     { return l.path.Base() }
-func (l *Lesson) Path() model.FilePath                             { return l.path }
-func (l *Lesson) Content() string                                  { return l.content }
-func (l *Lesson) Structure() map[model.Label][]*model.CommandBlock { return l.structure }
-func (l *Lesson) Children() []Tutorial                             { return []Tutorial{} }
-func (l *Lesson) Accept(v Visitor)                                 { v.VisitLesson(l) }
+
+func NewLesson(p model.FilePath, m map[model.Label][]*model.OldBlock) *Lesson {
+	return &Lesson{p, convert(m)}
+}
+
+func (l *Lesson) Accept(v Visitor)                           { v.VisitLesson(l) }
+func (l *Lesson) Name() string                               { return l.path.Base() }
+func (l *Lesson) Path() model.FilePath                       { return l.path }
+func (l *Lesson) Structure() map[model.Label][]*CommandBlock { return l.structure }
+func (l *Lesson) Children() []Tutorial {
+	result := []Tutorial{}
+	for _, z := range l.structure[model.AnyLabel] {
+		result = append(result, z)
+	}
+	return result
+}
+
+const (
+	TmplNameLesson = "navlesson"
+	TmplBodyLesson = `
+{{define "` + TmplNameLesson + `"}}
+lesson  {{.Name}}
+{{range $i, $c := .Children}}
+  <div class="commandBlock" data-id="{{$i}}">
+  HEY
+  </div>
+{{end}}
+{{end}}
+`
+)
+
+// Replace HEY with {{ template "` + TmplNameCommandBlock + `" $c }}
+
+
+// CommandBlock groups opaqueCode with its labels.
+type CommandBlock struct {
+	labels []model.Label
+	// prose is human language documentation for the opaqueCode
+	prose []byte
+	code  model.OpaqueCode
+}
+
+func NewCommandBlock(labels []model.Label, prose []byte, code model.OpaqueCode) *CommandBlock {
+	if len(labels) < 1 {
+		// Assure at least one label.
+		labels = []model.Label{model.MistakeLabel}
+	}
+	return &CommandBlock{labels, prose, code}
+}
+
+func (x *CommandBlock) Accept(v Visitor)       { v.VisitCommandBlock(x) }
+func (x *CommandBlock) Name() string           { return string(x.labels[0]) }
+func (x *CommandBlock) Path() model.FilePath   { return model.FilePath("wutwutwut") }
+func (x *CommandBlock) Labels() []model.Label  { return x.labels }
+func (x *CommandBlock) Code() model.OpaqueCode { return x.code }
+func (x *CommandBlock) Children() []Tutorial   { return []Tutorial{} }
+func (x *CommandBlock) RawProse() []byte       { return x.prose }
+func (x *CommandBlock) Prose() template.HTML {
+	return template.HTML(string(blackfriday.MarkdownCommon(x.prose)))
+}
+
+const (
+	TmplNameCommandBlock = "navcommandblock"
+	TmplBodyCommandBlock = `
+{{define "` + TmplNameCommandBlock + `"}}
+<div class="proseblock"> {{.Prose}} </div>
+<h3 id="control" class="control">
+  <span class="blockButton" onclick="onRunBlockClick(event)">
+     {{ .Name }}
+  </span>
+  <span class="spacer"> &nbsp; </span>
+</h3>
+<pre class="codeblock">
+{{ .Code }}
+</pre>
+{{end}}
+`
+)
+
+func (x *CommandBlock) Print(
+	w io.Writer, prefix string, n int, label model.Label, fileName model.FilePath) {
+	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n",
+		prefix, x.Name(), n, label, fileName)
+	fmt.Fprint(w, x.Code())
+}

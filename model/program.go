@@ -5,7 +5,9 @@ import (
 	"io"
 )
 
-// Program is a list of scripts with a common label.
+// Program is a list of Scripts with a common label.
+// Each Script came from a file, so a Program is
+// a collection of N files.
 type Program struct {
 	label   Label
 	scripts []*Script

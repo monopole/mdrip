@@ -17,8 +17,8 @@ import (
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/tmux"
 	"github.com/monopole/mdrip/tutorial"
-	"github.com/monopole/mdrip/webapp"
 	"github.com/monopole/mdrip/util"
+	"github.com/monopole/mdrip/webapp"
 )
 
 type myConn struct {
@@ -171,7 +171,7 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 		write500(w, err)
 		return
 	}
-	t.Accept(tutorial.NewTutorialPrinter(w))
+	t.Accept(tutorial.NewTutorialTxtPrinter(w))
 	p := tutorial.NewProgramFromTutorial(model.AnyLabel, t)
 	fmt.Fprintf(w, "file count %d\n\n", len(p.Scripts()))
 	for i, s := range p.Scripts() {

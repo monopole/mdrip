@@ -59,3 +59,11 @@ func SampleString(incoming string, max int) string {
 	}
 	return convertBadWhiteSpaceToBlanks(strings.TrimSpace(incoming[:s]))
 }
+
+// Returns a string of length n with only spaces.
+func Spaces(n int) string {
+	if n < 1 {
+		return ""
+	}
+	return fmt.Sprintf("%"+strconv.Itoa(n)+"s", " ")
+}

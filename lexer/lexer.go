@@ -281,11 +281,11 @@ func freshLabels() []model.Label {
 }
 
 // Parse lexes the incoming string into a mapping from block label to
-// CommandBlock array.  The labels are the strings after a labelMarker in
+// OldBlock array.  The labels are the strings after a labelMarker in
 // a comment preceding a command block.  Arrays hold command blocks in the
 // order they appeared in the input.
-func Parse(s string) (result map[model.Label][]*model.CommandBlock) {
-	result = make(map[model.Label][]*model.CommandBlock)
+func Parse(s string) (result map[model.Label][]*model.OldBlock) {
+	result = make(map[model.Label][]*model.OldBlock)
 	prose := ""
 	currentLabels := freshLabels()
 	l := newLex(s)
@@ -307,13 +307,13 @@ func Parse(s string) (result map[model.Label][]*model.CommandBlock) {
 			if shouldSleep(currentLabels) {
 				item.val = item.val + "sleep 2s # Added by mdrip\n"
 			}
-			newBlock := model.NewCommandBlock(currentLabels, item.val, prose)
+			newBlock := model.NewOldBlock(currentLabels, item.val, []byte(prose))
 			for _, label := range currentLabels {
 				blocks, ok := result[label]
 				if ok {
 					blocks = append(blocks, newBlock)
 				} else {
-					blocks = []*model.CommandBlock{newBlock}
+					blocks = []*model.OldBlock{newBlock}
 				}
 				result[label] = blocks
 			}

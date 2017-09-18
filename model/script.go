@@ -9,21 +9,21 @@ import (
 // An ordered list of command blocks from the given file path.
 type Script struct {
 	path   FilePath
-	blocks []*CommandBlock
+	blocks []*OldBlock
 }
 
-func (s Script) Path() FilePath                            { return s.path }
-func (s Script) Blocks() []*CommandBlock                   { return s.blocks }
-func NewScript(p FilePath, blocks []*CommandBlock) *Script { return &Script{p, blocks} }
+func (s *Script) Path() FilePath                       { return s.path }
+func (s *Script) Blocks() []*OldBlock                  { return s.blocks }
+func NewScript(p FilePath, blocks []*OldBlock) *Script { return &Script{p, blocks} }
 
 const (
-	TmplNameScript = "parsedFile"
+	TmplNameScript = "script"
 	TmplBodyScript = `
 {{define "` + TmplNameScript + `"}}
 <!-- <h2>mdrip {{.Path}}</h2> -->
 {{range $i, $b := .Blocks}}
   <div class="commandBlock" data-id="{{$i}}">
-  {{ template "` + TmplNameCommandBlock + `" $b }}
+  {{ template "` + TmplNameOldBlock + `" $b }}
   </div>
 {{end}}
 {{end}}

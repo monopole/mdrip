@@ -57,11 +57,11 @@ func testLoader(c *config.Config) {
 		fmt.Println(err)
 		return
 	}
-	t.Accept(tutorial.NewTutorialPrinter(os.Stdout))
+	t.Accept(tutorial.NewTutorialNavPrinter(os.Stdout))
 }
 
 func main() {
 	c := config.GetConfig()
-	testLoader(c)
+	//	testLoader(c)
 	realMain(c)
 }
