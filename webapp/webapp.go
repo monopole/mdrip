@@ -81,9 +81,10 @@ func makeAppTemplate(navDiv string) string {
 </script>
 </head>
 <body onload="onLoad()">
-WOW!
+<div class='main'>
 ` + navDiv + `
 {{ template "` + tmplNameLessonList + `" .Lessons }}
+</div>
 </body>
 </html>
 {{end}}
@@ -114,11 +115,13 @@ const (
 	tmplNameLessonList = "lessonList"
 	tmplBodyLessonList = `
 {{define "` + tmplNameLessonList + `"}}
+<div class="lessonList">
 {{range $i, $c := .}}
   <div class="oneLesson" id="L{{$i}}">
   {{ template "` + tutorial.TmplNameLesson + `" $c }}
   </div>
 {{end}}
+</div>
 {{end}}
 `
 )
@@ -128,6 +131,31 @@ body {
   font-family: "Veranda", Veranda, sans-serif;
   /* background-color: antiquewhite; */
   background-color: white;
+}
+
+div.main {
+  position: relative;
+}
+
+div.lnav0 {
+  position: fixed;
+  z-index: 100;
+  top: 10px;
+  left: 0;
+  width: 200px;
+  /* top rig bot lef */
+  padding: 2px 0px 2px 0px;
+}
+
+div.lnav1 {
+  /* top rig bot lef */
+  padding: 2px 0px 2px 20px;
+}
+
+div.lessonList {
+  position: absolute;
+  top: 10px;
+  left: 200px;
 }
 
 div.commandBlock {
@@ -152,14 +180,9 @@ div.proseblock {
   padding: 10px 20px 0px 0px;
 }
 
-div.lnav0 {
-  /* top rig bot lef */
-  padding: 2px 10px 2px 0px;
-}
-
-div.lnav1 {
-  /* top rig bot lef */
-  padding: 2px 0px 2px 20px;
+div.oneLesson {
+  display: none;
+  padding: 2px 2px 2px 2px;
 }
 
 .control {
@@ -199,7 +222,7 @@ pre.codeblock {
   z-index: 100;
 }
 div.instructions {
-  position: absolute;
+  position: fixed;
   font-size: 0.7em;
   display: none;
   width: 480px;
@@ -227,10 +250,25 @@ function toggle(name) {
 var blockUx = false
 var runButtons = []
 var requestRunning = false
+var activeE = null
 function onLoad() {
   if (blockUx) {
     runButtons = document.getElementsByTagName('input');
   }
+  assureActive('L0')
+}
+function assureActive(id) {
+  if (activeE != null) {
+    activeE.style.display = 'none';
+    console.log("turning off")
+  }
+  activeE = document.getElementById(id);
+  if (activeE == null) {
+    console.log("unable to find " + id)
+    return;
+ }
+  console.log("turning on " + id)
+  activeE.style.display = 'block';
 }
 function getId(el) {
   return el.getAttribute("data-id");

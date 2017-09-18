@@ -184,18 +184,15 @@ const (
 	TmplNameLesson = "navlesson"
 	TmplBodyLesson = `
 {{define "` + TmplNameLesson + `"}}
-lesson  {{.Name}}
+LESSON  {{.Name}}
 {{range $i, $c := .Children}}
   <div class="commandBlock" data-id="{{$i}}">
-  HEY
+  {{ template "` + TmplNameCommandBlock + `" $c }}
   </div>
 {{end}}
 {{end}}
 `
 )
-
-// Replace HEY with {{ template "` + TmplNameCommandBlock + `" $c }}
-
 
 // CommandBlock groups opaqueCode with its labels.
 type CommandBlock struct {

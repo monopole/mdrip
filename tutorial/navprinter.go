@@ -49,7 +49,7 @@ func (v *NavPrinter) VisitLesson(x *Lesson) {
 	v.pf("<div class='lnav1' data-name=\"%s\">\n", x.Name())
 	v.down()
 	// instead of toggle, call assureOnlyThisGuyOn!
-	v.pf("<div onclick=\"toggle('L%d')\">%s</div>\n", v.lCounter, x.Name())
+	v.pf("<div onclick=\"assureActive('L%d')\">%s</div>\n", v.lCounter, x.Name())
 	v.pf("<div id='n%d' style='display: %s;'>\n", v.id, v.initStyle())
 	v.down()
 	for _, c := range x.Children() {
