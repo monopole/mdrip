@@ -59,7 +59,7 @@ func oldMakeMasterTemplate(tut tutorial.Tutorial) *template.Template {
 				tmplBodyWebApp))
 }
 
-const oldWay = true
+const oldWay = false
 
 func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *App {
 	if oldWay {
