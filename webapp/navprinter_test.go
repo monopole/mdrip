@@ -1,24 +1,25 @@
-package tutorial
+package webapp
 
 import (
 	"bytes"
 	"testing"
 
 	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/tutorial"
 )
 
 type npTest struct {
 	name  string
-	input Tutorial
+	input tutorial.Tutorial
 	want  string
 }
 
-var emptyLesson = NewLesson(
+var emptyLesson = tutorial.NewLesson(
 	model.FilePath(""),
 	make(map[model.Label][]*model.OldBlock))
 
-var course1 = NewCourse(model.FilePath("hey"),
-	[]Tutorial{emptyLesson})
+var course1 = tutorial.NewCourse(model.FilePath("hey"),
+	[]tutorial.Tutorial{emptyLesson})
 
 var npTests = []npTest{
 	{"emptyLesson",

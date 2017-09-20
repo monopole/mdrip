@@ -17,19 +17,6 @@ func (p *Program) Scripts() []*Script                { return p.scripts }
 func (p *Program) Label() Label                      { return p.label }
 func NewProgram(l Label, scripts []*Script) *Program { return &Program{l, scripts} }
 
-const (
-	TmplNameProgram = "program"
-	TmplBodyProgram = `
-{{define "` + TmplNameProgram + `"}}
-{{range $i, $s := .Scripts}}
-  <div data-id="{{$i}}">
-  {{ template "` + TmplNameScript + `" $s }}
-  </div>
-{{end}}
-{{end}}
-`
-)
-
 // PrintNormal simply prints the contents of a program.
 func (p Program) PrintNormal(w io.Writer) {
 	for _, s := range p.scripts {

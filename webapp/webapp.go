@@ -23,19 +23,24 @@ func (app *App) Tutorial() tutorial.Tutorial { return app.tut }
 func (app *App) Program() *model.Program {
 	return tutorial.NewProgramFromTutorial(model.AnyLabel, app.tut)
 }
+
 func (app *App) Lessons() []*tutorial.Lesson {
 	v := tutorial.NewLessonExtractor()
 	app.tut.Accept(v)
 	return v.Lessons()
 }
 
+func (app *App) AppName() string {
+	return app.host
+}
+
 func (app *App) Render(w io.Writer) error {
 	return app.tmpl.ExecuteTemplate(w, tmplNameWebApp, app)
 }
 
-func makeNavDiv(tut tutorial.Tutorial) string {
+func makeLeftNavBody(tut tutorial.Tutorial) string {
 	var b bytes.Buffer
-	v := tutorial.NewTutorialNavPrinter(&b)
+	v := NewTutorialNavPrinter(&b)
 	tut.Accept(v)
 	return b.String()
 }
@@ -43,34 +48,23 @@ func makeNavDiv(tut tutorial.Tutorial) string {
 func makeMasterTemplate(tut tutorial.Tutorial) *template.Template {
 	return template.Must(
 		template.New("main").Parse(
-			tutorial.TmplBodyLesson +
-				tutorial.TmplBodyCommandBlock +
+			tmplBodyLesson +
+				tmplBodyCommandBlock +
 				tmplBodyLessonList +
-			makeAppTemplate(
-				makeNavDiv(tut))))
+				makeAppTemplate(
+					makeLeftNavBody(tut))))
 }
-
-func oldMakeMasterTemplate(tut tutorial.Tutorial) *template.Template {
-	return template.Must(
-		template.New("main").Parse(
-			model.TmplBodyOldBlock +
-				model.TmplBodyScript +
-				model.TmplBodyProgram +
-				tmplBodyWebApp))
-}
-
-const oldWay = false
 
 func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *App {
-	if oldWay {
-		return &App{sessId, host, tut, oldMakeMasterTemplate(tut)}
-	}
+	v := tutorial.NewLessonExtractor()
+	tut.Accept(v)
 	return &App{sessId, host, tut, makeMasterTemplate(tut)}
 }
 
-// The trouble here is that we're adding all the tutorial data to the template,
-// which is very bad since it has <divs and all sorts of crap in it.
-func makeAppTemplate(navDiv string) string {
+// The logic involved in building the leftnav is much less awkward
+// in plain Go than in the Go template language, so slapping the nav
+// into the template as a pre-built string.
+func makeAppTemplate(leftNavBody string) string {
 	return `
 {{define "` + tmplNameWebApp + `"}}
 <html>
@@ -82,46 +76,74 @@ func makeAppTemplate(navDiv string) string {
 </head>
 <body onload="onLoad()">
 <div class='main'>
-` + navDiv + `
-{{ template "` + tmplNameLessonList + `" .Lessons }}
-</div>
+` + instructionsHtml + `
+  <div class='leftNav'>
+    <div
+        class='overallTitleNav'
+        onclick='assureActiveLesson(0)'>
+      {{ .AppName }}
+    </div>
+` + leftNavBody + `
+  </div>
+  <div class='lessonList'>
+    <div class='overallTitleLesson'>
+      <button onclick='toggleLeftNav()' id='heyho' type='button'>&gt;</button>
+      <span id='activeLessonName'></span>
+    </div>
+    <div >
+      {{ template "` + tmplNameLessonList + `" .Lessons }}
+    </div>
+  </div>
 </body>
 </html>
 {{end}}
 `
 }
 
-
 const (
 	tmplNameWebApp = "webApp"
-	tmplBodyWebApp = `
-{{define "` + tmplNameWebApp + `"}}
-<html>
-<head>
-<style type="text/css">` + headerCss + `
-</style>
-<script type="text/javascript">` + headerJs + `
-</script>
-</head>
-<body onload="onLoad()"> ` + instructionsHtml + `
-{{ template "` + model.TmplNameProgram + `" .Program }}
-</body>
-</html>
-{{end}}
-`
 )
 
 const (
 	tmplNameLessonList = "lessonList"
 	tmplBodyLessonList = `
 {{define "` + tmplNameLessonList + `"}}
-<div class="lessonList">
 {{range $i, $c := .}}
-  <div class="oneLesson" id="L{{$i}}">
-  {{ template "` + tutorial.TmplNameLesson + `" $c }}
+  <div class='oneLesson' id='BL{{$i}}' data-id='{{$i}}' >
+  {{ template "` + tmplNameLesson + `" $c }}
   </div>
 {{end}}
-</div>
+{{end}}
+`
+)
+
+const (
+	tmplNameLesson = "navlesson"
+	tmplBodyLesson = `
+{{define "` + tmplNameLesson + `"}}
+{{range $i, $c := .Children}}
+  <div class="commandBlock" data-id="{{$i}}">
+  {{ template "` + tmplNameCommandBlock + `" $c }}
+  </div>
+{{end}}
+{{end}}
+`
+)
+
+const (
+	tmplNameCommandBlock = "navcommandblock"
+	tmplBodyCommandBlock = `
+{{define "` + tmplNameCommandBlock + `"}}
+<div class="proseblock"> {{.Prose}} </div>
+<h3 id="control" class="control">
+  <span class="blockButton" onclick="onRunBlockClick(event)">
+     {{ .Name }}
+  </span>
+  <span class="spacer"> &nbsp; </span>
+</h3>
+<pre class="codeblock">
+{{ .Code }}
+</pre>
 {{end}}
 `
 )
@@ -131,31 +153,77 @@ body {
   font-family: "Veranda", Veranda, sans-serif;
   /* background-color: antiquewhite; */
   background-color: white;
+  margin: 0;
+  padding: 0;
 }
 
 div.main {
   position: relative;
 }
 
-div.lnav0 {
+div.overallTitleNav {
   position: fixed;
-  z-index: 100;
-  top: 10px;
-  left: 0;
-  width: 200px;
-  /* top rig bot lef */
-  padding: 2px 0px 2px 0px;
+  top: 0;
+  height: 26px;
+  padding: 4px 0px 4px 4px;
 }
 
-div.lnav1 {
+div.leftNav {
+  position: fixed;
+  z-index: 100;
+  top: 26px;
+  left: 0;
+  /* width: 100px; */
   /* top rig bot lef */
-  padding: 2px 0px 2px 20px;
+  padding: 4px 0px 4px 4px;
+}
+
+div.overallTitleLesson {
+  position: fixed;
+  z-index: 100;
+  padding: 0;
+  background-color: #ddd;
+  /* opacity: 0.0; */
+  top: 0;
+  height: 26px;
+  left: 200px;
+  width: 100%;
+  padding: 4px 0px 4px 4px;
 }
 
 div.lessonList {
   position: absolute;
-  top: 10px;
+  top: 26px;
   left: 200px;
+  width: 100%;
+}
+
+div.navCourseTitle {
+}
+
+div.navCourseTitle:hover {
+  color: #06e;
+}
+
+div.navLessonTitleOn {
+  background-color: #ddd;
+}
+
+div.navLessonTitleOff {
+}
+
+div.navLessonTitleOff:hover {
+  color: #06e;
+}
+
+div.navItemTop {
+  /* top rig bot lef */
+  padding: 4px 0px 2px 4px;
+}
+
+div.navItemBox {
+  /* top rig bot lef */
+  padding: 2px 0px 2px 20px;
 }
 
 div.commandBlock {
@@ -217,9 +285,9 @@ pre.codeblock {
 }
 .topcorner {
   position: fixed;
-  top: 0;
+  top: 6;
   right: 10;
-  z-index: 100;
+  z-index: 200;
 }
 div.instructions {
   position: fixed;
@@ -237,38 +305,77 @@ div.instructions {
 `
 
 const headerJs = `
-function showhide(name) {
+function getElByClass(name) {
   var elements = document.getElementsByClassName(name);
-  var e = elements[0];
+  return elements[0];
+}
+function toggleLeftNav() {
+  var ln = getElByClass('leftNav');
+  var list = getElByClass('lessonList');
+  var e = document.getElementById('heyho')
+  if (e.innerHTML == '&gt;') {
+    // Show the nav
+    e.innerHTML = '&lt;'
+    ln.style.display = 'block';
+    list.style.left = '200px';
+  } else {
+    // Hide the nav
+    e.innerHTML = '&gt;'
+    ln.style.display = 'none';
+    list.style.left = '0';
+  }
+}
+function toggleByClass(name) {
+  var e = getElByClass(name);
   e.style.display = (e.style.display == 'block') ? 'none' : 'block';
 }
-function toggle(name) {
-  var e = document.getElementById(name);
+function toggleNC(index) {
+  var e = document.getElementById('NC' + index.toString());
   e.style.display = (e.style.display == 'block') ? 'none' : 'block';
 }
 // blockUx, which may cause screen flicker, not needed if write is very fast.
 var blockUx = false
 var runButtons = []
 var requestRunning = false
-var activeE = null
+var activeLesson = -1
+function assureNoActiveLesson() {
+  if (activeLesson == -1) {
+    return
+  }
+  var index = activeLesson
+  document.getElementById('activeLessonName').innerHTML = ''
+  // hide lesson body.
+  var e = document.getElementById('BL' + index.toString())
+  e.style.display = 'none'
+  // hide lesson nav.
+  var e = document.getElementById('NL' + index.toString())
+  e.className = 'navLessonTitleOff'
+  activeLesson = -1
+}
+function assureActiveLesson(index) {
+  if (activeLesson == index) {
+    return
+  }
+  if (activeLesson != -1) {
+    assureNoActiveLesson()
+  }
+  // show lesson body.
+  var e = document.getElementById('BL' + index.toString())
+  e.style.display = 'block'
+
+  // show lesson nav.
+  var e = document.getElementById('NL' + index.toString())
+  e.className = 'navLessonTitleOn'
+
+  path = e.getAttribute('data-path')
+  document.getElementById('activeLessonName').innerHTML = path
+  activeLesson = index
+}
 function onLoad() {
   if (blockUx) {
     runButtons = document.getElementsByTagName('input');
   }
-  assureActive('L0')
-}
-function assureActive(id) {
-  if (activeE != null) {
-    activeE.style.display = 'none';
-    console.log("turning off")
-  }
-  activeE = document.getElementById(id);
-  if (activeE == null) {
-    console.log("unable to find " + id)
-    return;
- }
-  console.log("turning on " + id)
-  activeE.style.display = 'block';
+  assureActiveLesson(0)
 }
 function getId(el) {
   return el.getAttribute("data-id");
@@ -355,9 +462,9 @@ function onRunBlockClick(event) {
 `
 const instructionsHtml = `
 <div class="topcorner">
-<button onclick="showhide('instructions')" type="button">
+<button onclick="toggleByClass('instructions')" type="button">
 Meta Instructions</button>
-<div class="instructions" onclick="showhide('instructions')">
+<div class="instructions" onclick="toggleByClass('instructions')">
 <p>You're viewing a tutorial with command blocks tested to run
 in bash on a linux system.</p>
 <p>Clicking on a command block header

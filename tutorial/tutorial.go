@@ -12,9 +12,10 @@ import (
 //
 // Suppose it's a tutorial on Benelux.
 //
-// The first lesson is an overview of Benelux, with sibling (not child) lessons
-// covering Belgium, Netherlands, and Luxembourg.  These in turn could contain
-// lessons on provinces, which could contain lessons on cities, etc.
+// The first lesson is an overview of Benelux, with sibling (_not_ child)
+// lessons covering Belgium, Netherlands, and Luxembourg.  These in turn
+// could contain lessons on provinces, which could contain lessons on
+// cities, etc.
 //
 // Associated content REST addresses look like
 //
@@ -35,17 +36,17 @@ import (
 //     benelux.com/netherlands/flevoland
 //     ...
 //
-// Crucially, all content is accessible from a left nav in a page like this:
+// All content is accessible from a left nav in the usual app layout:
 //
 //      overview     |                             {content outline
 //      belgium      |                              here - title, h1,
 //     [netherlands] |       {main page             h2, h3 etc.}
 //      luxembourg   |      content here}
 //
-// The core interaction here is that
+// Core UX rules:
 //   * At all times exactly one of the left nav choices is selected.
 //   * The main page shows content associated with that selection.
-// It's always obvious where you are, where you can go, and how to get back.
+// This makes it obvious where you are, where you can go, and how to get back.
 //
 // The first item, in this case "overview" is the initial highlight.
 // If one hits the domain without a REST path, one is redirected to
@@ -180,20 +181,6 @@ func (l *Lesson) Children() []Tutorial {
 	return result
 }
 
-const (
-	TmplNameLesson = "navlesson"
-	TmplBodyLesson = `
-{{define "` + TmplNameLesson + `"}}
-LESSON  {{.Name}}
-{{range $i, $c := .Children}}
-  <div class="commandBlock" data-id="{{$i}}">
-  {{ template "` + TmplNameCommandBlock + `" $c }}
-  </div>
-{{end}}
-{{end}}
-`
-)
-
 // CommandBlock groups opaqueCode with its labels.
 type CommandBlock struct {
 	labels []model.Label
@@ -220,24 +207,6 @@ func (x *CommandBlock) RawProse() []byte       { return x.prose }
 func (x *CommandBlock) Prose() template.HTML {
 	return template.HTML(string(blackfriday.MarkdownCommon(x.prose)))
 }
-
-const (
-	TmplNameCommandBlock = "navcommandblock"
-	TmplBodyCommandBlock = `
-{{define "` + TmplNameCommandBlock + `"}}
-<div class="proseblock"> {{.Prose}} </div>
-<h3 id="control" class="control">
-  <span class="blockButton" onclick="onRunBlockClick(event)">
-     {{ .Name }}
-  </span>
-  <span class="spacer"> &nbsp; </span>
-</h3>
-<pre class="codeblock">
-{{ .Code }}
-</pre>
-{{end}}
-`
-)
 
 func (x *CommandBlock) Print(
 	w io.Writer, prefix string, n int, label model.Label, fileName model.FilePath) {

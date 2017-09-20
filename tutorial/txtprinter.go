@@ -15,42 +15,46 @@ func NewTutorialTxtPrinter(w io.Writer) *TxtPrinter {
 	return &TxtPrinter{0, w}
 }
 
-func (v *TxtPrinter) in(s string) string {
-	return util.Spaces(2*v.depth) + s
+func (v *TxtPrinter) wrapFmt(s string) string {
+	return util.Spaces(2*v.depth) + s + "\n"
 }
 
-func (v *TxtPrinter) down() {
+func (v *TxtPrinter) Depth() int {
+	return v.depth
+}
+
+func (v *TxtPrinter) Down() {
 	v.depth += 1
 }
 
-func (v *TxtPrinter) up() {
+func (v *TxtPrinter) Up() {
 	v.depth -= 1
 }
 
-func (v *TxtPrinter) pf(s string, a ...interface{}) {
-	fmt.Fprintf(v.w, v.in(s), a...)
+func (v *TxtPrinter) P(s string, a ...interface{}) {
+	fmt.Fprintf(v.w, v.wrapFmt(s), a...)
 }
 
 func (v *TxtPrinter) VisitCommandBlock(b *CommandBlock) {
-	v.pf("%s --- %s...\n", b.Name(), util.SampleString(string(b.Code()), 60))
+	v.P("%s --- %s...", b.Name(), util.SampleString(string(b.Code()), 60))
 }
 
 func (v *TxtPrinter) VisitLesson(l *Lesson) {
-	v.pf("%s\n", l.Name())
-	v.down()
+	v.P("%s", l.Name())
+	v.Down()
 	for _, x := range l.Children() {
 		x.Accept(v)
 	}
-	v.up()
+	v.Up()
 }
 
 func (v *TxtPrinter) VisitCourse(c *Course) {
-	v.pf("%s\n", c.Name())
-	v.down()
+	v.P("%s", c.Name())
+	v.Down()
 	for _, x := range c.Children() {
 		x.Accept(v)
 	}
-	v.up()
+	v.Up()
 }
 
 func (v *TxtPrinter) VisitTopCourse(t *TopCourse) {

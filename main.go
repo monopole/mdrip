@@ -10,6 +10,7 @@ import (
 	"github.com/monopole/mdrip/tmux"
 	"github.com/monopole/mdrip/tutorial"
 	"github.com/monopole/mdrip/webserver"
+	"github.com/monopole/mdrip/webapp"
 )
 
 func realMain(c *config.Config) {
@@ -57,11 +58,11 @@ func testLoader(c *config.Config) {
 		fmt.Println(err)
 		return
 	}
-	t.Accept(tutorial.NewTutorialNavPrinter(os.Stdout))
+	t.Accept(webapp.NewTutorialNavPrinter(os.Stdout))
 }
 
 func main() {
 	c := config.GetConfig()
-	//	testLoader(c)
+		testLoader(c)
 	realMain(c)
 }

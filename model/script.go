@@ -16,20 +16,6 @@ func (s *Script) Path() FilePath                       { return s.path }
 func (s *Script) Blocks() []*OldBlock                  { return s.blocks }
 func NewScript(p FilePath, blocks []*OldBlock) *Script { return &Script{p, blocks} }
 
-const (
-	TmplNameScript = "script"
-	TmplBodyScript = `
-{{define "` + TmplNameScript + `"}}
-<!-- <h2>mdrip {{.Path}}</h2> -->
-{{range $i, $b := .Blocks}}
-  <div class="commandBlock" data-id="{{$i}}">
-  {{ template "` + TmplNameOldBlock + `" $b }}
-  </div>
-{{end}}
-{{end}}
-`
-)
-
 // Print sends contents to the given Writer.
 //
 // If n <= 0, print everything, else only print the first n blocks.
