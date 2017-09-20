@@ -24,19 +24,25 @@ var course1 = tutorial.NewCourse(model.FilePath("hey"),
 var npTests = []npTest{
 	{"emptyLesson",
 		emptyLesson,
-		`<div class='lnav1' data-name=".">
-  <div onclick="assureActive('L0')">.</div>
-  <div id='n1' style='display: block;'>
+		`<div class='navItemTop'>
+  <div id='NL0' class='navLessonTitleOff'
+      onclick='assureActiveLesson(0)'
+      data-path=''>
+    .
   </div>
 </div>
 `}, {"smallCourse",
 		course1,
-		`<div class='lnav1' data-name="hey">
-  <div onclick="toggle('n1')">hey</div>
-  <div id='n1' style='display: block;'>
-    <div class='lnav1' data-name=".">
-      <div onclick="assureActive('L0')">.</div>
-      <div id='n2' style='display: none;'>
+		`<div class='navItemTop'>
+  <div class='navCourseTitle' onclick='toggleNC(0)'>
+    hey
+  </div>
+  <div id='NC0' style='display: none;'>
+    <div class='navItemBox'>
+      <div id='NL0' class='navLessonTitleOff'
+          onclick='assureActiveLesson(0)'
+          data-path=''>
+        .
       </div>
     </div>
   </div>
