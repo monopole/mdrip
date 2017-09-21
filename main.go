@@ -63,6 +63,5 @@ func testLoader(c *config.Config) {
 
 func main() {
 	c := config.GetConfig()
-		testLoader(c)
 	realMain(c)
 }

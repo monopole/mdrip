@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/tutorial"
+	"strconv"
 )
 
 // A tutorial and associated info for rendering.
@@ -34,6 +35,27 @@ func (app *App) AppName() string {
 	return app.host
 }
 
+const (
+	layoutNavWidth = 200
+	layoutTitleHeight = 28
+)
+
+func (app *App) LayoutNavWidth() string {
+	return strconv.Itoa(layoutNavWidth)
+}
+
+func (app *App) LayoutNavWidthPlusDelta() string {
+	return strconv.Itoa(layoutNavWidth+1)
+}
+
+func (app *App) LayoutTitleHeight() string {
+	return strconv.Itoa(layoutTitleHeight)
+}
+
+func (app *App) LayoutTitleHeightPlusDelta() string {
+	return strconv.Itoa(layoutTitleHeight+1)
+}
+
 func (app *App) Render(w io.Writer) error {
 	return app.tmpl.ExecuteTemplate(w, tmplNameWebApp, app)
 }
@@ -51,8 +73,7 @@ func makeMasterTemplate(tut tutorial.Tutorial) *template.Template {
 			tmplBodyLesson +
 				tmplBodyCommandBlock +
 				tmplBodyLessonList +
-				makeAppTemplate(
-					makeLeftNavBody(tut))))
+				makeAppTemplate(makeLeftNavBody(tut))))
 }
 
 func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *App {
@@ -77,23 +98,21 @@ func makeAppTemplate(leftNavBody string) string {
 <body onload="onLoad()">
 <div class='main'>
 ` + instructionsHtml + `
+  <div class='titleBar'>
+    <span class='titleNav' onclick='assureActiveLesson(0)'> {{ .AppName }} </span>
+    <button class='navToggle' type='button' onclick='toggleLeftNav()'
+        id='navToggle' >&lt;</button>
+    <button type='button' onclick="toggleByClass('instructions')">?</button>
+    <span id='activeLessonName'>lesson name</span>
+    </span>
+  </div>
   <div class='leftNav'>
-    <div
-        class='overallTitleNav'
-        onclick='assureActiveLesson(0)'>
-      {{ .AppName }}
-    </div>
 ` + leftNavBody + `
   </div>
   <div class='lessonList'>
-    <div class='overallTitleLesson'>
-      <button onclick='toggleLeftNav()' id='heyho' type='button'>&gt;</button>
-      <span id='activeLessonName'></span>
-    </div>
-    <div >
-      {{ template "` + tmplNameLessonList + `" .Lessons }}
-    </div>
+    {{ template "` + tmplNameLessonList + `" .Lessons }}
   </div>
+</div>
 </body>
 </html>
 {{end}}
@@ -102,9 +121,6 @@ func makeAppTemplate(leftNavBody string) string {
 
 const (
 	tmplNameWebApp = "webApp"
-)
-
-const (
 	tmplNameLessonList = "lessonList"
 	tmplBodyLessonList = `
 {{define "` + tmplNameLessonList + `"}}
@@ -115,9 +131,6 @@ const (
 {{end}}
 {{end}}
 `
-)
-
-const (
 	tmplNameLesson = "navlesson"
 	tmplBodyLesson = `
 {{define "` + tmplNameLesson + `"}}
@@ -128,9 +141,6 @@ const (
 {{end}}
 {{end}}
 `
-)
-
-const (
 	tmplNameCommandBlock = "navcommandblock"
 	tmplBodyCommandBlock = `
 {{define "` + tmplNameCommandBlock + `"}}
@@ -161,41 +171,62 @@ div.main {
   position: relative;
 }
 
-div.overallTitleNav {
+div.titleBar {
   position: fixed;
+  z-index: 100;
   top: 0;
-  height: 26px;
+  width: 100%;
+  /* background-color: #ddd; */
+  background-color: #ddd;
+  height: {{.LayoutTitleHeight}}px;
+  /* top rig bot lef */
+  /* padding: 4px 0px 4px 4px; */
+}
+
+span.titleNav {
+  width: {{.LayoutNavWidth}}px;
   padding: 4px 0px 4px 4px;
+}
+
+.navToggle {
+  position: fixed;
+  left: {{.LayoutNavWidthPlusDelta}}px;
 }
 
 div.leftNav {
   position: fixed;
   z-index: 100;
-  top: 26px;
+  top: {{.LayoutTitleHeightPlusDelta}}px;
   left: 0;
-  /* width: 100px; */
-  /* top rig bot lef */
-  padding: 4px 0px 4px 4px;
-}
-
-div.overallTitleLesson {
-  position: fixed;
-  z-index: 100;
-  padding: 0;
-  background-color: #ddd;
-  /* opacity: 0.0; */
-  top: 0;
-  height: 26px;
-  left: 200px;
-  width: 100%;
-  padding: 4px 0px 4px 4px;
+  padding: 30px 0px 4px 4px;
 }
 
 div.lessonList {
   position: absolute;
-  top: 26px;
-  left: 200px;
+  top: {{.LayoutTitleHeightPlusDelta}}px;
+  left: {{.LayoutNavWidthPlusDelta}}px;
   width: 100%;
+}
+
+div.topcorner {
+  position: fixed;
+  top: 6;
+  right: 10;
+  z-index: 200;
+}
+
+div.instructions {
+  position: fixed;
+  font-size: 0.7em;
+  display: none;
+  width: 480px;
+  margin: auto;
+  background-color: #cccccc;
+  border: 5px solid #eeeeee;
+  top: 23px;
+  right: 0px;
+  /* top rig bot lef */
+  padding: 10px 20px 20px 20px;
 }
 
 div.navCourseTitle {
@@ -283,25 +314,6 @@ pre.codeblock {
   background-size: contain;
   background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAWCAMAAADto6y6AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAQtQTFRFAAAAAH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//////BQzC2AAAAFd0Uk5TAAADLy4QZVEHKp8FAUnHbeJ3BAh68IYGC4f4nQyM/LkYCYnXf/rvAm/2/oFY7rcTPuHkOCEky3YjlW4Pqbww0MVTfUZA96p061Xs3mz1e4P70R2aHJYf2KM0AgAAAAFiS0dEWO21xI4AAAAJcEhZcwAAEysAABMrAbkohUIAAADTSURBVCjPbdDZUsJAEAXQXAgJIUDCogHBkbhFEIgCsqmo4MImgij9/39iUT4Qkp63OV0zfbsliTkIhWWOEVHUKOdaTNER9HgiaYQY1xUzlWY8kz04tBjP5Y8KRc6PxUmJcftUnMkIFGCdX1yqjDtX5cp1MChQrVHd3Xn8/y1wc0uNpuejZmt7Ae7aJDreBt1e3wVw/0D06HobYPD0/GI7Q0G10V4i4NV8e/8YE/V8KwImUxJEM82fFM78k4gW3MhfS1p9B3ckobgWBpiChJ/fjc//AJIfFr4X0swAAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE2LTA3LTMwVDE0OjI3OjUxLTA3OjAwUzMirAAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNi0wNy0zMFQxNDoyNzo0NC0wNzowMLz8tSkAAAAZdEVYdFNvZnR3YXJlAHd3dy5pbmtzY2FwZS5vcmeb7jwaAAAAFXRFWHRUaXRsZQBibHVlIENoZWNrIG1hcmsiA8jIAAAAAElFTkSuQmCC);
 }
-.topcorner {
-  position: fixed;
-  top: 6;
-  right: 10;
-  z-index: 200;
-}
-div.instructions {
-  position: fixed;
-  font-size: 0.7em;
-  display: none;
-  width: 480px;
-  margin: auto;
-  background-color: #cccccc;
-  border: 5px solid #eeeeee;
-  top: 23px;
-  right: 0px;
-  /* top rig bot lef */
-  padding: 10px 20px 20px 20px;
-}
 `
 
 const headerJs = `
@@ -312,7 +324,7 @@ function getElByClass(name) {
 function toggleLeftNav() {
   var ln = getElByClass('leftNav');
   var list = getElByClass('lessonList');
-  var e = document.getElementById('heyho')
+  var e = document.getElementById('navToggle')
   if (e.innerHTML == '&gt;') {
     // Show the nav
     e.innerHTML = '&lt;'
@@ -462,11 +474,9 @@ function onRunBlockClick(event) {
 `
 const instructionsHtml = `
 <div class="topcorner">
-<button onclick="toggleByClass('instructions')" type="button">
-Meta Instructions</button>
 <div class="instructions" onclick="toggleByClass('instructions')">
-<p>You're viewing a tutorial with command blocks tested to run
-in bash on a linux system.</p>
+<p>You're looking at markdown files with code blocks
+tested to run in bash on a linux system.</p>
 <p>Clicking on a command block header
 copies the block to your clipboard so you can mouse over
 to a shell and click again to paste it for execution.</p>
