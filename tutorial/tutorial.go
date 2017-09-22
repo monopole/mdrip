@@ -46,7 +46,7 @@ import (
 // Core UX rules:
 //   * At all times exactly one of the left nav choices is selected.
 //   * The main page shows content associated with that selection.
-// This makes it obvious where you are, where you can go, and how to get back.
+// Make it obvious where you are, where you can go, and how to get back.
 //
 // The first item, in this case "overview" is the initial highlight.
 // If one hits the domain without a REST path, one is redirected to
@@ -56,7 +56,7 @@ import (
 // Items in the left nav either name content and show it when clicked, or
 // they name sub-tutorials and expand sub-tutorial choices when clicked.
 // In the latter case, the main content and the left nav highlighting
-// _do not change_.  A second click hides the exposed sub-tutorial names.
+// don't change.  A second click hides the exposed sub-tutorial names.
 //
 // Only the name of a Lesson (a leaf) with content can 1) be highlighted,
 // 2) change the main page content when clicked, and 3) serve at a meaningful
@@ -86,7 +86,9 @@ import (
 //       ...
 //
 // Where, say README (a github name convention) is converted to "overview"
-// by a file loader.
+// by a file loader, and likewise leading numbers in file names are dropped
+// - though the implied presentation order is preserved in the nav so one
+// can retain a lesson ordering.
 //
 // The proposed command line to read and serve content is
 //

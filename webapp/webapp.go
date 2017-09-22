@@ -59,6 +59,10 @@ func (app *App) Render(w io.Writer) error {
 	return app.tmpl.ExecuteTemplate(w, tmplNameWebApp, app)
 }
 
+func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *App {
+	return &App{sessId, host, tut, makeMasterTemplate(tut)}
+}
+
 func makeLeftNavBody(tut tutorial.Tutorial) string {
 	var b bytes.Buffer
 	v := NewTutorialNavPrinter(&b)
@@ -75,11 +79,6 @@ func makeMasterTemplate(tut tutorial.Tutorial) *template.Template {
 				makeAppTemplate(makeLeftNavBody(tut))))
 }
 
-func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *App {
-	v := tutorial.NewLessonExtractor()
-	tut.Accept(v)
-	return &App{sessId, host, tut, makeMasterTemplate(tut)}
-}
 
 // The logic involved in building the leftnav is much less awkward
 // in plain Go than in the Go template language, so slapping the nav
