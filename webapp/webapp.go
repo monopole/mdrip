@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/tutorial"
-	"strconv"
+	"strings"
 )
 
 // A tutorial and associated info for rendering.
@@ -35,26 +35,25 @@ func (app *App) AppName() string {
 	return app.host
 }
 
+func (app *App) TrimName() string {
+	result := strings.TrimSpace(app.AppName())
+	if len(result) > maxAppNameLen {
+		return result[:maxAppNameLen] + "..."
+	}
+	return result
+}
+
 const (
-	layoutNavWidth = 200
-	layoutTitleHeight = 28
+	delta = 2
+	maxAppNameLen = 20
 )
-
-func (app *App) LayoutNavWidth() string {
-	return strconv.Itoa(layoutNavWidth)
-}
-
-func (app *App) LayoutNavWidthPlusDelta() string {
-	return strconv.Itoa(layoutNavWidth+1)
-}
-
-func (app *App) LayoutTitleHeight() string {
-	return strconv.Itoa(layoutTitleHeight)
-}
-
-func (app *App) LayoutTitleHeightPlusDelta() string {
-	return strconv.Itoa(layoutTitleHeight+1)
-}
+func (app *App) LayMainWidth() int            { return 900 }
+func (app *App) LayNavPad() int              { return 7 }
+func (app *App) LayLeftPad() int              { return 20 }
+func (app *App) LayNavWidth() int             { return 200 }
+func (app *App) LayNavWidthPlusDelta() int    { return app.LayNavWidth() + delta }
+func (app *App) LayTitleHeight() int          { return 30 }
+func (app *App) LayTitleHeightPlusDelta() int { return app.LayTitleHeight() + delta }
 
 func (app *App) Render(w io.Writer) error {
 	return app.tmpl.ExecuteTemplate(w, tmplNameWebApp, app)
@@ -99,11 +98,11 @@ func makeAppTemplate(leftNavBody string) string {
 <div class='main'>
 ` + instructionsHtml + `
   <div class='titleBar'>
-    <span class='titleNav' onclick='assureActiveLesson(0)'> {{ .AppName }} </span>
+    <span class='titleNav' onclick='assureActiveLesson(0)'> {{ .TrimName }} </span>
     <button class='navToggle' type='button' onclick='toggleLeftNav()'
         id='navToggle' >&lt;</button>
     <button type='button' onclick="toggleByClass('instructions')">?</button>
-    <span id='activeLessonName'>lesson name</span>
+    <span class='activeLessonName'>lesson name</span>
     </span>
   </div>
   <div class='leftNav'>
@@ -120,7 +119,7 @@ func makeAppTemplate(leftNavBody string) string {
 }
 
 const (
-	tmplNameWebApp = "webApp"
+	tmplNameWebApp     = "webApp"
 	tmplNameLessonList = "lessonList"
 	tmplBodyLessonList = `
 {{define "` + tmplNameLessonList + `"}}
@@ -169,6 +168,8 @@ body {
 
 div.main {
   position: relative;
+  width: {{.LayMainWidth}}px;
+  min-width: {{.LayMainWidth}}px;
 }
 
 div.titleBar {
@@ -178,41 +179,44 @@ div.titleBar {
   width: 100%;
   /* background-color: #ddd; */
   background-color: #ddd;
-  height: {{.LayoutTitleHeight}}px;
+  height: {{.LayTitleHeight}}px;
   /* top rig bot lef */
   /* padding: 4px 0px 4px 4px; */
 }
 
 span.titleNav {
-  width: {{.LayoutNavWidth}}px;
-  padding: 4px 0px 4px 4px;
+  display: inline-block;
+  width: {{.LayNavWidth}}px;
+  min-width: {{.LayNavWidth}}px;
+  padding: 4px 0px 4px {{.LayLeftPad}}px;
+}
+
+span.activeLessonName {
+  padding: 4px 0px 4px 6px;
 }
 
 .navToggle {
-  position: fixed;
-  left: {{.LayoutNavWidthPlusDelta}}px;
+  /* float: left; */
+  /* position: fixed; */
+  /* left: {{.LayNavWidthPlusDelta}}px; */
 }
 
 div.leftNav {
   position: fixed;
   z-index: 100;
-  top: {{.LayoutTitleHeightPlusDelta}}px;
+  top: {{.LayTitleHeightPlusDelta}}px;
   left: 0;
-  padding: 30px 0px 4px 4px;
+  /* top rig bot lef */
+  padding: 20px 0px 4px {{.LayLeftPad}}px;
 }
 
 div.lessonList {
   position: absolute;
-  top: {{.LayoutTitleHeightPlusDelta}}px;
-  left: {{.LayoutNavWidthPlusDelta}}px;
+  top: {{.LayTitleHeightPlusDelta}}px;
+  left: {{.LayNavWidthPlusDelta}}px;
   width: 100%;
-}
-
-div.topcorner {
-  position: fixed;
-  top: 6;
-  right: 10;
-  z-index: 200;
+  /* top rig bot lef */
+  padding: 0px 0px 4px {{.LayLeftPad}}px;
 }
 
 div.instructions {
@@ -220,11 +224,12 @@ div.instructions {
   font-size: 0.7em;
   display: none;
   width: 480px;
+  z-index: 100;
   margin: auto;
   background-color: #cccccc;
   border: 5px solid #eeeeee;
-  top: 23px;
-  right: 0px;
+  top: {{.LayTitleHeightPlusDelta}}px;
+  right: {{.LayTitleHeightPlusDelta}}px;
   /* top rig bot lef */
   padding: 10px 20px 20px 20px;
 }
@@ -249,12 +254,12 @@ div.navLessonTitleOff:hover {
 
 div.navItemTop {
   /* top rig bot lef */
-  padding: 4px 0px 2px 4px;
+  padding: {{.LayNavPad}}px 0px {{.LayNavPad}}px 4px;
 }
 
 div.navItemBox {
   /* top rig bot lef */
-  padding: 2px 0px 2px 20px;
+  padding: {{.LayNavPad}}px 0px {{.LayNavPad}}px {{.LayLeftPad}}px;
 }
 
 div.commandBlock {
@@ -338,12 +343,13 @@ function toggleLeftNav() {
   }
 }
 function toggleByClass(name) {
-  var e = getElByClass(name);
-  e.style.display = (e.style.display == 'block') ? 'none' : 'block';
+  dToggle(getElByClass(name))
 }
 function toggleNC(index) {
-  var e = document.getElementById('NC' + index.toString());
-  e.style.display = (e.style.display == 'block') ? 'none' : 'block';
+  dToggle(document.getElementById('NC' + index.toString()))
+}
+function dToggle(e) {
+  e.style.display = (e.style.display == 'block') ? 'none' : 'block'
 }
 // blockUx, which may cause screen flicker, not needed if write is very fast.
 var blockUx = false
@@ -355,7 +361,7 @@ function assureNoActiveLesson() {
     return
   }
   var index = activeLesson
-  document.getElementById('activeLessonName').innerHTML = ''
+  getElByClass('activeLessonName').innerHTML = ''
   // hide lesson body.
   var e = document.getElementById('BL' + index.toString())
   e.style.display = 'none'
@@ -380,7 +386,7 @@ function assureActiveLesson(index) {
   e.className = 'navLessonTitleOn'
 
   path = e.getAttribute('data-path')
-  document.getElementById('activeLessonName').innerHTML = path
+  getElByClass('activeLessonName').innerHTML = path
   activeLesson = index
 }
 function onLoad() {
@@ -473,7 +479,6 @@ function onRunBlockClick(event) {
 }
 `
 const instructionsHtml = `
-<div class="topcorner">
 <div class="instructions" onclick="toggleByClass('instructions')">
 <p>You're looking at markdown files with code blocks
 tested to run in bash on a linux system.</p>
@@ -513,6 +518,5 @@ from this page's server over a websocket to your local
 to your active <code>tmux</code> pane.</p><p>
 The socket evaporates after a period of inactivity,
 and can be restarted with the same command.</p>
-</div>
 </div>
 `
