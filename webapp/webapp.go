@@ -21,7 +21,7 @@ type App struct {
 func (app *App) SessId() model.TypeSessId    { return app.sessId }
 func (app *App) Host() string                { return app.host }
 func (app *App) Tutorial() tutorial.Tutorial { return app.tut }
-func (app *App) Program() *model.Program {
+func (app *App) Program() *tutorial.Program {
 	return tutorial.NewProgramFromTutorial(model.AnyLabel, app.tut)
 }
 
@@ -31,6 +31,8 @@ func (app *App) Lessons() []*tutorial.Lesson {
 	return v.Lessons()
 }
 
+// This should probably be some text passed to the ctor instead,
+// after pulling it from the command line.
 func (app *App) AppName() string {
 	return app.host
 }
@@ -44,11 +46,12 @@ func (app *App) TrimName() string {
 }
 
 const (
-	delta = 2
+	delta         = 2
 	maxAppNameLen = 20
 )
+
 func (app *App) LayMainWidth() int            { return 900 }
-func (app *App) LayNavPad() int              { return 7 }
+func (app *App) LayNavPad() int               { return 7 }
 func (app *App) LayLeftPad() int              { return 20 }
 func (app *App) LayNavWidth() int             { return 200 }
 func (app *App) LayNavWidthPlusDelta() int    { return app.LayNavWidth() + delta }
@@ -76,9 +79,9 @@ func makeMasterTemplate(tut tutorial.Tutorial) *template.Template {
 			tmplBodyLesson +
 				tmplBodyCommandBlock +
 				tmplBodyLessonList +
+				tmplBodyLessonHead +
 				makeAppTemplate(makeLeftNavBody(tut))))
 }
-
 
 // The logic involved in building the leftnav is much less awkward
 // in plain Go than in the Go template language, so slapping the nav
@@ -152,6 +155,12 @@ const (
 <pre class="codeblock">
 {{ .Code }}
 </pre>
+{{end}}
+`
+	tmplNameLessonHead = "lessonhead"
+	tmplBodyLessonHead = `
+{{define "` + tmplNameLessonHead + `"}}
+<p><code> {{.Path}} </code></p>
 {{end}}
 `
 )
@@ -272,6 +281,10 @@ div.commandBlock {
   cursor: pointer;
 }
 
+.blockButton:hover {
+  color: #06e;
+}
+
 .spacer {
   height: 100%;
   width: 5px;
@@ -350,9 +363,6 @@ function toggleNC(index) {
 function dToggle(e) {
   e.style.display = (e.style.display == 'block') ? 'none' : 'block'
 }
-// blockUx, which may cause screen flicker, not needed if write is very fast.
-var blockUx = false
-var runButtons = []
 var requestRunning = false
 var activeLesson = -1
 function assureNoActiveLesson() {
@@ -389,18 +399,10 @@ function assureActiveLesson(index) {
   activeLesson = index
 }
 function onLoad() {
-  if (blockUx) {
-    runButtons = document.getElementsByTagName('input');
-  }
   assureActiveLesson(0)
 }
-function getId(el) {
+function getDataId(el) {
   return el.getAttribute("data-id");
-}
-function setRunButtonsDisabled(value) {
-  for (var i = 0; i < runButtons.length; i++) {
-    runButtons[i].disabled = value;
-  }
 }
 function addCheck(el) {
   var t = 'span';
@@ -443,43 +445,33 @@ function onRunBlockClick(event) {
     return
   }
   requestRunning = true;
-  if (blockUx) {
-    setRunButtonsDisabled(true)
-  }
   var b = event.target;
   var commandBlockDiv = b.parentNode.parentNode;
-  // Sorry about the fragility here :P
+  // Fragile, but brief!
   var codeBody = commandBlockDiv.childNodes[5].firstChild;
   attemptCopyToBuffer(codeBody.textContent)
-  var blockId = getId(commandBlockDiv);
-  var fileId = getId(commandBlockDiv.parentNode);
-  var oldColor = b.style.color;
-  var oldValue = b.value;
-  if (blockUx) {
-     b.style.color = 'red';
-     b.value = 'running...';
-  }
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (xhttp.readyState == XMLHttpRequest.DONE) {
-      if (blockUx) {
-        b.style.color = oldColor;
-        b.value = oldValue;
-      }
+  var blockId = getDataId(commandBlockDiv);
+  var fileId = getDataId(commandBlockDiv.parentNode);
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == XMLHttpRequest.DONE) {
       addCheck(b.parentNode)
       requestRunning = false;
-      if (blockUx) {
-        setRunButtonsDisabled(false);
-      }
     }
   };
-  xhttp.open('GET', '/runblock?fid=' + fileId + '&bid=' + blockId, true);
-  xhttp.send();
+  xhr.open('GET', '/runblock?fid=' + fileId + '&bid=' + blockId, true);
+  xhr.send();
 }
 `
 const instructionsHtml = `
 <div class="instructions" onclick="toggleByClass('instructions')">
-<p>You're looking at markdown files with code blocks
+<p>You're looking at markdown files harvested from</p>
+<blockquote>
+{{range $i, $c := .Lessons}}
+{{ template "` + tmplNameLessonHead + `" $c }}
+{{end}}
+</blockquote>
+<p>with code blocks
 tested to run in bash on a linux system.</p>
 <p>Clicking on a command block header
 copies the block to your clipboard so you can mouse over
@@ -499,12 +491,13 @@ websocket adapter
 <code><a target="_blank"
 href="https://github.com/monopole/mdrip">mdrip</a></code>:
 <pre>
-  GOPATH=/tmp/mdrip go install github.com/monopole/mdrip
+  TMP_DIR=$(mktemp -d)
+  GOPATH=$TMP_DIR go install github.com/monopole/mdrip
 </pre>
 </li>
 <li>Run (in any shell):
 <pre>
-  /tmp/mdrip/bin/mdrip --mode tmux ws://{{.Host}}/ws?id={{.SessId}}
+  $TMP_DIR/bin/mdrip --mode tmux ws://{{.Host}}/ws?id={{.SessId}}
 </pre>
 </li>
 <li>

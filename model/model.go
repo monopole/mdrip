@@ -37,6 +37,7 @@ type Label string
 const (
 	AnyLabel     = Label(`__AnyLabel__`)
 	MistakeLabel = Label(`__MistakeLabel__`)
+	SleepLabel   = Label(`sleep`)
 )
 
 func (l Label) String() string { return string(l) }
@@ -49,3 +50,35 @@ type OpaqueCode string
 
 func (c OpaqueCode) String() string { return string(c) }
 func (c OpaqueCode) Bytes() []byte  { return []byte(c) }
+
+// Block groups OpaqueCode with its labels.
+type Block struct {
+	labels []Label
+	// prose is presumably human language documentation for the OpaqueCode.
+	prose []byte
+	code  OpaqueCode
+}
+
+func shouldSleep(labels []Label) bool {
+	for _, l := range labels {
+		if l == SleepLabel {
+			return true
+		}
+	}
+	return false
+}
+
+func NewBlock(labels []Label, p string, c string) *Block {
+	// If the command block has a 'sleep' label, add a brief sleep
+	// at the end.  This hack give servers placed in the
+	// background time to start, assuming they can do so in 2s!  Yeah, bad.
+	if shouldSleep(labels) {
+		c += "sleep 2s # Added by mdrip\n"
+	}
+	// Always add AnyLabel as a cheap matcher.
+	labels = append(labels, AnyLabel)
+	return &Block{labels, []byte(p), OpaqueCode(c)}
+}
+func (x *Block) Labels() []Label  { return x.labels }
+func (x *Block) Prose() []byte    { return x.prose }
+func (x *Block) Code() OpaqueCode { return x.code }

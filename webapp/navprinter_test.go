@@ -16,7 +16,7 @@ type npTest struct {
 
 var emptyLesson = tutorial.NewLesson(
 	model.FilePath(""),
-	make(map[model.Label][]*model.OldBlock))
+	[]*tutorial.CommandBlock{})
 
 var course1 = tutorial.NewCourse(model.FilePath("hey"),
 	[]tutorial.Tutorial{emptyLesson})

@@ -6,6 +6,7 @@ import (
 	"github.com/russross/blackfriday"
 	"html/template"
 	"io"
+	"strings"
 )
 
 // Tutorial UX Overview.
@@ -152,35 +153,77 @@ func (c *Course) Children() []Tutorial                 { return c.children }
 // A Lesson, or file, must have a name, and should have blocks.
 type Lesson struct {
 	path      model.FilePath
-	structure map[model.Label][]*CommandBlock
+	blocks []*CommandBlock
 }
 
-func convert(m map[model.Label][]*model.OldBlock) map[model.Label][]*CommandBlock {
-	result := make(map[model.Label][]*CommandBlock)
-	for k, v := range m {
-		bar := []*CommandBlock{}
-		for _, z := range v {
-			bar = append(bar, NewCommandBlock(z.Labels(), z.RawProse(), z.Code()))
+func buildMap(blocks []*model.Block) (result map[model.Label][]*model.Block) {
+	for _, b := range blocks {
+		for _, l := range b.Labels() {
+			haveLabel, ok := result[l]
+			if ok {
+				haveLabel = append(haveLabel, b)
+			} else {
+				haveLabel = []*model.Block{b}
+			}
+			result[l] = haveLabel
 		}
-		result[k] = bar
 	}
-	return result
+	return
 }
 
-func NewLesson(p model.FilePath, m map[model.Label][]*model.OldBlock) *Lesson {
-	return &Lesson{p, convert(m)}
+
+func NewLessonFromModelBlocks(p model.FilePath, blocks []*model.Block) *Lesson {
+	result := make([]*CommandBlock, len(blocks))
+	for i, b := range blocks {
+		result[i] = NewCommandBlock(b.Labels(), b.Prose(), b.Code())
+	}
+	return NewLesson(p, result)
+}
+
+func NewLesson(p model.FilePath, blocks []*CommandBlock) *Lesson {
+	return &Lesson{p, blocks}
 }
 
 func (l *Lesson) Accept(v Visitor)                           { v.VisitLesson(l) }
 func (l *Lesson) Name() string                               { return l.path.Base() }
 func (l *Lesson) Path() model.FilePath                       { return l.path }
-func (l *Lesson) Structure() map[model.Label][]*CommandBlock { return l.structure }
+func (l *Lesson) Blocks(label model.Label) []*CommandBlock {
+	result := []*CommandBlock{}
+	for _, b := range l.blocks {
+		if b.HasLabel(label) {
+			result = append(result, b)
+		}
+	}
+	return result
+}
+
 func (l *Lesson) Children() []Tutorial {
 	result := []Tutorial{}
-	for _, z := range l.structure[model.AnyLabel] {
+	for _, z := range l.blocks {
 		result = append(result, z)
 	}
 	return result
+}
+
+// Print sends contents to the given Writer.
+//
+// If n <= 0, print everything, else only print the first n blocks.
+//
+// n is a count not an index, so to print only the first two blocks,
+// pass n==2, not n==1.
+func (l *Lesson) Print(w io.Writer, label model.Label, n int) {
+	fmt.Fprintf(w, "#\n# Script @%s from %s \n#\n", label, l.path)
+	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d of %d\n"
+	blocks := l.Blocks(label)
+	for i, block := range blocks {
+		if n > 0 && i >= n {
+			break
+		}
+		fmt.Fprintf(w, delimFmt, "Start", i+1, len(blocks))
+		block.Print(w, "#", i+1, label, l.path)
+		fmt.Fprintf(w, delimFmt, "End", i+1, len(blocks))
+		fmt.Fprintln(w)
+	}
 }
 
 // CommandBlock groups opaqueCode with its labels.
@@ -209,7 +252,14 @@ func (x *CommandBlock) RawProse() []byte       { return x.prose }
 func (x *CommandBlock) Prose() template.HTML {
 	return template.HTML(string(blackfriday.MarkdownCommon(x.prose)))
 }
-
+func (x *CommandBlock) HasLabel(label model.Label) bool {
+	for _, l := range x.Labels() {
+		if l == label {
+			return true
+		}
+	}
+	return false
+}
 func (x *CommandBlock) Print(
 	w io.Writer, prefix string, n int, label model.Label, fileName model.FilePath) {
 	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n",

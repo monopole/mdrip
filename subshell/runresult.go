@@ -5,6 +5,7 @@ import (
 	"github.com/monopole/mdrip/model"
 	"os"
 	"strings"
+	"github.com/monopole/mdrip/tutorial"
 )
 
 type status int
@@ -47,25 +48,30 @@ type RunResult struct {
 	BlockOutput
 	fileName model.FilePath  // File in which the error occurred.
 	index    int             // Command block index.
-	block    *model.OldBlock // Content of actual command block.
+	block    *tutorial.CommandBlock // Content of actual command block.
 	problem  error           // Error, if any.
 	message  string          // Detailed error message, if any.
 }
 
+func emptyCommandBlock() *tutorial.CommandBlock {
+	return tutorial.NewCommandBlock([]model.Label{}, []byte{}, "")
+}
+
 func NewRunResult() *RunResult {
-	noLabels := []model.Label{}
 	blockOutput := NewFailureOutput("")
 	return &RunResult{
-		*blockOutput, "", -1, model.NewOldBlock(noLabels, "", []byte{}), nil, ""}
+		*blockOutput, "", -1,
+		emptyCommandBlock(),
+		nil, ""}
 }
 
 // For tests.
 func NoCommandsRunResult(
 	blockOutput *BlockOutput, path model.FilePath, index int, message string) *RunResult {
-	noLabels := []model.Label{}
 	return &RunResult{
 		*blockOutput, path, index,
-		model.NewOldBlock(noLabels, "", []byte{}), nil, message}
+		emptyCommandBlock(),
+		nil, message}
 }
 
 func (x *RunResult) FileName() model.FilePath {
@@ -104,7 +110,7 @@ func (x *RunResult) SetIndex(i int) *RunResult {
 	return x
 }
 
-func (x *RunResult) SetBlock(b *model.OldBlock) *RunResult {
+func (x *RunResult) SetBlock(b *tutorial.CommandBlock) *RunResult {
 	x.block = b
 	return x
 }

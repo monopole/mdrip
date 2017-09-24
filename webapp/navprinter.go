@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// NavPrinter creates leftnav html. for use in a Go template.
+// NavPrinter prints leftnav HTML to a Writer.
 type NavPrinter struct {
 	tutorial.TxtPrinter
 	courseCounter int

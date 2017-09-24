@@ -12,22 +12,22 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/scanner"
 	"github.com/monopole/mdrip/util"
+	"github.com/monopole/mdrip/tutorial"
 )
 
 // Subshell can run a program
 type Subshell struct {
 	blockTimeout time.Duration
-	scripts      []*model.Script
+	program      *tutorial.Program
 }
 
-func NewSubshell(timeout time.Duration, scripts []*model.Script) *Subshell {
-	return &Subshell{timeout, scripts}
+func NewSubshell(timeout time.Duration, p *tutorial.Program) *Subshell {
+	return &Subshell{timeout, p}
 }
 
-// check reports the error fatally if it's non-nil.
+// Check reports the error fatally if it's non-nil.
 func check(msg string, err error) {
 	if err != nil {
 		fmt.Printf("Problem with %s: %v\n", msg, err)
@@ -52,9 +52,9 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunRes
 	chAccErr := accumulateOutput("stdErr", chErr)
 
 	errResult = NewRunResult()
-	for _, file := range s.scripts {
-		numBlocks := len(file.Blocks())
-		for i, block := range file.Blocks() {
+	for _, file := range s.program.Lessons() {
+		numBlocks := len(file.Blocks(s.program.Label()))
+		for i, block := range file.Blocks(s.program.Label()) {
 			glog.Info("Running %s (%d/%d) from %s\n",
 				block.Name(), i+1, numBlocks, file.Path())
 			if glog.V(2) {
@@ -126,11 +126,11 @@ func (s *Subshell) Run() (result *RunResult) {
 	tmpFile, err := ioutil.TempFile("", "mdrip-file-")
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(tmpFile.Name(), 0744))
-	for _, file := range s.scripts {
-		for _, block := range file.Blocks() {
+	for _, file := range s.program.Lessons() {
+		for _, block := range file.Blocks(s.program.Label()) {
 			write(tmpFile, block.Code().String())
 			write(tmpFile, "\n")
-			write(tmpFile, "echo "+scanner.MsgHappy+" "+block.Name().String()+"\n")
+			write(tmpFile, "echo "+scanner.MsgHappy+" "+block.Name()+"\n")
 		}
 	}
 	if glog.V(2) {

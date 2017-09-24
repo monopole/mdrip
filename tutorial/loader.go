@@ -96,9 +96,7 @@ func scanFile(n model.FilePath) (*Lesson, error) {
 	if err != nil {
 		return nil, err
 	}
-	var mymap map[model.Label][]*model.OldBlock
-	mymap = lexer.Parse(contents)
-	return NewLesson(n, mymap), nil
+	return NewLessonFromModelBlocks(n, lexer.Parse(contents)), nil
 }
 
 func LoadTutorialFromPath(path model.FilePath) (Tutorial, error) {
@@ -149,14 +147,14 @@ func LoadTutorialFromPaths(paths []model.FilePath) (Tutorial, error) {
 }
 
 // Build program code from blocks extracted from a tutorial.
-func NewProgramFromTutorial(l model.Label, t Tutorial) *model.Program {
-	v := NewScriptExtractor(l)
+func NewProgramFromTutorial(l model.Label, t Tutorial) *Program {
+	v := NewLessonExtractor()
 	t.Accept(v)
-	return model.NewProgram(l, v.Scripts())
+	return NewProgram(l, v.Lessons())
 }
 
 // Build program code from blocks extracted from markdown files.
-func NewProgramFromPaths(l model.Label, paths []model.FilePath) (*model.Program, error) {
+func NewProgramFromPaths(l model.Label, paths []model.FilePath) (*Program, error) {
 	t, err := LoadTutorialFromPaths(paths)
 	if err != nil {
 		return nil, err

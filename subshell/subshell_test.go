@@ -7,30 +7,35 @@ import (
 
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/scanner"
+	"github.com/monopole/mdrip/tutorial"
 )
 
 const timeout = 2 * time.Second
 
 var labels = []model.Label{model.Label("foo"), model.Label("bar")}
 
-func makeCommandBlock(labels []model.Label, code string) *model.OldBlock {
-	return model.NewOldBlock(labels, code, []byte{})
+func makeCommandBlock(labels []model.Label, code string) *tutorial.CommandBlock {
+	labels = append(labels, model.AnyLabel)
+	return tutorial.NewCommandBlock(labels, []byte{}, model.OpaqueCode(code))
 }
 
 func TestRunnerWithNothing(t *testing.T) {
-	if NewSubshell(timeout, []*model.Script{}).Run().Problem() != nil {
+	if NewSubshell(
+		timeout,
+		tutorial.NewProgram(model.AnyLabel, []*tutorial.Lesson{})).Run().Problem() != nil {
 		t.Fail()
 	}
 }
 
-func doIt(blocks []*model.OldBlock) *RunResult {
-	s := []*model.Script{}
-	s = append(s, model.NewScript("iAmFileName", blocks))
-	return NewSubshell(timeout, s).Run()
+func doIt(blocks []*tutorial.CommandBlock) *RunResult {
+	p := tutorial.NewProgram(
+		model.AnyLabel,
+		[]*tutorial.Lesson{tutorial.NewLesson("iAmFileName", blocks)})
+	return NewSubshell(timeout, p).Run()
 }
 
 func TestRunnerWithGoodStuff(t *testing.T) {
-	blocks := []*model.OldBlock{
+	blocks := []*tutorial.CommandBlock{
 		makeCommandBlock(labels, "echo kale\ndate\n"),
 		makeCommandBlock(labels, "echo beans\necho apple\n"),
 		makeCommandBlock(labels, "echo hasta\necho la vista\n")}
@@ -48,7 +53,7 @@ func checkFail(t *testing.T, got, want *RunResult) {
 		t.Errorf("%s got\n\t%v\nwant\n\t%v", "file", got.Index(), want.Index())
 	}
 	if !strings.Contains(got.Message(), want.Message()) {
-		t.Errorf("%s got\n\t%v\nwant\n\t%v", "message", got.Message(), want.Message())
+		t.Errorf("%s got\n\t\"%v\"\nwant\n\t%v", "message", got.Message(), want.Message())
 	}
 }
 
@@ -59,7 +64,7 @@ func TestStartWithABadCommand(t *testing.T) {
 		0,
 		"line 1: notagoodcommand: command not found")
 
-	blocks := []*model.OldBlock{
+	blocks := []*tutorial.CommandBlock{
 		makeCommandBlock(labels, "notagoodcommand\ndate\n"),
 		makeCommandBlock(labels, "echo beans\necho cheese\n")}
 	checkFail(t, doIt(blocks), want)
@@ -72,7 +77,7 @@ func TestBadCommandInTheMiddle(t *testing.T) {
 		2,
 		"line 9: lochNessMonster: command not found")
 
-	blocks := []*model.OldBlock{
+	blocks := []*tutorial.CommandBlock{
 		makeCommandBlock(labels, "echo tofu\ndate\n"),
 		makeCommandBlock(labels, "echo beans\necho kale\n"),
 		makeCommandBlock(labels, "lochNessMonster\n"),
@@ -92,7 +97,7 @@ func TestTimeOut(t *testing.T) {
 	// Arrange to sleep for two seconds longer than the timeout.
 	sleep := timeout + (2 * time.Second)
 
-	blocks := []*model.OldBlock{
+	blocks := []*tutorial.CommandBlock{
 		makeCommandBlock(labels, "date\nsleep "+sleep.String()+"\necho kale"),
 		makeCommandBlock(labels, "echo beans\necho cheese\n")}
 	checkFail(t, doIt(blocks), want)

@@ -10,11 +10,10 @@ import (
 	"github.com/monopole/mdrip/tmux"
 	"github.com/monopole/mdrip/tutorial"
 	"github.com/monopole/mdrip/webserver"
-	"github.com/monopole/mdrip/webapp"
 )
 
-func realMain(c *config.Config) {
-
+func main() {
+	c := config.GetConfig()
 	switch c.Mode() {
 	case config.ModeTmux:
 		t := tmux.NewTmux(tmux.Path)
@@ -31,7 +30,7 @@ func realMain(c *config.Config) {
 			fmt.Println(err)
 			return
 		}
-		s := subshell.NewSubshell(c.BlockTimeOut(), p.Scripts())
+		s := subshell.NewSubshell(c.BlockTimeOut(), p)
 		if r := s.Run(); r.Problem() != nil {
 			r.Print(c.Label())
 			if !c.IgnoreTestFailure() {
@@ -50,18 +49,4 @@ func realMain(c *config.Config) {
 			p.PrintNormal(os.Stdout)
 		}
 	}
-}
-
-func testLoader(c *config.Config) {
-	t, err := tutorial.LoadTutorialFromPaths(c.FileNames())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	t.Accept(webapp.NewTutorialNavPrinter(os.Stdout))
-}
-
-func main() {
-	c := config.GetConfig()
-	realMain(c)
 }

@@ -267,57 +267,32 @@ func lexCommandBlock(l *lexer) stateFn {
 	}
 }
 
-func shouldSleep(labels []model.Label) bool {
-	for _, l := range labels {
-		if l == "sleep" {
-			return true
-		}
-	}
-	return false
-}
-
-func freshLabels() []model.Label {
-	return make([]model.Label, 0, 10)
-}
-
-// Parse lexes the incoming string into a mapping from block label to
-// OldBlock array.  The labels are the strings after a labelMarker in
-// a comment preceding a command block.  Arrays hold command blocks in the
-// order they appeared in the input.
-func Parse(s string) (result map[model.Label][]*model.OldBlock) {
-	result = make(map[model.Label][]*model.OldBlock)
+// Parse lexes the incoming string into a list of model.Block.
+func Parse(s string) (result []*model.Block) {
+	result = []*model.Block{}
 	prose := ""
-	currentLabels := freshLabels()
+	labels := []model.Label{}
 	l := newLex(s)
 	for {
 		item := l.nextItem()
 		switch {
 		case item.typ == itemEOF || item.typ == itemError:
-			return
+			break
 		case item.typ == itemBlockLabel:
-			currentLabels = append(currentLabels, model.Label(item.val))
+			labels = append(labels, model.Label(item.val))
 		case item.typ == itemProse:
 			prose = item.val
 		case item.typ == itemCommandBlock:
-			// Always add AnyLabel at the end, so one can extract all blocks.
-			currentLabels = append(currentLabels, model.AnyLabel)
-			// If the command block has a 'sleep' label, add a brief sleep
-			// at the end.  This is hack to give servers placed in the
-			// background time to start.
-			if shouldSleep(currentLabels) {
-				item.val = item.val + "sleep 2s # Added by mdrip\n"
-			}
-			newBlock := model.NewOldBlock(currentLabels, item.val, []byte(prose))
-			for _, label := range currentLabels {
-				blocks, ok := result[label]
-				if ok {
-					blocks = append(blocks, newBlock)
-				} else {
-					blocks = []*model.OldBlock{newBlock}
-				}
-				result[label] = blocks
-			}
-			currentLabels = freshLabels()
+			result = append(result, model.NewBlock(labels, prose, item.val))
+			labels = []model.Label{}
+			prose = ""
 		}
 	}
+	if len(prose) > 0 {
+		// Hack to grab the last bit of prose.
+		// The data structure returned by Parse needs redesign.
+		newBlock := model.NewBlock([]model.Label{}, prose, "")
+		result = append(result, newBlock)
+	}
+	return
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/gorilla/sessions"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/tmux"
@@ -173,11 +174,12 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 	}
 	t.Accept(tutorial.NewTutorialTxtPrinter(w))
 	p := tutorial.NewProgramFromTutorial(model.AnyLabel, t)
-	fmt.Fprintf(w, "file count %d\n\n", len(p.Scripts()))
-	for i, s := range p.Scripts() {
+	fmt.Fprintf(w, "\n\nfile count %d\n\n", len(p.Lessons()))
+	for i, s := range p.Lessons() {
 		fmt.Fprintf(w, "file %d: %s\n", i, s.Path())
-		for j, b := range s.Blocks() {
-			fmt.Fprintf(w, "  block %d content: %s\n", j, util.SampleString(string(b.Code()), 50))
+		for j, b := range s.Blocks(p.Label()) {
+			fmt.Fprintf(w, "  block %d content: %s\n",
+				j, util.SampleString(string(b.Code()), 50))
 			fmt.Fprintf(w, "  num labels: %d\n", len(b.Labels()))
 			for k, l := range b.Labels() {
 				fmt.Fprintf(w, "    label %d:  %s\n", k, string(l))
@@ -225,8 +227,22 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		p := tutorial.NewProgramFromTutorial(model.AnyLabel, t)
+		limit := len(p.Lessons())-1
+		if indexFile < 0 || indexFile > limit {
+			http.Error(w,
+				fmt.Sprintf("fid %d out of range 0-%d",
+					indexFile, limit), http.StatusBadRequest)
+			return
+		}
+		limit = len(p.Lessons()[indexFile].Blocks(p.Label()))-1
+		if indexBlock < 0 || indexBlock > limit {
+			http.Error(w,
+				fmt.Sprintf("bid %d out of range 0-%d",
+					indexBlock, limit), http.StatusBadRequest)
+			return
+		}
 		// TODO(monopole): 404 on out of range indices
-		block := p.Scripts()[indexFile].Blocks()[indexBlock]
+		block := p.Lessons()[indexFile].Blocks(p.Label())[indexBlock]
 		_, err = ws.getCodeRunner(sessId).Write(block.Code().Bytes())
 		if err != nil {
 			fmt.Fprintln(w, err)
@@ -305,4 +321,21 @@ func (ws *Server) Serve(hostAndPort string) {
 	fmt.Println("Serving at " + hostAndPort)
 	glog.Info("Serving at " + hostAndPort)
 	glog.Fatal(http.ListenAndServe(hostAndPort, nil))
+}
+
+// Serve offers an http service.
+func (ws *Server) YayServe(hostAndPort string) {
+	r := mux.NewRouter()
+	// r.Host(hostAndPort)
+	r.HandleFunc("/runblock", ws.makeBlockRunner())
+	r.HandleFunc("/debug", ws.showDebugPage)
+	r.HandleFunc("/ws", ws.openWebSocket)
+	r.HandleFunc("/favicon.ico", ws.favicon)
+	r.HandleFunc("/image", ws.image)
+	r.HandleFunc("/q", ws.quit)
+	r.HandleFunc("/", ws.showControlPage)
+	fmt.Println("Serving at " + hostAndPort)
+	glog.Info("Serving at " + hostAndPort)
+	//http.Handle("/", r)
+	glog.Fatal(http.ListenAndServe(hostAndPort, r))
 }
