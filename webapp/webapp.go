@@ -10,35 +10,33 @@ import (
 	"strings"
 )
 
-// A tutorial and associated info for rendering.
-type App struct {
+// WebApp presents a tutorial to a web browser.
+// Not using react, angular2, polymer, etc. because
+// want to keep it simple and shippable as a single binary.
+type WebApp struct {
 	sessId model.TypeSessId
 	host   string
 	tut    tutorial.Tutorial
 	tmpl   *template.Template
 }
 
-func (app *App) SessId() model.TypeSessId    { return app.sessId }
-func (app *App) Host() string                { return app.host }
-func (app *App) Tutorial() tutorial.Tutorial { return app.tut }
-func (app *App) Program() *tutorial.Program {
-	return tutorial.NewProgramFromTutorial(model.AnyLabel, app.tut)
-}
-
-func (app *App) Lessons() []*tutorial.Lesson {
+func (wa *WebApp) SessId() model.TypeSessId    { return wa.sessId }
+func (wa *WebApp) Host() string                { return wa.host }
+func (wa *WebApp) Tutorial() tutorial.Tutorial { return wa.tut }
+func (wa *WebApp) Lessons() []*tutorial.Lesson {
 	v := tutorial.NewLessonExtractor()
-	app.tut.Accept(v)
+	wa.tut.Accept(v)
 	return v.Lessons()
 }
 
 // This should probably be some text passed to the ctor instead,
 // after pulling it from the command line.
-func (app *App) AppName() string {
-	return app.host
+func (wa *WebApp) AppName() string {
+	return wa.host
 }
 
-func (app *App) TrimName() string {
-	result := strings.TrimSpace(app.AppName())
+func (wa *WebApp) TrimName() string {
+	result := strings.TrimSpace(wa.AppName())
 	if len(result) > maxAppNameLen {
 		return result[:maxAppNameLen] + "..."
 	}
@@ -50,30 +48,23 @@ const (
 	maxAppNameLen = 20
 )
 
-func (app *App) LayMainWidth() int            { return 900 }
-func (app *App) LayNavPad() int               { return 7 }
-func (app *App) LayLeftPad() int              { return 20 }
-func (app *App) LayNavWidth() int             { return 200 }
-func (app *App) LayNavWidthPlusDelta() int    { return app.LayNavWidth() + delta }
-func (app *App) LayTitleHeight() int          { return 30 }
-func (app *App) LayTitleHeightPlusDelta() int { return app.LayTitleHeight() + delta }
+func (wa *WebApp) LayMainWidth() int            { return 900 }
+func (wa *WebApp) LayNavPad() int               { return 7 }
+func (wa *WebApp) LayLeftPad() int              { return 20 }
+func (wa *WebApp) LayNavWidth() int             { return 200 }
+func (wa *WebApp) LayNavWidthPlusDelta() int    { return wa.LayNavWidth() + delta }
+func (wa *WebApp) LayTitleHeight() int          { return 30 }
+func (wa *WebApp) LayTitleHeightPlusDelta() int { return wa.LayTitleHeight() + delta }
 
-func (app *App) Render(w io.Writer) error {
-	return app.tmpl.ExecuteTemplate(w, tmplNameWebApp, app)
+func (wa *WebApp) Render(w io.Writer) error {
+	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
 
-func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *App {
-	return &App{sessId, host, tut, makeMasterTemplate(tut)}
+func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *WebApp {
+	return &WebApp{sessId, host, tut, makeParsedTemplate(tut)}
 }
 
-func makeLeftNavBody(tut tutorial.Tutorial) string {
-	var b bytes.Buffer
-	v := NewTutorialNavPrinter(&b)
-	tut.Accept(v)
-	return b.String()
-}
-
-func makeMasterTemplate(tut tutorial.Tutorial) *template.Template {
+func makeParsedTemplate(tut tutorial.Tutorial) *template.Template {
 	return template.Must(
 		template.New("main").Parse(
 			tmplBodyLesson +
@@ -84,8 +75,15 @@ func makeMasterTemplate(tut tutorial.Tutorial) *template.Template {
 }
 
 // The logic involved in building the leftnav is much less awkward
-// in plain Go than in the Go template language, so slapping the nav
-// into the template as a pre-built string.
+// in plain Go than in the Go template language, so creating it
+// this way rather than writing it out with a bunch of {{if}}s, etc.
+func makeLeftNavBody(tut tutorial.Tutorial) string {
+	var b bytes.Buffer
+	v := NewTutorialNavPrinter(&b)
+	tut.Accept(v)
+	return b.String()
+}
+
 func makeAppTemplate(leftNavBody string) string {
 	return `
 {{define "` + tmplNameWebApp + `"}}
@@ -146,15 +144,17 @@ const (
 	tmplBodyCommandBlock = `
 {{define "` + tmplNameCommandBlock + `"}}
 <div class="proseblock"> {{.Prose}} </div>
+{{if .Code}}
 <h3 id="control" class="control">
   <span class="blockButton" onclick="onRunBlockClick(event)">
-     {{ .Name }}
+     {{.Name}}
   </span>
   <span class="spacer"> &nbsp; </span>
 </h3>
 <pre class="codeblock">
 {{ .Code }}
 </pre>
+{{end}}
 {{end}}
 `
 	tmplNameLessonHead = "lessonhead"

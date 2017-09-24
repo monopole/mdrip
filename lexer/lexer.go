@@ -277,7 +277,13 @@ func Parse(s string) (result []*model.Block) {
 		item := l.nextItem()
 		switch {
 		case item.typ == itemEOF || item.typ == itemError:
-			break
+			prose = strings.TrimSpace(prose)
+			if len(prose) > 0 {
+				// Hack to grab the last bit of prose.
+				// The data structure returned by Parse needs redesign.
+				result = append(result, model.NewBlock(labels, prose, ""))
+			}
+			return
 		case item.typ == itemBlockLabel:
 			labels = append(labels, model.Label(item.val))
 		case item.typ == itemProse:
@@ -288,11 +294,4 @@ func Parse(s string) (result []*model.Block) {
 			prose = ""
 		}
 	}
-	if len(prose) > 0 {
-		// Hack to grab the last bit of prose.
-		// The data structure returned by Parse needs redesign.
-		newBlock := model.NewBlock([]model.Label{}, prose, "")
-		result = append(result, newBlock)
-	}
-	return
 }

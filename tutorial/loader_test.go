@@ -8,5 +8,5 @@ import (
 
 // TODO: add some real tests
 func TestReload(t *testing.T) {
-	NewProgramFromPaths(model.Label("foo"), []model.FilePath{})
+	LoadTutorialFromPaths([]model.FilePath{})
 }

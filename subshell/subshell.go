@@ -13,8 +13,8 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/scanner"
-	"github.com/monopole/mdrip/util"
 	"github.com/monopole/mdrip/tutorial"
+	"github.com/monopole/mdrip/util"
 )
 
 // Subshell can run a program
@@ -40,7 +40,7 @@ func check(msg string, err error) {
 // TODO(monopole): update the comments, as this function no longer writes to stdin.
 // See https://github.com/monopole/mdrip/commit/a7be6a6fb62ccf8dfe1c2906515ce3e83d0400d7
 //
-// It writes command blocks to shell, then waits after  each block to
+// It writes command blocks to shell, then waits after each block to
 // see if the block worked.  If the block appeared to complete without
 // error, the routine sends the next block, else it exits early.
 func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunResult) {
@@ -52,11 +52,11 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunRes
 	chAccErr := accumulateOutput("stdErr", chErr)
 
 	errResult = NewRunResult()
-	for _, file := range s.program.Lessons() {
-		numBlocks := len(file.Blocks(s.program.Label()))
-		for i, block := range file.Blocks(s.program.Label()) {
+	for _, lesson := range s.program.Lessons() {
+		numBlocks := len(lesson.OnlyBlocksWithLabel(s.program.Label()))
+		for i, block := range lesson.OnlyBlocksWithLabel(s.program.Label()) {
 			glog.Info("Running %s (%d/%d) from %s\n",
-				block.Name(), i+1, numBlocks, file.Path())
+				block.Name(), i+1, numBlocks, lesson.Path())
 			if glog.V(2) {
 				glog.Info("userBehavior: sending \"%s\"", block.Code())
 			}
@@ -78,7 +78,7 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunRes
 					}
 					errResult.SetOutput(result.Output()).SetMessage(result.Output())
 				}
-				errResult.SetFileName(file.Path()).SetIndex(i).SetBlock(block)
+				errResult.SetFileName(lesson.Path()).SetIndex(i).SetBlock(block)
 				fillErrResult(chAccErr, errResult)
 				return
 			}
@@ -127,7 +127,7 @@ func (s *Subshell) Run() (result *RunResult) {
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(tmpFile.Name(), 0744))
 	for _, file := range s.program.Lessons() {
-		for _, block := range file.Blocks(s.program.Label()) {
+		for _, block := range file.OnlyBlocksWithLabel(s.program.Label()) {
 			write(tmpFile, block.Code().String())
 			write(tmpFile, "\n")
 			write(tmpFile, "echo "+scanner.MsgHappy+" "+block.Name()+"\n")

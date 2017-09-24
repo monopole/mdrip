@@ -145,19 +145,3 @@ func LoadTutorialFromPaths(paths []model.FilePath) (Tutorial, error) {
 	}
 	return nil, errors.New("nothing useful found in paths")
 }
-
-// Build program code from blocks extracted from a tutorial.
-func NewProgramFromTutorial(l model.Label, t Tutorial) *Program {
-	v := NewLessonExtractor()
-	t.Accept(v)
-	return NewProgram(l, v.Lessons())
-}
-
-// Build program code from blocks extracted from markdown files.
-func NewProgramFromPaths(l model.Label, paths []model.FilePath) (*Program, error) {
-	t, err := LoadTutorialFromPaths(paths)
-	if err != nil {
-		return nil, err
-	}
-	return NewProgramFromTutorial(l, t), nil
-}

@@ -3,9 +3,9 @@ package subshell
 import (
 	"fmt"
 	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/tutorial"
 	"os"
 	"strings"
-	"github.com/monopole/mdrip/tutorial"
 )
 
 type status int
@@ -46,11 +46,11 @@ func NewSuccessOutput(output string) *BlockOutput {
 // RunResult pairs BlockOutput with meta data about shell execution.
 type RunResult struct {
 	BlockOutput
-	fileName model.FilePath  // File in which the error occurred.
-	index    int             // Command block index.
+	fileName model.FilePath         // File in which the error occurred.
+	index    int                    // Command block index.
 	block    *tutorial.CommandBlock // Content of actual command block.
-	problem  error           // Error, if any.
-	message  string          // Detailed error message, if any.
+	problem  error                  // Error, if any.
+	message  string                 // Detailed error message, if any.
 }
 
 func emptyCommandBlock() *tutorial.CommandBlock {

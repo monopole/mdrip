@@ -3,20 +3,41 @@ package tutorial
 import (
 	"fmt"
 	"io"
+
 	"github.com/monopole/mdrip/model"
 )
 
 // Program is a list of Lessons and a label.
-// Each Lesson represents a file, so a Program is
-// a collection of N files.
+// Each Lesson represents a file, so a Program is a collection of N files.
 type Program struct {
 	label   model.Label
 	lessons []*Lesson
 }
 
-func (p *Program) Lessons() []*Lesson                { return p.lessons }
+func (p *Program) Lessons() []*Lesson                      { return p.lessons }
 func (p *Program) Label() model.Label                      { return p.label }
-func NewProgram(l model.Label, lessons []*Lesson) *Program { return &Program{l, lessons} }
+func newProgram(l model.Label, lessons []*Lesson) *Program { return &Program{l, lessons} }
+
+// Build program from blocks extracted from a tutorial.
+func NewProgramFromTutorial(t Tutorial) *Program {
+	return newProgramFromTutorial(model.AnyLabel, t)
+}
+
+// Build program code from blocks extracted from a tutorial.
+func newProgramFromTutorial(l model.Label, t Tutorial) *Program {
+	v := NewLessonExtractor()
+	t.Accept(v)
+	return newProgram(l, v.Lessons())
+}
+
+// Build program code from blocks extracted from markdown files.
+func NewProgramFromPaths(l model.Label, paths []model.FilePath) (*Program, error) {
+	t, err := LoadTutorialFromPaths(paths)
+	if err != nil {
+		return nil, err
+	}
+	return newProgramFromTutorial(l, t), nil
+}
 
 // PrintNormal simply prints the contents of a program.
 func (p Program) PrintNormal(w io.Writer) {

@@ -19,18 +19,24 @@ func makeCommandBlock(labels []model.Label, code string) *tutorial.CommandBlock 
 	return tutorial.NewCommandBlock(labels, []byte{}, model.OpaqueCode(code))
 }
 
+func newTutorial(b []*tutorial.CommandBlock) tutorial.Tutorial {
+	return tutorial.NewLesson("iamafilename", b)
+}
+
+func emptyTutorial() tutorial.Tutorial {
+	return newTutorial([]*tutorial.CommandBlock{})
+}
+
 func TestRunnerWithNothing(t *testing.T) {
 	if NewSubshell(
 		timeout,
-		tutorial.NewProgram(model.AnyLabel, []*tutorial.Lesson{})).Run().Problem() != nil {
+		tutorial.NewProgramFromTutorial(emptyTutorial())).Run().Problem() != nil {
 		t.Fail()
 	}
 }
 
 func doIt(blocks []*tutorial.CommandBlock) *RunResult {
-	p := tutorial.NewProgram(
-		model.AnyLabel,
-		[]*tutorial.Lesson{tutorial.NewLesson("iAmFileName", blocks)})
+	p := tutorial.NewProgramFromTutorial(newTutorial(blocks))
 	return NewSubshell(timeout, p).Run()
 }
 
