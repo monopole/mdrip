@@ -109,10 +109,10 @@ type Tutorial interface {
 	Name() string
 	Path() model.FilePath
 	Children() []Tutorial
-	Accept(v Visitor)
+	Accept(v TutVisitor)
 }
 
-type Visitor interface {
+type TutVisitor interface {
 	VisitTopCourse(t *TopCourse)
 	VisitCourse(c *Course)
 	VisitLesson(l *Lesson)
@@ -126,7 +126,7 @@ type TopCourse struct {
 }
 
 func NewTopCourse(p model.FilePath, c []Tutorial) *TopCourse { return &TopCourse{p, c} }
-func (t *TopCourse) Accept(v Visitor)                        { v.VisitTopCourse(t) }
+func (t *TopCourse) Accept(v TutVisitor)                     { v.VisitTopCourse(t) }
 func (t *TopCourse) Name() string                            { return "" }
 func (t *TopCourse) Path() model.FilePath                    { return t.path }
 func (t *TopCourse) Children() []Tutorial                    { return t.children }
@@ -139,7 +139,7 @@ type Course struct {
 }
 
 func NewCourse(p model.FilePath, c []Tutorial) *Course { return &Course{p, c} }
-func (c *Course) Accept(v Visitor)                     { v.VisitCourse(c) }
+func (c *Course) Accept(v TutVisitor)                  { v.VisitCourse(c) }
 func (c *Course) Name() string                         { return c.patrh.Base() }
 func (c *Course) Path() model.FilePath                 { return c.patrh }
 func (c *Course) Children() []Tutorial                 { return c.children }

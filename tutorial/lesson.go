@@ -19,15 +19,15 @@ func NewLesson(p model.FilePath, blocks []*CommandBlock) *Lesson {
 	return &Lesson{p, blocks}
 }
 
-func NewLessonFromModelBlocks(p model.FilePath, blocks []*model.Block) *Lesson {
+func NewLessonFromModelBlocks(p model.FilePath, blocks []*model.LabelledBlock) *Lesson {
 	result := make([]*CommandBlock, len(blocks))
 	for i, b := range blocks {
-		result[i] = &CommandBlock{*b}
+		result[i] = NewCommandBlock(b.Labels(), b.Prose(), b.Code())
 	}
 	return NewLesson(p, result)
 }
 
-func (l *Lesson) Accept(v Visitor)        { v.VisitLesson(l) }
+func (l *Lesson) Accept(v TutVisitor)     { v.VisitLesson(l) }
 func (l *Lesson) Name() string            { return l.path.Base() }
 func (l *Lesson) Path() model.FilePath    { return l.path }
 func (l *Lesson) Blocks() []*CommandBlock { return l.blocks }

@@ -11,23 +11,29 @@ import (
 
 // CommandBlock groups opaqueCode with its labels.
 type CommandBlock struct {
-	model.Block
+	labels []model.Label
+	prose []byte
+	code  model.OpaqueCode
 }
 
-func NewCommandBlock(labels []model.Label, prose []byte, code string) *CommandBlock {
+func NewCommandBlock(labels []model.Label, prose []byte, code model.OpaqueCode) *CommandBlock {
 	if !hasLabel(labels, model.AnyLabel) {
 		labels = append(labels, model.AnyLabel)
 	}
-	return &CommandBlock{*model.NewBlock(labels, prose, code)}
+	return &CommandBlock{labels, prose, code}
 }
 
-func (x *CommandBlock) Accept(v Visitor)     { v.VisitCommandBlock(x) }
+func (x *CommandBlock) Accept(v TutVisitor)  { v.VisitCommandBlock(x) }
 func (x *CommandBlock) Name() string         { return string(x.Labels()[0]) }
 func (x *CommandBlock) Path() model.FilePath { return model.FilePath("notUsingThis") }
 func (x *CommandBlock) Children() []Tutorial { return []Tutorial{} }
 func (x *CommandBlock) HtmlProse() template.HTML {
 	return template.HTML(string(blackfriday.MarkdownCommon(x.Prose())))
 }
+func (x *CommandBlock) Labels() []model.Label  { return x.labels }
+func (x *CommandBlock) Prose() []byte    { return x.prose }
+func (x *CommandBlock) Code() model.OpaqueCode { return x.code }
+
 func (x *CommandBlock) HasLabel(label model.Label) bool {
 	return hasLabel(x.Labels(), label)
 }

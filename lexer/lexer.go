@@ -17,10 +17,10 @@ type position int
 type itemType int
 
 const (
-	itemError        itemType = iota
-	itemProse                 // Prose between command blocks.
-	itemBlockLabel            // Label for a command block
-	itemCommandBlock          // All lines between codeFence marks
+	itemError         itemType = iota
+	itemProse          // Prose between command blocks.
+	itemBlockLabel     // Label for a command block
+	itemLabelledBlock  // All lines between codeFence marks
 	itemEOF
 )
 
@@ -37,7 +37,7 @@ func (i item) String() string {
 		return i.val
 	case i.typ == itemBlockLabel:
 		return string(labelMarker) + i.val
-	case i.typ == itemCommandBlock:
+	case i.typ == itemLabelledBlock:
 		return "--------\n" + i.val + "--------\n"
 	case len(i.val) > 10:
 		return fmt.Sprintf("%.30s...", i.val)
@@ -238,13 +238,13 @@ func lexBlockLabels(l *lexer) stateFn {
 			if !strings.HasPrefix(l.input[l.current:], codeFence) {
 				return l.errorf("Expected command block mark, got: " + l.input[l.current:])
 			}
-			return lexCommandBlock
+			return lexLabelledBlock
 		}
 	}
 }
 
-// lexCommandBlock scans a command block.  Initial marker known to be present.
-func lexCommandBlock(l *lexer) stateFn {
+// lexLabelledBlock scans a command block.  Initial marker known to be present.
+func lexLabelledBlock(l *lexer) stateFn {
 	l.current += position(len(codeFence))
 	l.ignore()
 	// Ignore any language specifier.
@@ -255,7 +255,7 @@ func lexCommandBlock(l *lexer) stateFn {
 	for {
 		if strings.HasPrefix(l.input[l.current:], codeFence) {
 			if l.current > l.start {
-				l.emit(itemCommandBlock)
+				l.emit(itemLabelledBlock)
 			}
 			l.current += position(len(codeFence))
 			l.ignore()
@@ -267,9 +267,9 @@ func lexCommandBlock(l *lexer) stateFn {
 	}
 }
 
-// Parse lexes the incoming string into a list of model.Block.
-func Parse(s string) (result []*model.Block) {
-	result = []*model.Block{}
+// Parse lexes the incoming string into a list of model.LabelledBlock.
+func Parse(s string) (result []*model.LabelledBlock) {
+	result = []*model.LabelledBlock{}
 	prose := ""
 	labels := []model.Label{}
 	l := newLex(s)
@@ -281,15 +281,15 @@ func Parse(s string) (result []*model.Block) {
 			if len(prose) > 0 {
 				// Hack to grab the last bit of prose.
 				// The data structure returned by Parse needs redesign.
-				result = append(result, model.NewBlock(labels, []byte(prose), ""))
+				result = append(result, model.NewLabelledBlock(labels, []byte(prose), ""))
 			}
 			return
 		case item.typ == itemBlockLabel:
 			labels = append(labels, model.Label(item.val))
 		case item.typ == itemProse:
 			prose = item.val
-		case item.typ == itemCommandBlock:
-			result = append(result, model.NewBlock(labels, []byte(prose), item.val))
+		case item.typ == itemLabelledBlock:
+			result = append(result, model.NewLabelledBlock(labels, []byte(prose), item.val))
 			labels = []model.Label{}
 			prose = ""
 		}

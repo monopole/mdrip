@@ -33,7 +33,7 @@ var lexTests = []lexTest{
 		[]item{
 			{itemProse, "fred "},
 			{itemBlockLabel, "1"},
-			{itemCommandBlock, block1},
+			{itemLabelledBlock, block1},
 			{itemProse, "\n bbb"},
 			tEOF}},
 	{"block2", "aa <!-- @1 @2-->\n" +
@@ -44,11 +44,11 @@ var lexTests = []lexTest{
 			{itemProse, "aa "},
 			{itemBlockLabel, "1"},
 			{itemBlockLabel, "2"},
-			{itemCommandBlock, block1},
+			{itemLabelledBlock, block1},
 			{itemProse, "\n bb cc\ndd "},
 			{itemBlockLabel, "3"},
 			{itemBlockLabel, "4"},
-			{itemCommandBlock, block2},
+			{itemLabelledBlock, block2},
 			{itemProse, "\n ee ff\n"},
 			tEOF}},
 	{"blockWithLangName", "Hello <!-- @1 -->\n" +
@@ -56,7 +56,7 @@ var lexTests = []lexTest{
 		[]item{
 			{itemProse, "Hello "},
 			{itemBlockLabel, "1"},
-			{itemCommandBlock, "void main whatever\n"},
+			{itemLabelledBlock, "void main whatever\n"},
 			tEOF}},
 }
 
