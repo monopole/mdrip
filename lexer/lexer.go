@@ -281,7 +281,7 @@ func Parse(s string) (result []*model.Block) {
 			if len(prose) > 0 {
 				// Hack to grab the last bit of prose.
 				// The data structure returned by Parse needs redesign.
-				result = append(result, model.NewBlock(labels, prose, ""))
+				result = append(result, model.NewBlock(labels, []byte(prose), ""))
 			}
 			return
 		case item.typ == itemBlockLabel:
@@ -289,7 +289,7 @@ func Parse(s string) (result []*model.Block) {
 		case item.typ == itemProse:
 			prose = item.val
 		case item.typ == itemCommandBlock:
-			result = append(result, model.NewBlock(labels, prose, item.val))
+			result = append(result, model.NewBlock(labels, []byte(prose), item.val))
 			labels = []model.Label{}
 			prose = ""
 		}

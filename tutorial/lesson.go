@@ -22,23 +22,24 @@ func NewLesson(p model.FilePath, blocks []*CommandBlock) *Lesson {
 func NewLessonFromModelBlocks(p model.FilePath, blocks []*model.Block) *Lesson {
 	result := make([]*CommandBlock, len(blocks))
 	for i, b := range blocks {
-		result[i] = NewCommandBlock(b.Labels(), b.Prose(), b.Code())
+		result[i] = &CommandBlock{*b}
 	}
 	return NewLesson(p, result)
 }
 
-func (l *Lesson) Accept(v Visitor)     { v.VisitLesson(l) }
-func (l *Lesson) Name() string         { return l.path.Base() }
-func (l *Lesson) Path() model.FilePath { return l.path }
+func (l *Lesson) Accept(v Visitor)        { v.VisitLesson(l) }
+func (l *Lesson) Name() string            { return l.path.Base() }
+func (l *Lesson) Path() model.FilePath    { return l.path }
+func (l *Lesson) Blocks() []*CommandBlock { return l.blocks }
 func (l *Lesson) Children() []Tutorial {
 	result := []Tutorial{}
-	for _, z := range l.blocks {
-		result = append(result, z)
+	for _, b := range l.blocks {
+		result = append(result, b)
 	}
 	return result
 }
 
-func (l *Lesson) OnlyBlocksWithLabel(label model.Label) []*CommandBlock {
+func (l *Lesson) GetBlocksWithLabel(label model.Label) []*CommandBlock {
 	result := []*CommandBlock{}
 	for _, b := range l.blocks {
 		if b.HasLabel(label) {
@@ -57,7 +58,7 @@ func (l *Lesson) OnlyBlocksWithLabel(label model.Label) []*CommandBlock {
 func (l *Lesson) Print(w io.Writer, label model.Label, n int) {
 	fmt.Fprintf(w, "#\n# Script @%s from %s \n#\n", label, l.path)
 	delimFmt := "#" + strings.Repeat("-", 70) + "#  %s %d of %d\n"
-	blocks := l.OnlyBlocksWithLabel(label)
+	blocks := l.GetBlocksWithLabel(label)
 	for i, block := range blocks {
 		if n > 0 && i >= n {
 			break

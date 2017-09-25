@@ -53,8 +53,8 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunRes
 
 	errResult = NewRunResult()
 	for _, lesson := range s.program.Lessons() {
-		numBlocks := len(lesson.OnlyBlocksWithLabel(s.program.Label()))
-		for i, block := range lesson.OnlyBlocksWithLabel(s.program.Label()) {
+		numBlocks := len(lesson.Blocks())
+		for i, block := range lesson.Blocks() {
 			glog.Info("Running %s (%d/%d) from %s\n",
 				block.Name(), i+1, numBlocks, lesson.Path())
 			if glog.V(2) {
@@ -126,8 +126,8 @@ func (s *Subshell) Run() (result *RunResult) {
 	tmpFile, err := ioutil.TempFile("", "mdrip-file-")
 	check("create temp file", err)
 	check("chmod temp file", os.Chmod(tmpFile.Name(), 0744))
-	for _, file := range s.program.Lessons() {
-		for _, block := range file.OnlyBlocksWithLabel(s.program.Label()) {
+	for _, lesson := range s.program.Lessons() {
+		for _, block := range lesson.Blocks() {
 			write(tmpFile, block.Code().String())
 			write(tmpFile, "\n")
 			write(tmpFile, "echo "+scanner.MsgHappy+" "+block.Name()+"\n")

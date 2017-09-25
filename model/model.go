@@ -35,13 +35,11 @@ func (n FilePath) Read() (string, error) {
 type Label string
 
 const (
-	AnyLabel     = Label(`__AnyLabel__`)
-	MistakeLabel = Label(`__MistakeLabel__`)
-	SleepLabel   = Label(`sleep`)
+	AnyLabel   = Label(`__AnyLabel__`)
+	SleepLabel = Label(`sleep`)
 )
 
 func (l Label) String() string { return string(l) }
-func (l Label) IsAny() bool    { return l == AnyLabel }
 
 // OpaqueCode is an opaque, uninterpreted, unknown block of text that
 // is presumably shell commands parsed from markdown.  Fed into a
@@ -59,25 +57,8 @@ type Block struct {
 	code  OpaqueCode
 }
 
-func shouldSleep(labels []Label) bool {
-	for _, l := range labels {
-		if l == SleepLabel {
-			return true
-		}
-	}
-	return false
-}
-
-func NewBlock(labels []Label, p string, c string) *Block {
-	// If the command block has a 'sleep' label, add a brief sleep
-	// at the end.  This hack give servers placed in the
-	// background time to start, assuming they can do so in 2s!  Yeah, bad.
-	if shouldSleep(labels) {
-		c += "sleep 2s # Added by mdrip\n"
-	}
-	// Always add AnyLabel as a cheap matcher.
-	labels = append(labels, AnyLabel)
-	return &Block{labels, []byte(p), OpaqueCode(c)}
+func NewBlock(labels []Label, p []byte, c string) *Block {
+	return &Block{labels, p, OpaqueCode(c)}
 }
 func (x *Block) Labels() []Label  { return x.labels }
 func (x *Block) Prose() []byte    { return x.prose }

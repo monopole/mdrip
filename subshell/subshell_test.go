@@ -15,8 +15,7 @@ const timeout = 2 * time.Second
 var labels = []model.Label{model.Label("foo"), model.Label("bar")}
 
 func makeCommandBlock(labels []model.Label, code string) *tutorial.CommandBlock {
-	labels = append(labels, model.AnyLabel)
-	return tutorial.NewCommandBlock(labels, []byte{}, model.OpaqueCode(code))
+	return tutorial.NewCommandBlock(labels, []byte{}, code)
 }
 
 func newTutorial(b []*tutorial.CommandBlock) tutorial.Tutorial {

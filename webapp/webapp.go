@@ -24,7 +24,7 @@ func (wa *WebApp) SessId() model.TypeSessId    { return wa.sessId }
 func (wa *WebApp) Host() string                { return wa.host }
 func (wa *WebApp) Tutorial() tutorial.Tutorial { return wa.tut }
 func (wa *WebApp) Lessons() []*tutorial.Lesson {
-	v := tutorial.NewLessonExtractor()
+	v := tutorial.NewLessonExtractor(model.AnyLabel)
 	wa.tut.Accept(v)
 	return v.Lessons()
 }
@@ -143,7 +143,7 @@ const (
 	tmplNameCommandBlock = "navcommandblock"
 	tmplBodyCommandBlock = `
 {{define "` + tmplNameCommandBlock + `"}}
-<div class="proseblock"> {{.Prose}} </div>
+<div class="proseblock"> {{.HtmlProse}} </div>
 {{if .Code}}
 <h3 id="control" class="control">
   <span class="blockButton" onclick="onRunBlockClick(event)">

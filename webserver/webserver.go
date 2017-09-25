@@ -177,7 +177,7 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "\n\nfile count %d\n\n", len(p.Lessons()))
 	for i, lesson := range p.Lessons() {
 		fmt.Fprintf(w, "file %d: %s\n", i, lesson.Path())
-		for j, b := range lesson.OnlyBlocksWithLabel(p.Label()) {
+		for j, b := range lesson.Blocks() {
 			fmt.Fprintf(w, "  block %d content: %s\n",
 				j, util.SampleString(string(b.Code()), 50))
 			fmt.Fprintf(w, "  num labels: %d\n", len(b.Labels()))
@@ -234,7 +234,7 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 					indexFile, limit), http.StatusBadRequest)
 			return
 		}
-		limit = len(p.Lessons()[indexFile].OnlyBlocksWithLabel(p.Label())) - 1
+		limit = len(p.Lessons()[indexFile].Blocks()) - 1
 		if indexBlock < 0 || indexBlock > limit {
 			http.Error(w,
 				fmt.Sprintf("bid %d out of range 0-%d",
@@ -242,7 +242,7 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		// TODO(monopole): 404 on out of range indices
-		block := p.Lessons()[indexFile].OnlyBlocksWithLabel(p.Label())[indexBlock]
+		block := p.Lessons()[indexFile].Blocks()[indexBlock]
 		_, err = ws.getCodeRunner(sessId).Write(block.Code().Bytes())
 		if err != nil {
 			fmt.Fprintln(w, err)
