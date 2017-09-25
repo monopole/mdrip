@@ -34,17 +34,9 @@ func (x *CommandBlock) Prose() []byte    { return x.prose }
 func (x *CommandBlock) Code() OpaqueCode { return x.code }
 
 func (x *CommandBlock) HasLabel(label Label) bool {
-	return xhasLabel(x.Labels(), label)
+	return hasLabel(x.Labels(), label)
 }
 
-func xhasLabel(labels []Label, label Label) bool {
-	for _, l := range labels {
-		if l == label {
-			return true
-		}
-	}
-	return false
-}
 func (x *CommandBlock) Print(
 	w io.Writer, prefix string, n int, label Label, fileName FilePath) {
 	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n",
