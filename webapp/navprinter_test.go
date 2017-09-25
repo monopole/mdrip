@@ -5,21 +5,20 @@ import (
 	"testing"
 
 	"github.com/monopole/mdrip/model"
-	"github.com/monopole/mdrip/tutorial"
 )
 
 type npTest struct {
 	name  string
-	input tutorial.Tutorial
+	input model.Tutorial
 	want  string
 }
 
-var emptyLesson = tutorial.NewLesson(
+var emptyLesson = model.NewLesson(
 	model.FilePath(""),
-	[]*tutorial.CommandBlock{})
+	[]*model.CommandBlock{})
 
-var course1 = tutorial.NewCourse(model.FilePath("hey"),
-	[]tutorial.Tutorial{emptyLesson})
+var course1 = model.NewCourse(model.FilePath("hey"),
+	[]model.Tutorial{emptyLesson})
 
 var npTests = []npTest{
 	{"emptyLesson",

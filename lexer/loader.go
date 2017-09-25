@@ -1,4 +1,4 @@
-package tutorial
+package lexer
 
 import (
 	"errors"
@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
 )
 
@@ -61,12 +60,12 @@ func isDesirableDir(n model.FilePath) bool {
 	return true
 }
 
-func scanDir(d model.FilePath) (*Course, error) {
+func scanDir(d model.FilePath) (*model.Course, error) {
 	files, err := d.ReadDir()
 	if err != nil {
 		return nil, err
 	}
-	var items = []Tutorial{}
+	var items = []model.Tutorial{}
 	for _, f := range files {
 		p := d.Join(f)
 		if isDesirableFile(p) {
@@ -86,20 +85,20 @@ func scanDir(d model.FilePath) (*Course, error) {
 		}
 	}
 	if len(items) > 0 {
-		return NewCourse(d, items), nil
+		return model.NewCourse(d, items), nil
 	}
 	return nil, nil
 }
 
-func scanFile(n model.FilePath) (*Lesson, error) {
+func scanFile(n model.FilePath) (*model.Lesson, error) {
 	contents, err := n.Read()
 	if err != nil {
 		return nil, err
 	}
-	return NewLessonFromModelBlocks(n, lexer.Parse(contents)), nil
+	return model.NewLessonFromModelBlocks(n, Parse(contents)), nil
 }
 
-func LoadTutorialFromPath(path model.FilePath) (Tutorial, error) {
+func LoadTutorialFromPath(path model.FilePath) (model.Tutorial, error) {
 	if isDesirableFile(path) {
 		return scanFile(path)
 	}
@@ -109,20 +108,20 @@ func LoadTutorialFromPath(path model.FilePath) (Tutorial, error) {
 			return nil, err
 		}
 		if c != nil {
-			return NewTopCourse(path, c.children), nil
+			return model.NewTopCourse(path, c.Children()), nil
 		}
 	}
 	return nil, errors.New("cannot load from " + string(path))
 }
 
-func LoadTutorialFromPaths(paths []model.FilePath) (Tutorial, error) {
+func LoadTutorialFromPaths(paths []model.FilePath) (model.Tutorial, error) {
 	if len(paths) == 0 {
 		return nil, errors.New("no paths?")
 	}
 	if len(paths) == 1 {
 		return LoadTutorialFromPath(paths[0])
 	}
-	var items = []Tutorial{}
+	var items = []model.Tutorial{}
 	for _, f := range paths {
 		if isDesirableFile(f) {
 			l, err := scanFile(f)
@@ -141,7 +140,7 @@ func LoadTutorialFromPaths(paths []model.FilePath) (Tutorial, error) {
 		}
 	}
 	if len(items) > 0 {
-		return NewTopCourse(model.FilePath(""), items), nil
+		return model.NewTopCourse(model.FilePath(""), items), nil
 	}
 	return nil, errors.New("nothing useful found in paths")
 }

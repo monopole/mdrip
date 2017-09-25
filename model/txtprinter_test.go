@@ -1,10 +1,8 @@
-package tutorial
+package model
 
 import (
 	"bytes"
 	"testing"
-
-	"github.com/monopole/mdrip/model"
 )
 
 type tpTest struct {
@@ -14,10 +12,10 @@ type tpTest struct {
 }
 
 var emptyLesson = NewLesson(
-	model.FilePath(""),
+	FilePath(""),
 	[]*CommandBlock{})
 
-var course1 = NewCourse(model.FilePath("hey"),
+var course1 = NewCourse(FilePath("hey"),
 	[]Tutorial{emptyLesson})
 
 var npTests = []tpTest{

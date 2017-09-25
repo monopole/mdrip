@@ -17,9 +17,9 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/tmux"
-	"github.com/monopole/mdrip/tutorial"
 	"github.com/monopole/mdrip/util"
 	"github.com/monopole/mdrip/webapp"
+	"github.com/monopole/mdrip/lexer"
 )
 
 type myConn struct {
@@ -149,7 +149,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		write500(w, err)
 		return
 	}
-	t, err := tutorial.LoadTutorialFromPaths(ws.pathArgs)
+	t, err := lexer.LoadTutorialFromPaths(ws.pathArgs)
 	if err != nil {
 		write500(w, err)
 		return
@@ -167,13 +167,13 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
-	t, err := tutorial.LoadTutorialFromPaths(ws.pathArgs)
+	t, err := lexer.LoadTutorialFromPaths(ws.pathArgs)
 	if err != nil {
 		write500(w, err)
 		return
 	}
-	t.Accept(tutorial.NewTutorialTxtPrinter(w))
-	p := tutorial.NewProgramFromTutorial(t)
+	t.Accept(model.NewTutorialTxtPrinter(w))
+	p := model.NewProgramFromTutorial(model.AnyLabel, t)
 	fmt.Fprintf(w, "\n\nfile count %d\n\n", len(p.Lessons()))
 	for i, lesson := range p.Lessons() {
 		fmt.Fprintf(w, "file %d: %s\n", i, lesson.Path())
@@ -221,12 +221,12 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
 		glog.Info("bid = ", indexBlock)
-		t, err := tutorial.LoadTutorialFromPaths(ws.pathArgs)
+		t, err := lexer.LoadTutorialFromPaths(ws.pathArgs)
 		if err != nil {
 			write500(w, err)
 			return
 		}
-		p := tutorial.NewProgramFromTutorial(t)
+		p := model.NewProgramFromTutorial(model.AnyLabel, t)
 		limit := len(p.Lessons()) - 1
 		if indexFile < 0 || indexFile > limit {
 			http.Error(w,

@@ -1,4 +1,4 @@
-package tutorial
+package lexer
 
 import (
 	"testing"

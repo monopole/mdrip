@@ -8,7 +8,8 @@ import (
 	"github.com/monopole/mdrip/config"
 	"github.com/monopole/mdrip/subshell"
 	"github.com/monopole/mdrip/tmux"
-	"github.com/monopole/mdrip/tutorial"
+	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/webserver"
 )
 
@@ -25,11 +26,12 @@ func main() {
 	case config.ModeWeb:
 		webserver.NewServer(c.FileNames()).Serve(c.HostAndPort())
 	case config.ModeTest:
-		p, err := tutorial.NewProgramFromPaths(c.Label(), c.FileNames())
+		t, err := lexer.LoadTutorialFromPaths(c.FileNames())
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+		p := model.NewProgramFromTutorial(c.Label(), t)
 		s := subshell.NewSubshell(c.BlockTimeOut(), p)
 		if r := s.Run(); r.Problem() != nil {
 			r.Print(c.Label())
@@ -38,11 +40,12 @@ func main() {
 			}
 		}
 	default:
-		p, err := tutorial.NewProgramFromPaths(c.Label(), c.FileNames())
+		t, err := lexer.LoadTutorialFromPaths(c.FileNames())
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+		p := model.NewProgramFromTutorial(c.Label(), t)
 		if c.Preambled() > 0 {
 			p.PrintPreambled(os.Stdout, c.Preambled())
 		} else {

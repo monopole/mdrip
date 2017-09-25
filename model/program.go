@@ -1,29 +1,27 @@
-package tutorial
+package model
 
 import (
 	"fmt"
 	"io"
-
-	"github.com/monopole/mdrip/model"
 )
 
 // Program is a list of Lessons and a label.
 // Each Lesson represents a file, so a Program is a collection of N files.
 // Every CommandBlock in every lesson is known to have the given label.
 type Program struct {
-	label   model.Label
+	label   Label
 	lessons []*Lesson
 }
 
 func (p *Program) Lessons() []*Lesson                      { return p.lessons }
-func (p *Program) Label() model.Label                      { return p.label }
+func (p *Program) Label() Label                      { return p.label }
 
 // Arguably we'd do better to drop the labels entirely - but some other labels
 // might be involved in hack, e.g. sleep.
-func (p *Program) hasCommonLabel(l model.Label) bool {
+func (p *Program) hasCommonLabel(l Label) bool {
 	for _, l := range p.Lessons() {
 		for _, b := range l.blocks {
-			if !b.HasLabel(model.AnyLabel) {
+			if !b.HasLabel(AnyLabel) {
 				return false
 			}
 		}
@@ -31,26 +29,8 @@ func (p *Program) hasCommonLabel(l model.Label) bool {
 	return true
 }
 
-// Build program code from blocks extracted from markdown files.
-func NewProgramFromPaths(l model.Label, paths []model.FilePath) (*Program, error) {
-	t, err := LoadTutorialFromPaths(paths)
-	if err != nil {
-		return nil, err
-	}
-	return newProgramFromTutorial(l, t), nil
-}
-
 // Build program from blocks extracted from a tutorial.
-func NewProgramFromTutorial(t Tutorial) *Program {
-	p := newProgramFromTutorial(model.AnyLabel, t)
-//	if !p.hasCommonLabel(model.AnyLabel) {
-//		panic("Expected AnyLabel")
-//	}
-	return p
-}
-
-// Build program code from blocks extracted from a tutorial.
-func newProgramFromTutorial(l model.Label, t Tutorial) *Program {
+func NewProgramFromTutorial(l Label, t Tutorial) *Program {
 	v := NewLessonExtractor(l)
 	t.Accept(v)
 	return &Program{l, v.Lessons()}

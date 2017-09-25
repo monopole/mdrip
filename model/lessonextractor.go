@@ -1,8 +1,4 @@
-package tutorial
-
-import (
-	"github.com/monopole/mdrip/model"
-)
+package model
 
 // LessonExtractor extracts all Lessons in depth first order
 // from a Tutorial to create a flat list of lessons.  The lessons
@@ -10,11 +6,11 @@ import (
 // into the new extracted lesson.  If a lesson has no blocks with
 // the given label, it is completely dropped.
 type LessonExtractor struct {
-	label   model.Label
+	label   Label
 	lessons []*Lesson
 }
 
-func NewLessonExtractor(label model.Label) *LessonExtractor {
+func NewLessonExtractor(label Label) *LessonExtractor {
 	return &LessonExtractor{label, []*Lesson{}}
 }
 
@@ -26,7 +22,7 @@ func (v *LessonExtractor) VisitCommandBlock(b *CommandBlock) {
 }
 
 func (v *LessonExtractor) VisitLesson(l *Lesson) {
-	if v.label == model.AnyLabel && len(l.Children()) > 0 {
+	if v.label == AnyLabel && len(l.Children()) > 0 {
 		v.lessons = append(v.lessons, l)
 		return
 	}

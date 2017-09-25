@@ -1,4 +1,4 @@
-package tutorial
+package model
 
 import (
 	"fmt"

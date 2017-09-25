@@ -1,20 +1,20 @@
 package webapp
 
 import (
-	"github.com/monopole/mdrip/tutorial"
+	"github.com/monopole/mdrip/model"
 	"io"
 )
 
 // NavPrinter prints leftnav HTML to a Writer.
 type NavPrinter struct {
-	tutorial.TxtPrinter
+	model.TxtPrinter
 	courseCounter int
 	lessonCounter int
 }
 
 func NewTutorialNavPrinter(w io.Writer) *NavPrinter {
 	return &NavPrinter{
-		*tutorial.NewTutorialTxtPrinter(w),
+		*model.NewTutorialTxtPrinter(w),
 		-1, -1}
 }
 
@@ -26,10 +26,10 @@ func (v *NavPrinter) navItemStyle() string {
 }
 
 // Not expanding blocks in the nav - too busy looking.
-func (v *NavPrinter) VisitCommandBlock(x *tutorial.CommandBlock) {
+func (v *NavPrinter) VisitCommandBlock(x *model.CommandBlock) {
 }
 
-func (v *NavPrinter) VisitLesson(x *tutorial.Lesson) {
+func (v *NavPrinter) VisitLesson(x *model.Lesson) {
 	v.lessonCounter++
 	v.P("<div class='%s'>", v.navItemStyle())
 	v.Down()
@@ -45,7 +45,7 @@ func (v *NavPrinter) VisitLesson(x *tutorial.Lesson) {
 	v.P("</div>")
 }
 
-func (v *NavPrinter) VisitCourse(x *tutorial.Course) {
+func (v *NavPrinter) VisitCourse(x *model.Course) {
 	v.courseCounter++
 	v.P("<div class='%s'>", v.navItemStyle())
 	v.Down()
@@ -65,7 +65,7 @@ func (v *NavPrinter) VisitCourse(x *tutorial.Course) {
 	v.P("</div>")
 }
 
-func (v *NavPrinter) VisitTopCourse(x *tutorial.TopCourse) {
+func (v *NavPrinter) VisitTopCourse(x *model.TopCourse) {
 	for _, c := range x.Children() {
 		c.Accept(v)
 	}

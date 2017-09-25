@@ -6,7 +6,6 @@ import (
 
 	"bytes"
 	"github.com/monopole/mdrip/model"
-	"github.com/monopole/mdrip/tutorial"
 	"strings"
 )
 
@@ -16,15 +15,15 @@ import (
 type WebApp struct {
 	sessId model.TypeSessId
 	host   string
-	tut    tutorial.Tutorial
+	tut    model.Tutorial
 	tmpl   *template.Template
 }
 
 func (wa *WebApp) SessId() model.TypeSessId    { return wa.sessId }
 func (wa *WebApp) Host() string                { return wa.host }
-func (wa *WebApp) Tutorial() tutorial.Tutorial { return wa.tut }
-func (wa *WebApp) Lessons() []*tutorial.Lesson {
-	v := tutorial.NewLessonExtractor(model.AnyLabel)
+func (wa *WebApp) Tutorial() model.Tutorial { return wa.tut }
+func (wa *WebApp) Lessons() []*model.Lesson {
+	v := model.NewLessonExtractor(model.AnyLabel)
 	wa.tut.Accept(v)
 	return v.Lessons()
 }
@@ -60,11 +59,11 @@ func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
 
-func NewWebApp(sessId model.TypeSessId, host string, tut tutorial.Tutorial) *WebApp {
+func NewWebApp(sessId model.TypeSessId, host string, tut model.Tutorial) *WebApp {
 	return &WebApp{sessId, host, tut, makeParsedTemplate(tut)}
 }
 
-func makeParsedTemplate(tut tutorial.Tutorial) *template.Template {
+func makeParsedTemplate(tut model.Tutorial) *template.Template {
 	return template.Must(
 		template.New("main").Parse(
 			tmplBodyLesson +
@@ -77,7 +76,7 @@ func makeParsedTemplate(tut tutorial.Tutorial) *template.Template {
 // The logic involved in building the leftnav is much less awkward
 // in plain Go than in the Go template language, so creating it
 // this way rather than writing it out with a bunch of {{if}}s, etc.
-func makeLeftNavBody(tut tutorial.Tutorial) string {
+func makeLeftNavBody(tut model.Tutorial) string {
 	var b bytes.Buffer
 	v := NewTutorialNavPrinter(&b)
 	tut.Accept(v)

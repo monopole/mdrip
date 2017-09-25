@@ -3,7 +3,6 @@ package subshell
 import (
 	"fmt"
 	"github.com/monopole/mdrip/model"
-	"github.com/monopole/mdrip/tutorial"
 	"os"
 	"strings"
 )
@@ -48,13 +47,13 @@ type RunResult struct {
 	BlockOutput
 	fileName model.FilePath         // File in which the error occurred.
 	index    int                    // Command block index.
-	block    *tutorial.CommandBlock // Content of actual command block.
+	block    *model.CommandBlock // Content of actual command block.
 	problem  error                  // Error, if any.
 	message  string                 // Detailed error message, if any.
 }
 
-func emptyCommandBlock() *tutorial.CommandBlock {
-	return tutorial.NewCommandBlock([]model.Label{}, []byte{}, "")
+func emptyCommandBlock() *model.CommandBlock {
+	return model.NewCommandBlock([]model.Label{}, []byte{}, "")
 }
 
 func NewRunResult() *RunResult {
@@ -110,7 +109,7 @@ func (x *RunResult) SetIndex(i int) *RunResult {
 	return x
 }
 
-func (x *RunResult) SetBlock(b *tutorial.CommandBlock) *RunResult {
+func (x *RunResult) SetBlock(b *model.CommandBlock) *RunResult {
 	x.block = b
 	return x
 }

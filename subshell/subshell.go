@@ -13,17 +13,17 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/scanner"
-	"github.com/monopole/mdrip/tutorial"
+	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/util"
 )
 
 // Subshell can run a program
 type Subshell struct {
 	blockTimeout time.Duration
-	program      *tutorial.Program
+	program      *model.Program
 }
 
-func NewSubshell(timeout time.Duration, p *tutorial.Program) *Subshell {
+func NewSubshell(timeout time.Duration, p *model.Program) *Subshell {
 	return &Subshell{timeout, p}
 }
 
