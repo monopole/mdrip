@@ -13,9 +13,9 @@ type npTest struct {
 	want  string
 }
 
-var emptyLesson = model.NewLesson(
+var emptyLesson = model.NewLessonTut(
 	model.FilePath(""),
-	[]*model.CommandBlock{})
+	[]*model.BlockTut{})
 
 var course1 = model.NewCourse(model.FilePath("hey"),
 	[]model.Tutorial{emptyLesson})

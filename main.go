@@ -6,10 +6,10 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/config"
+	"github.com/monopole/mdrip/lexer"
+	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/subshell"
 	"github.com/monopole/mdrip/tmux"
-	"github.com/monopole/mdrip/model"
-	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/webserver"
 )
 
@@ -31,7 +31,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		p := model.NewProgramFromTutorial(c.Label(), t)
+		p := program.NewProgramFromTutorial(c.Label(), t)
 		s := subshell.NewSubshell(c.BlockTimeOut(), p)
 		if r := s.Run(); r.Problem() != nil {
 			r.Print(c.Label())
@@ -45,7 +45,7 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		p := model.NewProgramFromTutorial(c.Label(), t)
+		p := program.NewProgramFromTutorial(c.Label(), t)
 		if c.Preambled() > 0 {
 			p.PrintPreambled(os.Stdout, c.Preambled())
 		} else {

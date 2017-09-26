@@ -6,6 +6,7 @@ import (
 
 	"bytes"
 	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/program"
 	"strings"
 )
 
@@ -19,11 +20,11 @@ type WebApp struct {
 	tmpl   *template.Template
 }
 
-func (wa *WebApp) SessId() model.TypeSessId    { return wa.sessId }
-func (wa *WebApp) Host() string                { return wa.host }
+func (wa *WebApp) SessId() model.TypeSessId { return wa.sessId }
+func (wa *WebApp) Host() string             { return wa.host }
 func (wa *WebApp) Tutorial() model.Tutorial { return wa.tut }
-func (wa *WebApp) Lessons() []*model.Lesson {
-	v := model.NewLessonExtractor(model.AnyLabel)
+func (wa *WebApp) Lessons() []*program.LessonPgm {
+	v := program.NewLessonPgmExtractor(model.AnyLabel)
 	wa.tut.Accept(v)
 	return v.Lessons()
 }
@@ -67,7 +68,7 @@ func makeParsedTemplate(tut model.Tutorial) *template.Template {
 	return template.Must(
 		template.New("main").Parse(
 			tmplBodyLesson +
-				tmplBodyCommandBlock +
+				tmplBodyBlockPgm +
 				tmplBodyLessonList +
 				tmplBodyLessonHead +
 				makeAppTemplate(makeLeftNavBody(tut))))
@@ -129,19 +130,19 @@ const (
 {{end}}
 {{end}}
 `
-	tmplNameLesson = "navlesson"
+	tmplNameLesson = "lessonlist"
 	tmplBodyLesson = `
 {{define "` + tmplNameLesson + `"}}
-{{range $i, $c := .Children}}
+{{range $i, $c := .Blocks}}
   <div class="commandBlock" data-id="{{$i}}">
-  {{ template "` + tmplNameCommandBlock + `" $c }}
+  {{ template "` + tmplNameBlockPgm + `" $c }}
   </div>
 {{end}}
 {{end}}
 `
-	tmplNameCommandBlock = "navcommandblock"
-	tmplBodyCommandBlock = `
-{{define "` + tmplNameCommandBlock + `"}}
+	tmplNameBlockPgm = "blockPgm"
+	tmplBodyBlockPgm = `
+{{define "` + tmplNameBlockPgm + `"}}
 <div class="proseblock"> {{.HtmlProse}} </div>
 {{if .Code}}
 <h3 id="control" class="control">

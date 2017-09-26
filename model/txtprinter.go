@@ -35,11 +35,11 @@ func (v *TxtPrinter) P(s string, a ...interface{}) {
 	fmt.Fprintf(v.w, v.wrapFmt(s), a...)
 }
 
-func (v *TxtPrinter) VisitCommandBlock(b *CommandBlock) {
+func (v *TxtPrinter) VisitBlockTut(b *BlockTut) {
 	v.P("%s --- %s...", b.Name(), util.SampleString(string(b.Code()), 60))
 }
 
-func (v *TxtPrinter) VisitLesson(l *Lesson) {
+func (v *TxtPrinter) VisitLessonTut(l *LessonTut) {
 	v.P("%s", l.Name())
 	v.Down()
 	for _, x := range l.Children() {

@@ -26,10 +26,10 @@ func (v *NavPrinter) navItemStyle() string {
 }
 
 // Not expanding blocks in the nav - too busy looking.
-func (v *NavPrinter) VisitCommandBlock(x *model.CommandBlock) {
+func (v *NavPrinter) VisitBlockTut(x *model.BlockTut) {
 }
 
-func (v *NavPrinter) VisitLesson(x *model.Lesson) {
+func (v *NavPrinter) VisitLessonTut(x *model.LessonTut) {
 	v.lessonCounter++
 	v.P("<div class='%s'>", v.navItemStyle())
 	v.Down()

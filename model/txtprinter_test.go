@@ -11,9 +11,9 @@ type tpTest struct {
 	want  string
 }
 
-var emptyLesson = NewLesson(
+var emptyLesson = NewLessonTut(
 	FilePath(""),
-	[]*CommandBlock{})
+	[]*BlockTut{})
 
 var course1 = NewCourse(FilePath("hey"),
 	[]Tutorial{emptyLesson})

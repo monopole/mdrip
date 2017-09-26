@@ -15,11 +15,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
+	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/tmux"
 	"github.com/monopole/mdrip/util"
 	"github.com/monopole/mdrip/webapp"
-	"github.com/monopole/mdrip/lexer"
 )
 
 type myConn struct {
@@ -173,18 +174,13 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	t.Accept(model.NewTutorialTxtPrinter(w))
-	p := model.NewProgramFromTutorial(model.AnyLabel, t)
+	p := program.NewProgramFromTutorial(model.AnyLabel, t)
 	fmt.Fprintf(w, "\n\nfile count %d\n\n", len(p.Lessons()))
 	for i, lesson := range p.Lessons() {
 		fmt.Fprintf(w, "file %d: %s\n", i, lesson.Path())
 		for j, b := range lesson.Blocks() {
-			fmt.Fprintf(w, "  block %d content: %s\n",
-				j, util.SampleString(string(b.Code()), 50))
-			fmt.Fprintf(w, "  num labels: %d\n", len(b.Labels()))
-			for k, label := range b.Labels() {
-				fmt.Fprintf(w, "    label %d:  %s\n", k, string(label))
-			}
-			fmt.Fprintln(w)
+			fmt.Fprintf(w, "  block %d, content: %s\n",
+				j, util.SampleString(b.Code().String(), 50))
 		}
 	}
 }
@@ -226,7 +222,7 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 			write500(w, err)
 			return
 		}
-		p := model.NewProgramFromTutorial(model.AnyLabel, t)
+		p := program.NewProgramFromTutorial(model.AnyLabel, t)
 		limit := len(p.Lessons()) - 1
 		if indexFile < 0 || indexFile > limit {
 			http.Error(w,
@@ -241,7 +237,6 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 					indexBlock, limit), http.StatusBadRequest)
 			return
 		}
-		// TODO(monopole): 404 on out of range indices
 		block := p.Lessons()[indexFile].Blocks()[indexBlock]
 		_, err = ws.getCodeRunner(sessId).Write(block.Code().Bytes())
 		if err != nil {

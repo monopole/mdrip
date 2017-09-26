@@ -3,6 +3,7 @@ package subshell
 import (
 	"fmt"
 	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/program"
 	"os"
 	"strings"
 )
@@ -45,22 +46,18 @@ func NewSuccessOutput(output string) *BlockOutput {
 // RunResult pairs BlockOutput with meta data about shell execution.
 type RunResult struct {
 	BlockOutput
-	fileName model.FilePath         // File in which the error occurred.
-	index    int                    // Command block index.
-	block    *model.CommandBlock // Content of actual command block.
-	problem  error                  // Error, if any.
-	message  string                 // Detailed error message, if any.
-}
-
-func emptyCommandBlock() *model.CommandBlock {
-	return model.NewCommandBlock([]model.Label{}, []byte{}, "")
+	fileName model.FilePath    // File in which the error occurred.
+	index    int               // Command block index.
+	block    *program.BlockPgm // Content of actual command block.
+	problem  error             // Error, if any.
+	message  string            // Detailed error message, if any.
 }
 
 func NewRunResult() *RunResult {
 	blockOutput := NewFailureOutput("")
 	return &RunResult{
 		*blockOutput, "", -1,
-		emptyCommandBlock(),
+		program.NewEmptyBlockPgm(),
 		nil, ""}
 }
 
@@ -69,7 +66,7 @@ func NoCommandsRunResult(
 	blockOutput *BlockOutput, path model.FilePath, index int, message string) *RunResult {
 	return &RunResult{
 		*blockOutput, path, index,
-		emptyCommandBlock(),
+		program.NewEmptyBlockPgm(),
 		nil, message}
 }
 
@@ -109,7 +106,7 @@ func (x *RunResult) SetIndex(i int) *RunResult {
 	return x
 }
 
-func (x *RunResult) SetBlock(b *model.CommandBlock) *RunResult {
+func (x *RunResult) SetBlock(b *program.BlockPgm) *RunResult {
 	x.block = b
 	return x
 }

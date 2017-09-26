@@ -90,12 +90,12 @@ func scanDir(d model.FilePath) (*model.Course, error) {
 	return nil, nil
 }
 
-func scanFile(n model.FilePath) (*model.Lesson, error) {
+func scanFile(n model.FilePath) (*model.LessonTut, error) {
 	contents, err := n.Read()
 	if err != nil {
 		return nil, err
 	}
-	return model.NewLessonFromModelBlocks(n, Parse(contents)), nil
+	return model.NewLessonTutFromBlockParsed(n, Parse(contents)), nil
 }
 
 func LoadTutorialFromPath(path model.FilePath) (model.Tutorial, error) {

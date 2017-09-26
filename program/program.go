@@ -1,37 +1,29 @@
-package model
+package program
 
 import (
 	"fmt"
+	"github.com/monopole/mdrip/model"
 	"io"
 )
 
 // Program is a list of Lessons and a label.
-// Each Lesson represents a file, so a Program is a collection of N files.
-// Every CommandBlock in every lesson is known to have the given label.
+// Each LessonPgm represents a file, so a Program is a collection of N files.
+// Every BlockTut in every lesson is known to have the given label.
 type Program struct {
-	label   Label
-	lessons []*Lesson
+	label   model.Label
+	lessons []*LessonPgm
 }
 
-func (p *Program) Lessons() []*Lesson                      { return p.lessons }
-func (p *Program) Label() Label                      { return p.label }
+func (p *Program) Lessons() []*LessonPgm { return p.lessons }
+func (p *Program) Label() model.Label    { return p.label }
 
-// Arguably we'd do better to drop the labels entirely - but some other labels
-// might be involved in hack, e.g. sleep.
-func (p *Program) hasCommonLabel(l Label) bool {
-	for _, l := range p.Lessons() {
-		for _, b := range l.blocks {
-			if !b.HasLabel(AnyLabel) {
-				return false
-			}
-		}
-	}
-	return true
+func NewProgram(lessons []*LessonPgm) *Program {
+	return &Program{model.AnyLabel, lessons}
 }
 
 // Build program from blocks extracted from a tutorial.
-func NewProgramFromTutorial(l Label, t Tutorial) *Program {
-	v := NewLessonExtractor(l)
+func NewProgramFromTutorial(l model.Label, t model.Tutorial) *Program {
+	v := NewLessonPgmExtractor(l)
 	t.Accept(v)
 	return &Program{l, v.Lessons()}
 }

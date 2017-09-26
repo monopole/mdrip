@@ -50,7 +50,7 @@ package model
 // In the latter case, the main content and the left nav highlighting
 // don't change.  A second click hides the exposed sub-tutorial names.
 //
-// Only the name of a Lesson (a leaf) with content can 1) be highlighted,
+// Only the name of a LessonTut (a leaf) with content can 1) be highlighted,
 // 2) change the main page content when clicked, and 3) serve at a meaningful
 // REST address.  Everything else is a sub-tutorial, and only expands or hides
 // its own appearance.
@@ -102,17 +102,17 @@ package model
 // no left nav needed.
 
 type Tutorial interface {
+	Accept(v TutVisitor)
 	Name() string
 	Path() FilePath
 	Children() []Tutorial
-	Accept(v TutVisitor)
 }
 
 type TutVisitor interface {
 	VisitTopCourse(t *TopCourse)
 	VisitCourse(c *Course)
-	VisitLesson(l *Lesson)
-	VisitCommandBlock(b *CommandBlock)
+	VisitLessonTut(l *LessonTut)
+	VisitBlockTut(b *BlockTut)
 }
 
 // A TopCourse is a Course with no name - it's the root of the tree (benelux).
@@ -122,10 +122,10 @@ type TopCourse struct {
 }
 
 func NewTopCourse(p FilePath, c []Tutorial) *TopCourse { return &TopCourse{p, c} }
-func (t *TopCourse) Accept(v TutVisitor)                     { v.VisitTopCourse(t) }
-func (t *TopCourse) Name() string                            { return "" }
+func (t *TopCourse) Accept(v TutVisitor)               { v.VisitTopCourse(t) }
+func (t *TopCourse) Name() string                      { return "" }
 func (t *TopCourse) Path() FilePath                    { return t.path }
-func (t *TopCourse) Children() []Tutorial                    { return t.children }
+func (t *TopCourse) Children() []Tutorial              { return t.children }
 
 // A Course, or directory, has a name but no content, and an ordered list of
 // Lessons and Courses. If the list is empty, the Course is dropped (hah!).
@@ -135,7 +135,7 @@ type Course struct {
 }
 
 func NewCourse(p FilePath, c []Tutorial) *Course { return &Course{p, c} }
-func (c *Course) Accept(v TutVisitor)                  { v.VisitCourse(c) }
-func (c *Course) Name() string                         { return c.patrh.Base() }
+func (c *Course) Accept(v TutVisitor)            { v.VisitCourse(c) }
+func (c *Course) Name() string                   { return c.patrh.Base() }
 func (c *Course) Path() FilePath                 { return c.patrh }
-func (c *Course) Children() []Tutorial                 { return c.children }
+func (c *Course) Children() []Tutorial           { return c.children }

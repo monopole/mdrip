@@ -18,9 +18,9 @@ type itemType int
 
 const (
 	itemError         itemType = iota
-	itemProse          // Prose between command blocks.
-	itemBlockLabel     // Label for a command block
-	itemLabelledBlock  // All lines between codeFence marks
+	itemProse                  // Prose between command blocks.
+	itemBlockLabel             // Label for a command block
+	itemLabelledBlock          // All lines between codeFence marks
 	itemEOF
 )
 
@@ -267,9 +267,9 @@ func lexLabelledBlock(l *lexer) stateFn {
 	}
 }
 
-// Parse lexes the incoming string into a list of model.LabelledBlock.
-func Parse(s string) (result []*model.LabelledBlock) {
-	result = []*model.LabelledBlock{}
+// Parse lexes the incoming string into a list of model.BlockParsed.
+func Parse(s string) (result []*model.BlockParsed) {
+	result = []*model.BlockParsed{}
 	prose := ""
 	labels := []model.Label{}
 	l := newLex(s)
@@ -281,7 +281,7 @@ func Parse(s string) (result []*model.LabelledBlock) {
 			if len(prose) > 0 {
 				// Hack to grab the last bit of prose.
 				// The data structure returned by Parse needs redesign.
-				result = append(result, model.NewLabelledBlock(labels, []byte(prose), ""))
+				result = append(result, model.NewBlockParsed(labels, []byte(prose), ""))
 			}
 			return
 		case item.typ == itemBlockLabel:
@@ -289,7 +289,7 @@ func Parse(s string) (result []*model.LabelledBlock) {
 		case item.typ == itemProse:
 			prose = item.val
 		case item.typ == itemLabelledBlock:
-			result = append(result, model.NewLabelledBlock(labels, []byte(prose), item.val))
+			result = append(result, model.NewBlockParsed(labels, []byte(prose), item.val))
 			labels = []model.Label{}
 			prose = ""
 		}
