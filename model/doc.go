@@ -1,21 +1,18 @@
 package model
 
-import "github.com/monopole/mdrip/base"
-
 // Package model has types used to build a tutorial from discovered markdown.
 //
-// The file hierarchy holding the markdown is a part of the tutorial;
-// it organizes things into 'courses' (directories) and 'lessons' (textual
-// discussion from a file) held as part of an ordered course.
+// The file hierarchy holding the markdown defines tutorial structure,
+// organizing markdown files (lessons) into nestable groups (courses).
 //
-// Suppose one offers a tutorial on Benelux - the politico-economic union of
+// Suppose one offers a tutorial on Benelux - an economic union of
 // three neighbouring states in western Europe.
 //
 // The first lesson is an overview of Benelux, with sibling (_not_ child)
 // courses covering Belgium, Netherlands, and Luxembourg (as one might arrange
-// a physical book).  These 'courses' may hold lessons on provinces, or courses
-// which could drill into cities, etc.  This hierarchy is optional, but
-// supported.
+// a physical book).  These courses may hold lessons on provinces, or sub-courses
+// drilling into cities, regional histories etc.  This hierarchy is optional, but
+// supported and helpful to organize material.
 //
 // Associated content REST addresses reflect the file system hierarchy, e.g.
 //
@@ -36,15 +33,15 @@ import "github.com/monopole/mdrip/base"
 //     benelux.com/netherlands/flevoland
 //     ...
 //
-// All content is accessible from boring yet functional nav tools:
+// All content is accessible from standard nav tools:
 //
 //      overview     |                           {main page outline
 //      belgium      |                            here - title, h1,
 //     [netherlands] |       {main page           h2, h3 etc.}
 //      luxembourg   |        content here}
 //
-// * At all times exactly one of the left nav choices is selected.
-// * The main page shows content associated with that selection.
+// At all times exactly one of the left nav choices is selected., and the
+// main page shows content associated with that selection.
 //
 // The first item, in this case "overview", is the initial highlight.
 // If one hits the domain without a REST path, one is redirected to
@@ -52,13 +49,13 @@ import "github.com/monopole/mdrip/base"
 // content is shown.
 //
 // Items in the left nav either name content and show it when clicked, or
-// they name sub-tutorials and expand sub-tutorial choices when clicked.
+// they name sub-courses and expand choices when clicked.
 // In the latter case, the main content and the left nav highlighting
-// don't change.  A second click hides the exposed sub-tutorial names.
+// don't change.  A second click hides the exposed sub-course names.
 //
-// Only the name of a LessonTut (a leaf) with content can 1) be highlighted,
+// Only the name of a lesson (a leaf) with content can 1) be highlighted,
 // 2) change the main page content when clicked, and 3) serve at a meaningful
-// REST address.  Everything else is a sub-tutorial, and only expands or hides
+// REST address.  Everything else is a course, and only expands or hides
 // its own appearance.
 //
 // By design, this scheme maps to this filesystem layout:
@@ -94,7 +91,7 @@ import "github.com/monopole/mdrip/base"
 // or
 //      mdrip --mode web /foo/benelux/README.md
 //
-// i.e. the argument names either a directory or a file.
+// The arg names either a directory or a file.
 //
 // If the arg is a directory name, the tree below it is read in an attempt
 // to build RESTfully addressable content and UX.  The names shown in the UX
@@ -106,17 +103,3 @@ import "github.com/monopole/mdrip/base"
 //
 // If only one file is read, then only that content is shown -
 // no left nav needed.
-
-type Tutorial interface {
-	Accept(v TutVisitor)
-	Name() string
-	Path() base.FilePath
-	Children() []Tutorial
-}
-
-type TutVisitor interface {
-	VisitTopCourse(t *TopCourse)
-	VisitCourse(c *Course)
-	VisitLessonTut(l *LessonTut)
-	VisitBlockTut(b *BlockTut)
-}

@@ -11,17 +11,19 @@ import (
 	"strings"
 )
 
+type TypeSessId string
+
 // WebApp presents a tutorial to a web browser.
 // Not using react, angular2, polymer, etc. because
 // want to keep it simple and shippable as a single binary.
 type WebApp struct {
-	sessId base.TypeSessId
+	sessId TypeSessId
 	host   string
 	tut    model.Tutorial
 	tmpl   *template.Template
 }
 
-func (wa *WebApp) SessId() base.TypeSessId  { return wa.sessId }
+func (wa *WebApp) SessId() TypeSessId       { return wa.sessId }
 func (wa *WebApp) Host() string             { return wa.host }
 func (wa *WebApp) Tutorial() model.Tutorial { return wa.tut }
 func (wa *WebApp) Lessons() []*program.LessonPgm {
@@ -61,7 +63,7 @@ func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
 
-func NewWebApp(sessId base.TypeSessId, host string, tut model.Tutorial) *WebApp {
+func NewWebApp(sessId TypeSessId, host string, tut model.Tutorial) *WebApp {
 	return &WebApp{sessId, host, tut, makeParsedTemplate(tut)}
 }
 

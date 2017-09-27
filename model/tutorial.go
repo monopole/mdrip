@@ -2,6 +2,20 @@ package model
 
 import "github.com/monopole/mdrip/base"
 
+type Tutorial interface {
+	Accept(v TutVisitor)
+	Name() string
+	Path() base.FilePath
+	Children() []Tutorial
+}
+
+type TutVisitor interface {
+	VisitTopCourse(t *TopCourse)
+	VisitCourse(c *Course)
+	VisitLessonTut(l *LessonTut)
+	VisitBlockTut(b *BlockTut)
+}
+
 // A TopCourse is a Course with no name - it's the root of the tree (benelux).
 type TopCourse struct {
 	path     base.FilePath

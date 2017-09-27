@@ -43,7 +43,7 @@ type Server struct {
 	pathArgs     []base.FilePath
 	store        sessions.Store
 	upgrader     websocket.Upgrader
-	connections  map[base.TypeSessId]*myConn
+	connections  map[webapp.TypeSessId]*myConn
 	connReaperCh chan bool
 }
 
@@ -68,20 +68,20 @@ func NewServer(pathArgs []base.FilePath) *Server {
 		pathArgs,
 		s,
 		websocket.Upgrader{},
-		make(map[base.TypeSessId]*myConn),
+		make(map[webapp.TypeSessId]*myConn),
 		nil}
 	result.startConnReaper()
 	return result
 }
 
-func getSessionId(s *sessions.Session) base.TypeSessId {
+func getSessionId(s *sessions.Session) webapp.TypeSessId {
 	if c, ok := s.Values[keySessId].(string); ok {
-		return base.TypeSessId(c)
+		return webapp.TypeSessId(c)
 	}
 	return ""
 }
 
-func assureSessionId(s *sessions.Session) base.TypeSessId {
+func assureSessionId(s *sessions.Session) webapp.TypeSessId {
 	c := getSessionId(s)
 	if c == "" {
 		c = makeSessionId()
@@ -90,20 +90,20 @@ func assureSessionId(s *sessions.Session) base.TypeSessId {
 	return c
 }
 
-func makeSessionId() base.TypeSessId {
+func makeSessionId() webapp.TypeSessId {
 	b := make([]byte, 5)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-	return base.TypeSessId(fmt.Sprintf("%X", b))
+	return webapp.TypeSessId(fmt.Sprintf("%X", b))
 }
 
-func getSessionIdParam(n string, r *http.Request) (base.TypeSessId, error) {
+func getSessionIdParam(n string, r *http.Request) (webapp.TypeSessId, error) {
 	v := r.URL.Query().Get(n)
 	if v == "" {
 		return "", errors.New("no session Id")
 	}
-	return base.TypeSessId(v), nil
+	return webapp.TypeSessId(v), nil
 }
 
 // Pull session Id out of request, create a socket connection,
@@ -190,7 +190,7 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 // First tries to find a session socket.  Failing that, try to find
 // a locally running instance of tmux.  Failing that, returns a
 // writer that discards the code.
-func (ws *Server) getCodeRunner(sessId base.TypeSessId) io.Writer {
+func (ws *Server) getCodeRunner(sessId webapp.TypeSessId) io.Writer {
 	c := ws.connections[sessId]
 	if c != nil {
 		glog.Infof("Socket found for ID %v", sessId)

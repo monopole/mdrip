@@ -4,9 +4,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
-
-type TypeSessId string
 
 type FilePath string
 
@@ -15,7 +14,13 @@ func (n FilePath) ReadDir() ([]os.FileInfo, error) {
 }
 
 func (n FilePath) Base() string {
-	return filepath.Base(string(n))
+	arg := string(n)
+	ext := filepath.Ext(arg)
+	if len(ext) < 1 {
+		return filepath.Base(arg)
+	}
+	return filepath.Base(arg[:strings.Index(arg, ext)])
+
 }
 func (n FilePath) Join(info os.FileInfo) FilePath {
 	return FilePath(filepath.Join(string(n), info.Name()))
