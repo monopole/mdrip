@@ -1,4 +1,4 @@
-package model
+package base
 
 // BlockBase groups OpaqueCode with prose commentary.
 type BlockBase struct {

@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
+	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
@@ -39,10 +40,10 @@ func (c myConn) Write(bytes []byte) (n int, err error) {
 }
 
 type Server struct {
-	pathArgs     []model.FilePath
+	pathArgs     []base.FilePath
 	store        sessions.Store
 	upgrader     websocket.Upgrader
-	connections  map[model.TypeSessId]*myConn
+	connections  map[base.TypeSessId]*myConn
 	connReaperCh chan bool
 }
 
@@ -55,7 +56,7 @@ const (
 var keyAuth = []byte("static-visible-secret")
 var keyEncrypt = []byte(nil)
 
-func NewServer(pathArgs []model.FilePath) *Server {
+func NewServer(pathArgs []base.FilePath) *Server {
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
 		Domain:   "localhost",
@@ -67,20 +68,20 @@ func NewServer(pathArgs []model.FilePath) *Server {
 		pathArgs,
 		s,
 		websocket.Upgrader{},
-		make(map[model.TypeSessId]*myConn),
+		make(map[base.TypeSessId]*myConn),
 		nil}
 	result.startConnReaper()
 	return result
 }
 
-func getSessionId(s *sessions.Session) model.TypeSessId {
+func getSessionId(s *sessions.Session) base.TypeSessId {
 	if c, ok := s.Values[keySessId].(string); ok {
-		return model.TypeSessId(c)
+		return base.TypeSessId(c)
 	}
 	return ""
 }
 
-func assureSessionId(s *sessions.Session) model.TypeSessId {
+func assureSessionId(s *sessions.Session) base.TypeSessId {
 	c := getSessionId(s)
 	if c == "" {
 		c = makeSessionId()
@@ -89,20 +90,20 @@ func assureSessionId(s *sessions.Session) model.TypeSessId {
 	return c
 }
 
-func makeSessionId() model.TypeSessId {
+func makeSessionId() base.TypeSessId {
 	b := make([]byte, 5)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-	return model.TypeSessId(fmt.Sprintf("%X", b))
+	return base.TypeSessId(fmt.Sprintf("%X", b))
 }
 
-func getSessionIdParam(n string, r *http.Request) (model.TypeSessId, error) {
+func getSessionIdParam(n string, r *http.Request) (base.TypeSessId, error) {
 	v := r.URL.Query().Get(n)
 	if v == "" {
 		return "", errors.New("no session Id")
 	}
-	return model.TypeSessId(v), nil
+	return base.TypeSessId(v), nil
 }
 
 // Pull session Id out of request, create a socket connection,
@@ -174,7 +175,7 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	t.Accept(model.NewTutorialTxtPrinter(w))
-	p := program.NewProgramFromTutorial(model.AnyLabel, t)
+	p := program.NewProgramFromTutorial(base.AnyLabel, t)
 	fmt.Fprintf(w, "\n\nfile count %d\n\n", len(p.Lessons()))
 	for i, lesson := range p.Lessons() {
 		fmt.Fprintf(w, "file %d: %s\n", i, lesson.Path())
@@ -189,7 +190,7 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 // First tries to find a session socket.  Failing that, try to find
 // a locally running instance of tmux.  Failing that, returns a
 // writer that discards the code.
-func (ws *Server) getCodeRunner(sessId model.TypeSessId) io.Writer {
+func (ws *Server) getCodeRunner(sessId base.TypeSessId) io.Writer {
 	c := ws.connections[sessId]
 	if c != nil {
 		glog.Infof("Socket found for ID %v", sessId)
@@ -222,7 +223,7 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 			write500(w, err)
 			return
 		}
-		p := program.NewProgramFromTutorial(model.AnyLabel, t)
+		p := program.NewProgramFromTutorial(base.AnyLabel, t)
 		limit := len(p.Lessons()) - 1
 		if indexFile < 0 || indexFile > limit {
 			http.Error(w,

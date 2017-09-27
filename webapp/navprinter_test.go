@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 )
 
@@ -14,10 +15,10 @@ type npTest struct {
 }
 
 var emptyLesson = model.NewLessonTut(
-	model.FilePath(""),
+	base.FilePath(""),
 	[]*model.BlockTut{})
 
-var course1 = model.NewCourse(model.FilePath("hey"),
+var course1 = model.NewCourse(base.FilePath("hey"),
 	[]model.Tutorial{emptyLesson})
 
 var npTests = []npTest{

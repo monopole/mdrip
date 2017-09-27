@@ -7,12 +7,13 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 )
 
 const badLeadingChar = "~.#"
 
-func isDesirableFile(n model.FilePath) bool {
+func isDesirableFile(n base.FilePath) bool {
 	s, err := os.Stat(string(n))
 	if err != nil {
 		glog.Info("Stat error on "+s.Name(), err)
@@ -38,7 +39,7 @@ func isDesirableFile(n model.FilePath) bool {
 	return true
 }
 
-func isDesirableDir(n model.FilePath) bool {
+func isDesirableDir(n base.FilePath) bool {
 	s, err := os.Stat(string(n))
 	if err != nil {
 		glog.Info("Stat error on "+s.Name(), err)
@@ -60,7 +61,7 @@ func isDesirableDir(n model.FilePath) bool {
 	return true
 }
 
-func scanDir(d model.FilePath) (*model.Course, error) {
+func scanDir(d base.FilePath) (*model.Course, error) {
 	files, err := d.ReadDir()
 	if err != nil {
 		return nil, err
@@ -90,7 +91,7 @@ func scanDir(d model.FilePath) (*model.Course, error) {
 	return nil, nil
 }
 
-func scanFile(n model.FilePath) (*model.LessonTut, error) {
+func scanFile(n base.FilePath) (*model.LessonTut, error) {
 	contents, err := n.Read()
 	if err != nil {
 		return nil, err
@@ -98,7 +99,7 @@ func scanFile(n model.FilePath) (*model.LessonTut, error) {
 	return model.NewLessonTutFromBlockParsed(n, Parse(contents)), nil
 }
 
-func LoadTutorialFromPath(path model.FilePath) (model.Tutorial, error) {
+func LoadTutorialFromPath(path base.FilePath) (model.Tutorial, error) {
 	if isDesirableFile(path) {
 		return scanFile(path)
 	}
@@ -114,7 +115,7 @@ func LoadTutorialFromPath(path model.FilePath) (model.Tutorial, error) {
 	return nil, errors.New("cannot load from " + string(path))
 }
 
-func LoadTutorialFromPaths(paths []model.FilePath) (model.Tutorial, error) {
+func LoadTutorialFromPaths(paths []base.FilePath) (model.Tutorial, error) {
 	if len(paths) == 0 {
 		return nil, errors.New("no paths?")
 	}
@@ -140,7 +141,7 @@ func LoadTutorialFromPaths(paths []model.FilePath) (model.Tutorial, error) {
 		}
 	}
 	if len(items) > 0 {
-		return model.NewTopCourse(model.FilePath(""), items), nil
+		return model.NewTopCourse(base.FilePath(""), items), nil
 	}
 	return nil, errors.New("nothing useful found in paths")
 }

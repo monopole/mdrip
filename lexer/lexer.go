@@ -7,6 +7,7 @@ package lexer
 
 import (
 	"fmt"
+	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 	"strings"
 	"unicode/utf8"
@@ -271,7 +272,7 @@ func lexLabelledBlock(l *lexer) stateFn {
 func Parse(s string) (result []*model.BlockParsed) {
 	result = []*model.BlockParsed{}
 	prose := ""
-	labels := []model.Label{}
+	labels := []base.Label{}
 	l := newLex(s)
 	for {
 		item := l.nextItem()
@@ -285,12 +286,12 @@ func Parse(s string) (result []*model.BlockParsed) {
 			}
 			return
 		case item.typ == itemBlockLabel:
-			labels = append(labels, model.Label(item.val))
+			labels = append(labels, base.Label(item.val))
 		case item.typ == itemProse:
 			prose = item.val
 		case item.typ == itemLabelledBlock:
 			result = append(result, model.NewBlockParsed(labels, []byte(prose), item.val))
-			labels = []model.Label{}
+			labels = []base.Label{}
 			prose = ""
 		}
 	}

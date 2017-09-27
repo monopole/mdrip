@@ -1,6 +1,9 @@
 package program
 
-import "github.com/monopole/mdrip/model"
+import (
+	"github.com/monopole/mdrip/base"
+	"github.com/monopole/mdrip/model"
+)
 
 // LessonPgmExtractor extracts all Lessons in depth first order
 // from a Tutorial to create a flat list of lessons.  The lessons
@@ -8,12 +11,12 @@ import "github.com/monopole/mdrip/model"
 // into the new extracted lessons.  If a lesson has no blocks with
 // the given label, it is completely dropped.
 type LessonPgmExtractor struct {
-	label      model.Label
+	label      base.Label
 	lessons    []*LessonPgm
 	blockAccum []*BlockPgm
 }
 
-func NewLessonPgmExtractor(label model.Label) *LessonPgmExtractor {
+func NewLessonPgmExtractor(label base.Label) *LessonPgmExtractor {
 	return &LessonPgmExtractor{label, []*LessonPgm{}, []*BlockPgm{}}
 }
 
@@ -22,7 +25,7 @@ func (v *LessonPgmExtractor) Lessons() []*LessonPgm {
 }
 
 func (v *LessonPgmExtractor) VisitBlockTut(b *model.BlockTut) {
-	if v.label == model.AnyLabel || b.HasLabel(v.label) {
+	if v.label == base.AnyLabel || b.HasLabel(v.label) {
 		v.blockAccum = append(v.blockAccum, NewBlockPgmFromBlockTut(b))
 	}
 }

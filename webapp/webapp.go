@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"bytes"
+	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
 	"strings"
@@ -14,17 +15,17 @@ import (
 // Not using react, angular2, polymer, etc. because
 // want to keep it simple and shippable as a single binary.
 type WebApp struct {
-	sessId model.TypeSessId
+	sessId base.TypeSessId
 	host   string
 	tut    model.Tutorial
 	tmpl   *template.Template
 }
 
-func (wa *WebApp) SessId() model.TypeSessId { return wa.sessId }
+func (wa *WebApp) SessId() base.TypeSessId  { return wa.sessId }
 func (wa *WebApp) Host() string             { return wa.host }
 func (wa *WebApp) Tutorial() model.Tutorial { return wa.tut }
 func (wa *WebApp) Lessons() []*program.LessonPgm {
-	v := program.NewLessonPgmExtractor(model.AnyLabel)
+	v := program.NewLessonPgmExtractor(base.AnyLabel)
 	wa.tut.Accept(v)
 	return v.Lessons()
 }
@@ -60,7 +61,7 @@ func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
 
-func NewWebApp(sessId model.TypeSessId, host string, tut model.Tutorial) *WebApp {
+func NewWebApp(sessId base.TypeSessId, host string, tut model.Tutorial) *WebApp {
 	return &WebApp{sessId, host, tut, makeParsedTemplate(tut)}
 }
 

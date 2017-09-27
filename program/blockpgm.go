@@ -2,6 +2,7 @@ package program
 
 import (
 	"fmt"
+	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 	"github.com/russross/blackfriday"
 	"html/template"
@@ -15,7 +16,7 @@ type BlockPgm struct {
 	name string
 	// Should a sleep be added?
 	shouldAddSleep bool
-	model.BlockBase
+	base.BlockBase
 }
 
 func NewEmptyBlockPgm() *BlockPgm {
@@ -24,14 +25,14 @@ func NewEmptyBlockPgm() *BlockPgm {
 
 func NewBlockPgm(code string) *BlockPgm {
 	return &BlockPgm{"noNameBlock", false,
-		model.NewBlockBase([]byte{}, model.OpaqueCode(code))}
+		base.NewBlockBase([]byte{}, base.OpaqueCode(code))}
 }
 
 func NewBlockPgmFromBlockTut(b *model.BlockTut) *BlockPgm {
 	return &BlockPgm{
 		b.Name(),
-		b.HasLabel(model.SleepLabel),
-		model.NewBlockBase(b.Prose(), b.Code())}
+		b.HasLabel(base.SleepLabel),
+		base.NewBlockBase(b.Prose(), b.Code())}
 }
 
 func (x *BlockPgm) Name() string { return x.name }
@@ -40,7 +41,7 @@ func (x *BlockPgm) HtmlProse() template.HTML {
 }
 
 func (x *BlockPgm) Print(
-	w io.Writer, prefix string, n int, label model.Label, fileName model.FilePath) {
+	w io.Writer, prefix string, n int, label base.Label, fileName base.FilePath) {
 	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n",
 		prefix, x.Name(), n, label, fileName)
 	fmt.Fprint(w, x.Code())

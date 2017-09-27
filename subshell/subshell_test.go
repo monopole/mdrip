@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/scanner"
@@ -27,13 +28,13 @@ func emptyTutorial() model.Tutorial {
 func TestRunnerWithNothing(t *testing.T) {
 	if NewSubshell(
 		timeout,
-		program.NewProgramFromTutorial(model.AnyLabel, emptyTutorial())).Run().Problem() != nil {
+		program.NewProgramFromTutorial(base.AnyLabel, emptyTutorial())).Run().Problem() != nil {
 		t.Fail()
 	}
 }
 
 func doIt(blocks []*program.BlockPgm) *RunResult {
-	lesson := program.NewLessonPgm(model.FilePath("foo"), blocks)
+	lesson := program.NewLessonPgm(base.FilePath("foo"), blocks)
 	p := program.NewProgram([]*program.LessonPgm{lesson})
 	return NewSubshell(timeout, p).Run()
 }

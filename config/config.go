@@ -11,7 +11,7 @@ import (
 	"unicode"
 
 	"github.com/golang/glog"
-	"github.com/monopole/mdrip/model"
+	"github.com/monopole/mdrip/base"
 )
 
 const (
@@ -179,11 +179,11 @@ func determineMode() ModeType {
 	}
 }
 
-func determineLabel() model.Label {
+func determineLabel() base.Label {
 	if len(*label) == 0 {
-		return model.AnyLabel
+		return base.AnyLabel
 	}
-	return model.Label(*label)
+	return base.Label(*label)
 }
 
 func isOk(name string) bool {
@@ -196,12 +196,12 @@ func isOk(name string) bool {
 	return true
 }
 
-func determineFiles() []model.FilePath {
-	f := make([]model.FilePath, flag.NArg())
+func determineFiles() []base.FilePath {
+	f := make([]base.FilePath, flag.NArg())
 	problem := false
 	for i, n := range flag.Args() {
 		if isOk(n) {
-			f[i] = model.FilePath(n)
+			f[i] = base.FilePath(n)
 		} else {
 			glog.Error("Unable to read file ", n)
 			problem = true
@@ -214,9 +214,9 @@ func determineFiles() []model.FilePath {
 }
 
 type Config struct {
-	label     model.Label
+	label     base.Label
 	mode      ModeType
-	fileNames []model.FilePath
+	fileNames []base.FilePath
 }
 
 func (c *Config) BlockTimeOut() time.Duration {
@@ -247,11 +247,11 @@ func (c *Config) IgnoreTestFailure() bool {
 	return *ignoreTestFailure
 }
 
-func (c *Config) Label() model.Label {
+func (c *Config) Label() base.Label {
 	return c.label
 }
 
-func (c *Config) FileNames() []model.FilePath {
+func (c *Config) FileNames() []base.FilePath {
 	return c.fileNames
 }
 

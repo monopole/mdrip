@@ -1,5 +1,7 @@
 package model
 
+import "github.com/monopole/mdrip/base"
+
 // BlockTut is a part of a LessonTut.
 type BlockTut struct {
 	BlockParsed
@@ -16,5 +18,5 @@ func (x *BlockTut) Name() string {
 	}
 	return "noName"
 }
-func (x *BlockTut) Path() FilePath       { return FilePath("notUsingThis") }
+func (x *BlockTut) Path() base.FilePath  { return base.FilePath("notUsingThis") }
 func (x *BlockTut) Children() []Tutorial { return []Tutorial{} }

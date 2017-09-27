@@ -1,5 +1,7 @@
 package model
 
+import "github.com/monopole/mdrip/base"
+
 // Package model has types used to build a tutorial from discovered markdown.
 //
 // The file hierarchy holding the markdown is a part of the tutorial;
@@ -108,7 +110,7 @@ package model
 type Tutorial interface {
 	Accept(v TutVisitor)
 	Name() string
-	Path() FilePath
+	Path() base.FilePath
 	Children() []Tutorial
 }
 
@@ -118,4 +120,3 @@ type TutVisitor interface {
 	VisitLessonTut(l *LessonTut)
 	VisitBlockTut(b *BlockTut)
 }
-

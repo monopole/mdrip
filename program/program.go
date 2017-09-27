@@ -2,27 +2,29 @@ package program
 
 import (
 	"fmt"
-	"github.com/monopole/mdrip/model"
 	"io"
+
+	"github.com/monopole/mdrip/base"
+	"github.com/monopole/mdrip/model"
 )
 
 // Program is a list of Lessons and a label.
 // Each LessonPgm represents a file, so a Program is a collection of N files.
 // Every BlockTut in every lesson is known to have the given label.
 type Program struct {
-	label   model.Label
+	label   base.Label
 	lessons []*LessonPgm
 }
 
 func (p *Program) Lessons() []*LessonPgm { return p.lessons }
-func (p *Program) Label() model.Label    { return p.label }
+func (p *Program) Label() base.Label     { return p.label }
 
 func NewProgram(lessons []*LessonPgm) *Program {
-	return &Program{model.AnyLabel, lessons}
+	return &Program{base.AnyLabel, lessons}
 }
 
 // Build program from blocks extracted from a tutorial.
-func NewProgramFromTutorial(l model.Label, t model.Tutorial) *Program {
+func NewProgramFromTutorial(l base.Label, t model.Tutorial) *Program {
 	v := NewLessonPgmExtractor(l)
 	t.Accept(v)
 	return &Program{l, v.Lessons()}

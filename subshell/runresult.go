@@ -2,10 +2,11 @@ package subshell
 
 import (
 	"fmt"
-	"github.com/monopole/mdrip/model"
-	"github.com/monopole/mdrip/program"
 	"os"
 	"strings"
+
+	"github.com/monopole/mdrip/base"
+	"github.com/monopole/mdrip/program"
 )
 
 type status int
@@ -46,7 +47,7 @@ func NewSuccessOutput(output string) *BlockOutput {
 // RunResult pairs BlockOutput with meta data about shell execution.
 type RunResult struct {
 	BlockOutput
-	fileName model.FilePath    // File in which the error occurred.
+	fileName base.FilePath     // File in which the error occurred.
 	index    int               // Command block index.
 	block    *program.BlockPgm // Content of actual command block.
 	problem  error             // Error, if any.
@@ -63,14 +64,14 @@ func NewRunResult() *RunResult {
 
 // For tests.
 func NoCommandsRunResult(
-	blockOutput *BlockOutput, path model.FilePath, index int, message string) *RunResult {
+	blockOutput *BlockOutput, path base.FilePath, index int, message string) *RunResult {
 	return &RunResult{
 		*blockOutput, path, index,
 		program.NewEmptyBlockPgm(),
 		nil, message}
 }
 
-func (x *RunResult) FileName() model.FilePath {
+func (x *RunResult) FileName() base.FilePath {
 	return x.fileName
 }
 
@@ -111,12 +112,12 @@ func (x *RunResult) SetBlock(b *program.BlockPgm) *RunResult {
 	return x
 }
 
-func (x *RunResult) SetFileName(n model.FilePath) *RunResult {
+func (x *RunResult) SetFileName(n base.FilePath) *RunResult {
 	x.fileName = n
 	return x
 }
 
-func (x *RunResult) Print(selectedLabel model.Label) {
+func (x *RunResult) Print(selectedLabel base.Label) {
 	delim := strings.Repeat("-", 70) + "\n"
 	fmt.Fprintf(os.Stderr, delim)
 	x.block.Print(os.Stderr, "Error", x.index+1, selectedLabel, x.fileName)
