@@ -5,10 +5,11 @@ import (
 	"io"
 
 	"bytes"
+	"strings"
+
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
-	"strings"
 )
 
 type TypeSessId string
@@ -23,9 +24,10 @@ type WebApp struct {
 	tmpl   *template.Template
 }
 
-func (wa *WebApp) SessId() TypeSessId       { return wa.sessId }
-func (wa *WebApp) Host() string             { return wa.host }
-func (wa *WebApp) Tutorial() model.Tutorial { return wa.tut }
+func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
+func (wa *WebApp) Host() string       { return wa.host }
+
+// func (wa *WebApp) Tutorial() model.Tutorial { return wa.tut }
 func (wa *WebApp) Lessons() []*program.LessonPgm {
 	v := program.NewLessonPgmExtractor(base.AnyLabel)
 	wa.tut.Accept(v)
@@ -467,7 +469,7 @@ function onRunBlockClick(event) {
 }
 `
 const instructionsHtml = `
-<div class="instructions" onclick="toggleByClass('instructions')">
+<div class='instructions' onclick="toggleByClass('instructions')">
 <p>You're looking at markdown files harvested from</p>
 <blockquote>
 {{range $i, $c := .Lessons}}

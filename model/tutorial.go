@@ -17,16 +17,15 @@ type TutVisitor interface {
 }
 
 // A TopCourse is a Course with no name - it's the root of the tree, the cover of the book.
+// Although the fields match Course, it's a different type so that visitors may treat ot differently;
+// they typically ignore it and immediately descend into children.
 type TopCourse struct {
-	path     base.FilePath
-	children []Tutorial
+	Course
 }
 
-func NewTopCourse(p base.FilePath, c []Tutorial) *TopCourse { return &TopCourse{p, c} }
+func NewTopCourse(p base.FilePath, c []Tutorial) *TopCourse { return &TopCourse{Course{p, c}} }
 func (t *TopCourse) Accept(v TutVisitor)                    { v.VisitTopCourse(t) }
 func (t *TopCourse) Name() string                           { return "" }
-func (t *TopCourse) Path() base.FilePath                    { return t.path }
-func (t *TopCourse) Children() []Tutorial                   { return t.children }
 
 // A Course, or directory, has a name but no content, and an ordered list of
 // Lessons and Courses. If the list is empty, the Course is dropped (hah!).

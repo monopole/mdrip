@@ -94,7 +94,7 @@ package model
 // The arg names either a directory or a file.
 //
 // If the arg is a directory name, the tree below it is read in an attempt
-// to build RESTfully addressable content and UX.  The names shown in the UX
+// to build REST-fully addressable content and UX.  The names shown in the UX
 // could be raw file names or could be processed a bit, e.g. underscores or
 // hyphens become spaces, the ordering of the content in the UX could be
 // controlled by omittable numerical prefixes on file names, etc.

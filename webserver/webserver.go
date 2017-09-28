@@ -213,7 +213,6 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		sessId := assureSessionId(session)
-		// TODO(monopole): 404 on bad params
 		indexFile := getIntParam("fid", r, -1)
 		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
