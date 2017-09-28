@@ -51,3 +51,11 @@ type OpaqueCode string
 
 func (c OpaqueCode) String() string { return string(c) }
 func (c OpaqueCode) Bytes() []byte  { return []byte(c) }
+func NoCode() OpaqueCode            { return "" }
+
+// MdProse is documentation (plain text or markdown) for OpaqueCode.
+type MdProse []byte
+
+func (x MdProse) String() string { return string(x) }
+func (x MdProse) Bytes() []byte  { return []byte(x) }
+func NoProse() MdProse           { return []byte{} }

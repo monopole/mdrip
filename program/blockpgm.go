@@ -25,7 +25,7 @@ func NewEmptyBlockPgm() *BlockPgm {
 
 func NewBlockPgm(code string) *BlockPgm {
 	return &BlockPgm{"noNameBlock", false,
-		base.NewBlockBase([]byte{}, base.OpaqueCode(code))}
+		base.NewBlockBase(base.NoProse(), base.OpaqueCode(code))}
 }
 
 func NewBlockPgmFromBlockTut(b *model.BlockTut) *BlockPgm {

@@ -8,8 +8,8 @@ type BlockParsed struct {
 	labels []base.Label
 }
 
-func NewBlockParsed(labels []base.Label, p []byte, c string) *BlockParsed {
-	return &BlockParsed{base.NewBlockBase(p, base.OpaqueCode(c)), labels}
+func NewBlockParsed(labels []base.Label, p base.MdProse, c base.OpaqueCode) *BlockParsed {
+	return &BlockParsed{base.NewBlockBase(p, c), labels}
 }
 
 func (x *BlockParsed) Labels() []base.Label { return x.labels }

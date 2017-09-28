@@ -16,7 +16,7 @@ type TutVisitor interface {
 	VisitBlockTut(b *BlockTut)
 }
 
-// A TopCourse is a Course with no name - it's the root of the tree (benelux).
+// A TopCourse is a Course with no name - it's the root of the tree, the cover of the book.
 type TopCourse struct {
 	path     base.FilePath
 	children []Tutorial
@@ -31,12 +31,12 @@ func (t *TopCourse) Children() []Tutorial                   { return t.children 
 // A Course, or directory, has a name but no content, and an ordered list of
 // Lessons and Courses. If the list is empty, the Course is dropped (hah!).
 type Course struct {
-	patrh    base.FilePath
+	path     base.FilePath
 	children []Tutorial
 }
 
 func NewCourse(p base.FilePath, c []Tutorial) *Course { return &Course{p, c} }
 func (c *Course) Accept(v TutVisitor)                 { v.VisitCourse(c) }
-func (c *Course) Name() string                        { return c.patrh.Base() }
-func (c *Course) Path() base.FilePath                 { return c.patrh }
+func (c *Course) Name() string                        { return c.path.Base() }
+func (c *Course) Path() base.FilePath                 { return c.path }
 func (c *Course) Children() []Tutorial                { return c.children }
