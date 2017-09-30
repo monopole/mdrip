@@ -12,7 +12,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/base"
-	"strings"
 )
 
 const (
@@ -159,9 +158,9 @@ var (
 )
 
 type Config struct {
-	label    base.Label
-	mode     ModeType
-	pathArgs []base.FilePath
+	label      base.Label
+	mode       ModeType
+	dataSource *base.DataSource
 }
 
 // A forgiving interpretation of mode argument.
@@ -191,17 +190,6 @@ func determineLabel() base.Label {
 		return base.AnyLabel
 	}
 	return base.Label(*label)
-}
-
-func determinePathArgs(args []string) []base.FilePath {
-	result := []base.FilePath{}
-	for _, n := range args {
-		n := strings.TrimSpace(n)
-		if len(n) > 0 {
-			result = append(result, base.FilePath(n))
-		}
-	}
-	return result
 }
 
 func (c *Config) BlockTimeOut() time.Duration {
@@ -236,17 +224,17 @@ func (c *Config) Label() base.Label {
 	return c.label
 }
 
-func (c *Config) PathArgs() []base.FilePath {
-	return c.pathArgs
+func (c *Config) DataSource() *base.DataSource {
+	return c.dataSource
 }
 
 func GetConfig() *Config {
 	flag.Usage = usage
 	flag.Parse()
 
-	pathArgs := determinePathArgs(flag.Args())
-	if len(pathArgs) < 1 {
-		fmt.Fprintln(os.Stderr, "Must specify a data source - file, directory, etc.")
+	dataSource, err := base.NewDataSource(flag.Args())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		// TODO: if arg is --, read from stdin?
 		usage()
 		os.Exit(1)
@@ -266,7 +254,7 @@ func GetConfig() *Config {
 		os.Exit(1)
 	}
 
-	return &Config{determineLabel(), desiredMode, pathArgs}
+	return &Config{determineLabel(), desiredMode, dataSource}
 }
 
 func usage() {

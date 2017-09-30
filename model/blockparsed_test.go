@@ -40,7 +40,7 @@ func TestBlockParsed(t *testing.T) {
 	for _, test := range bpTests {
 		got := test.block.HasLabel(base.AnyLabel)
 		if got != test.want {
-			t.Errorf("%s:\ngot\n\"%s\"\nwant\n\"%s\"\n", test.name, got, test.want)
+			t.Errorf("%s:\ngot %v, want %v\n", test.name, got, test.want)
 		}
 	}
 }

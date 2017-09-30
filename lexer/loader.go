@@ -9,34 +9,34 @@ import (
 	"path/filepath"
 	"strings"
 
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 )
 
-const badLeadingChar = "~.#"
+const (
+	badLeadingChar = "~.#"
+	// github         = "https://github.com/"
+	githubScheme = "git@github.com:"
+)
 
 func isDesirableFile(n base.FilePath) bool {
 	s, err := os.Stat(string(n))
 	if err != nil {
-		glog.Info("Stat error on "+s.Name(), err)
 		return false
 	}
 	if s.IsDir() {
-		glog.Info("Ignoring NON-file " + s.Name())
 		return false
 	}
 	if !s.Mode().IsRegular() {
-		glog.Info("Ignoring irregular file " + s.Name())
 		return false
 	}
 	if filepath.Ext(s.Name()) != ".md" {
-		glog.Info("Ignoring non markdown file " + s.Name())
 		return false
 	}
 	base := filepath.Base(s.Name())
 	if strings.Index(badLeadingChar, string(base[0])) > -1 {
-		glog.Info("Ignoring because bad leading char: " + s.Name())
 		return false
 	}
 	return true
@@ -45,11 +45,9 @@ func isDesirableFile(n base.FilePath) bool {
 func isDesirableDir(n base.FilePath) bool {
 	s, err := os.Stat(string(n))
 	if err != nil {
-		glog.Info("Stat error on "+s.Name(), err)
 		return false
 	}
 	if !s.IsDir() {
-		glog.Info("Ignoring NON-dir " + s.Name())
 		return false
 	}
 	// Allow special dir names.
@@ -58,7 +56,6 @@ func isDesirableDir(n base.FilePath) bool {
 	}
 	// Ignore .git, etc.
 	if strings.HasPrefix(filepath.Base(s.Name()), ".") {
-		glog.Info("Ignoring dot dir " + s.Name())
 		return false
 	}
 	return true
@@ -74,24 +71,20 @@ func scanDir(d base.FilePath) (*model.Course, error) {
 		p := d.Join(f)
 		if isDesirableFile(p) {
 			l, err := scanFile(p)
-			if err != nil {
-				return nil, err
+			if err == nil {
+				items = append(items, l)
 			}
-			items = append(items, l)
 		} else if isDesirableDir(p) {
 			c, err := scanDir(p)
-			if err != nil {
-				return nil, err
-			}
-			if c != nil {
+			if err == nil {
 				items = append(items, c)
 			}
 		}
 	}
-	if len(items) > 0 {
-		return model.NewCourse(d, items), nil
+	if len(items) == 0 {
+		return nil, errors.New("no content in directory " + string(d))
 	}
-	return nil, nil
+	return model.NewCourse(d, items), nil
 }
 
 func scanFile(n base.FilePath) (*model.LessonTut, error) {
@@ -99,7 +92,11 @@ func scanFile(n base.FilePath) (*model.LessonTut, error) {
 	if err != nil {
 		return nil, err
 	}
-	return model.NewLessonTutFromBlockParsed(n, Parse(contents)), nil
+	parsed := Parse(contents)
+	if len(parsed) < 1 {
+		return nil, errors.New("no content in " + string(n))
+	}
+	return model.NewLessonTutFromBlockParsed(n, parsed), nil
 }
 
 func shiftToTop(x []model.Tutorial, top string) []model.Tutorial {
@@ -115,68 +112,81 @@ func shiftToTop(x []model.Tutorial, top string) []model.Tutorial {
 	return append(result, other...)
 }
 
-func putReadMeAtTop(x []model.Tutorial) []model.Tutorial {
+func reorder(x []model.Tutorial) []model.Tutorial {
 	return shiftToTop(x, "README")
 }
 
-func LoadTutorialFromPath(
-	path base.FilePath, nameOverride string) (model.Tutorial, error) {
+type Loader struct {
+	ds *base.DataSource
+}
+
+func NewLoader(ds *base.DataSource) *Loader {
+	return &Loader{ds}
+}
+
+func smellsLikeGithub(ds *base.DataSource) bool {
+	return ds.N() == 1 && strings.HasPrefix(ds.FirstArg(), githubScheme)
+}
+
+func smellsLikeAPath(ds *base.DataSource) bool {
+	return ds.N() == 1 && strings.Index(ds.FirstArg(), "://") < 0
+}
+
+func (l *Loader) Load() (model.Tutorial, error) {
+	if smellsLikeGithub(l.ds) {
+		name := l.ds.FirstArg()[len(githubScheme):]
+		return loadTutorialFromGitHub(name, l.ds.FirstArg())
+	}
+	if smellsLikeAPath(l.ds) {
+		p := base.FilePath(l.ds.FirstArg())
+		return loadTutorialFromPath(p.Base(), p)
+	}
+	name := fmt.Sprintf("(%d paths)", l.ds.N())
+	return loadTutorialFromPaths(name, l.ds.AsPaths())
+}
+
+func loadTutorialFromPath(name string, path base.FilePath) (model.Tutorial, error) {
 	if isDesirableFile(path) {
 		return scanFile(path)
 	}
-	if isDesirableDir(path) {
-		c, err := scanDir(path)
-		if err != nil {
-			return nil, err
-		}
-		if c != nil {
-			if len(nameOverride) > 0 {
-				path = base.FilePath(nameOverride)
-			}
-			return model.NewTopCourse(path, putReadMeAtTop(c.Children())), nil
-		}
+	if !isDesirableDir(path) {
+		return nil, errors.New("Unable to grok anything in " + string(path))
 	}
-	return nil, errors.New("Unable to grok anything in " + string(path))
+	c, err := scanDir(path)
+	if err != nil {
+		return nil, err
+	}
+	return model.NewTopCourse(name, path, reorder(c.Children())), nil
 }
 
-func LoadTutorialFromPaths(paths []base.FilePath) (model.Tutorial, error) {
-	if len(paths) == 0 {
-		return nil, errors.New("no paths?")
-	}
-	if len(paths) == 1 {
-		return LoadTutorialFromPath(paths[0], "")
-	}
+func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, error) {
 	var items = []model.Tutorial{}
 	for _, f := range paths {
 		if isDesirableFile(f) {
 			l, err := scanFile(f)
-			if err != nil {
-				return nil, err
+			if err == nil {
+				items = append(items, l)
 			}
-			items = append(items, l)
 		} else if isDesirableDir(f) {
 			c, err := scanDir(f)
-			if err != nil {
-				return nil, err
-			}
-			if c != nil {
+			if err == nil {
 				items = append(items, c)
 			}
 		}
 	}
-	if len(items) > 0 {
-		return model.NewTopCourse(base.FilePath(""), putReadMeAtTop(items)), nil
+	if len(items) == 0 {
+		return nil, errors.New("nothing useful found in paths")
 	}
-	return nil, errors.New("nothing useful found in paths")
+	return model.NewTopCourse(name, base.FilePath(name), reorder(items)), nil
 }
 
-func LoadTutorialFromGitHub(url string) (model.Tutorial, error) {
+func loadTutorialFromGitHub(name, url string) (model.Tutorial, error) {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
 		glog.Error("No git on path", err)
 		return nil, err
 	}
-	tmpDir, err := ioutil.TempDir("", "mdrip-unpack-")
+	tmpDir, err := ioutil.TempDir("", "mdrip-git-")
 	if err != nil {
 		glog.Error("Unable to create tmp dir", err)
 		return nil, err
@@ -191,5 +201,5 @@ func LoadTutorialFromGitHub(url string) (model.Tutorial, error) {
 		glog.Error("git clone failure", err)
 		return nil, err
 	}
-	return LoadTutorialFromPath(base.FilePath(tmpDir), url)
+	return loadTutorialFromPath(name, base.FilePath(tmpDir))
 }

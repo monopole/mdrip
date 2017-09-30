@@ -22,7 +22,6 @@ import (
 	"github.com/monopole/mdrip/tmux"
 	"github.com/monopole/mdrip/util"
 	"github.com/monopole/mdrip/webapp"
-	"strings"
 )
 
 type myConn struct {
@@ -41,7 +40,7 @@ func (c myConn) Write(bytes []byte) (n int, err error) {
 }
 
 type Server struct {
-	pathArgs     []base.FilePath
+	loader       *lexer.Loader
 	tutorial     model.Tutorial
 	store        sessions.Store
 	upgrader     websocket.Upgrader
@@ -58,7 +57,13 @@ const (
 var keyAuth = []byte("static-visible-secret")
 var keyEncrypt = []byte(nil)
 
-func NewServer(pathArgs []base.FilePath, tut model.Tutorial) *Server {
+func NewServer(ds *base.DataSource) (*Server, error) {
+	l := lexer.NewLoader(ds)
+	tut, err := l.Load()
+	if err != nil {
+		fmt.Println(err)
+		return nil, errors.New("Unable to build initial tutorial from " + ds.Name())
+	}
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
 		Domain:   "localhost",
@@ -67,14 +72,14 @@ func NewServer(pathArgs []base.FilePath, tut model.Tutorial) *Server {
 		HttpOnly: true,
 	}
 	result := &Server{
-		pathArgs,
+		l,
 		tut,
 		s,
 		websocket.Upgrader{},
 		make(map[webapp.TypeSessId]*myConn),
 		nil}
 	result.startConnReaper()
-	return result
+	return result, nil
 }
 
 func getSessionId(s *sessions.Session) webapp.TypeSessId {
@@ -148,32 +153,33 @@ func write500(w http.ResponseWriter, e error) {
 	http.Error(w, e.Error(), http.StatusInternalServerError)
 }
 
-const github = "https://github.com/"
-
 func (ws *Server) reload(w http.ResponseWriter, r *http.Request) {
-	url := r.URL.Query().Get("q")
+	value := mux.Vars(r)["gitclone"]
+	if len(value) < 1 {
+		value = r.URL.Query().Get("q")
+	}
 	var t model.Tutorial
 	var err error
-	if len(url) > 0 {
-		if strings.HasPrefix(url, github) {
-			t, err = lexer.LoadTutorialFromGitHub(url)
-			if err != nil {
-				http.Error(w,
-					fmt.Sprintf("Unable to read from url %s",
-						url), http.StatusBadRequest)
-				return
-			}
-			url = url[len(github):]
-		} else {
-			t, err = lexer.LoadTutorialFromPath(base.FilePath(url), url)
-			if err != nil {
-				write500(w, err)
-				return
-			}
+	if len(value) > 0 {
+		// Load data from new source.
+		ds, err := base.NewDataSource([]string{value})
+		if err != nil {
+			http.Error(w,
+				fmt.Sprintf("Bad value %s", value), http.StatusBadRequest)
+			return
 		}
-		ws.pathArgs = []base.FilePath{base.FilePath(url)}
+		l := lexer.NewLoader(ds)
+		t, err = l.Load()
+		if err != nil {
+			http.Error(w,
+				fmt.Sprintf("Unable to load from %s: %v", ds, err),
+				http.StatusBadRequest)
+			return
+		}
+		ws.loader = l
 	} else {
-		t, err = lexer.LoadTutorialFromPaths(ws.pathArgs)
+		// reload from same source, presumably changed.
+		t, err = ws.loader.Load()
 		if err != nil {
 			write500(w, err)
 			return
@@ -189,8 +195,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		write500(w, err)
 		return
 	}
-	app := webapp.NewWebApp(
-		assureSessionId(session), string(ws.pathArgs[0]), r.Host, ws.tutorial)
+	app := webapp.NewWebApp(assureSessionId(session), r.Host, ws.tutorial)
 	err = session.Save(r, w)
 	if err != nil {
 		write500(w, err)
@@ -331,8 +336,9 @@ func (ws *Server) startConnReaper() {
 // Serve offers an http service.
 func (ws *Server) Serve(hostAndPort string) {
 	r := mux.NewRouter()
-	// r.Host(hostAndPort)
-	r.HandleFunc("/reload", ws.reload)
+	r.HandleFunc("/r", ws.reload)
+	r.HandleFunc("/r/", ws.reload)
+	r.HandleFunc("/r/{gitclone:.*}", ws.reload)
 	r.HandleFunc("/runblock", ws.makeBlockRunner())
 	r.HandleFunc("/debug", ws.showDebugPage)
 	r.HandleFunc("/ws", ws.openWebSocket)
@@ -342,6 +348,5 @@ func (ws *Server) Serve(hostAndPort string) {
 	r.HandleFunc("/", ws.showControlPage)
 	fmt.Println("Serving at " + hostAndPort)
 	glog.Info("Serving at " + hostAndPort)
-	//http.Handle("/", r)
 	glog.Fatal(http.ListenAndServe(hostAndPort, r))
 }

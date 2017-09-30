@@ -19,7 +19,6 @@ type TypeSessId string
 // want to keep it simple and shippable as a single binary.
 type WebApp struct {
 	sessId TypeSessId
-	name   string
 	host   string
 	tut    model.Tutorial
 	tmpl   *template.Template
@@ -38,7 +37,7 @@ func (wa *WebApp) Lessons() []*program.LessonPgm {
 // This should probably be some text passed to the ctor instead,
 // after pulling it from the command line.
 func (wa *WebApp) AppName() string {
-	return wa.name
+	return wa.tut.Name()
 }
 
 func (wa *WebApp) TrimName() string {
@@ -66,8 +65,8 @@ func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
 
-func NewWebApp(sessId TypeSessId, name string, host string, tut model.Tutorial) *WebApp {
-	return &WebApp{sessId, name, host, tut, makeParsedTemplate(tut)}
+func NewWebApp(sessId TypeSessId, host string, tut model.Tutorial) *WebApp {
+	return &WebApp{sessId, host, tut, makeParsedTemplate(tut)}
 }
 
 func makeParsedTemplate(tut model.Tutorial) *template.Template {
