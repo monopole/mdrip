@@ -22,6 +22,7 @@ import (
 	"github.com/monopole/mdrip/tmux"
 	"github.com/monopole/mdrip/util"
 	"github.com/monopole/mdrip/webapp"
+	"strings"
 )
 
 type myConn struct {
@@ -41,6 +42,7 @@ func (c myConn) Write(bytes []byte) (n int, err error) {
 
 type Server struct {
 	pathArgs     []base.FilePath
+	tutorial     model.Tutorial
 	store        sessions.Store
 	upgrader     websocket.Upgrader
 	connections  map[webapp.TypeSessId]*myConn
@@ -56,7 +58,7 @@ const (
 var keyAuth = []byte("static-visible-secret")
 var keyEncrypt = []byte(nil)
 
-func NewServer(pathArgs []base.FilePath) *Server {
+func NewServer(pathArgs []base.FilePath, tut model.Tutorial) *Server {
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
 		Domain:   "localhost",
@@ -66,6 +68,7 @@ func NewServer(pathArgs []base.FilePath) *Server {
 	}
 	result := &Server{
 		pathArgs,
+		tut,
 		s,
 		websocket.Upgrader{},
 		make(map[webapp.TypeSessId]*myConn),
@@ -145,18 +148,49 @@ func write500(w http.ResponseWriter, e error) {
 	http.Error(w, e.Error(), http.StatusInternalServerError)
 }
 
+const github = "https://github.com/"
+
+func (ws *Server) reload(w http.ResponseWriter, r *http.Request) {
+	url := r.URL.Query().Get("q")
+	var t model.Tutorial
+	var err error
+	if len(url) > 0 {
+		if strings.HasPrefix(url, github) {
+			t, err = lexer.LoadTutorialFromGitHub(url)
+			if err != nil {
+				http.Error(w,
+					fmt.Sprintf("Unable to read from url %s",
+						url), http.StatusBadRequest)
+				return
+			}
+			url = url[len(github):]
+		} else {
+			t, err = lexer.LoadTutorialFromPath(base.FilePath(url), url)
+			if err != nil {
+				write500(w, err)
+				return
+			}
+		}
+		ws.pathArgs = []base.FilePath{base.FilePath(url)}
+	} else {
+		t, err = lexer.LoadTutorialFromPaths(ws.pathArgs)
+		if err != nil {
+			write500(w, err)
+			return
+		}
+	}
+	ws.tutorial = t
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 	session, err := ws.store.Get(r, cookieName)
 	if err != nil {
 		write500(w, err)
 		return
 	}
-	t, err := lexer.LoadTutorialFromPaths(ws.pathArgs)
-	if err != nil {
-		write500(w, err)
-		return
-	}
-	app := webapp.NewWebApp(assureSessionId(session), r.Host, t)
+	app := webapp.NewWebApp(
+		assureSessionId(session), string(ws.pathArgs[0]), r.Host, ws.tutorial)
 	err = session.Save(r, w)
 	if err != nil {
 		write500(w, err)
@@ -169,13 +203,8 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
-	t, err := lexer.LoadTutorialFromPaths(ws.pathArgs)
-	if err != nil {
-		write500(w, err)
-		return
-	}
-	t.Accept(model.NewTutorialTxtPrinter(w))
-	p := program.NewProgramFromTutorial(base.AnyLabel, t)
+	ws.tutorial.Accept(model.NewTutorialTxtPrinter(w))
+	p := program.NewProgramFromTutorial(base.AnyLabel, ws.tutorial)
 	fmt.Fprintf(w, "\n\nfile count %d\n\n", len(p.Lessons()))
 	for i, lesson := range p.Lessons() {
 		fmt.Fprintf(w, "file %d: %s\n", i, lesson.Path())
@@ -217,12 +246,7 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
 		glog.Info("bid = ", indexBlock)
-		t, err := lexer.LoadTutorialFromPaths(ws.pathArgs)
-		if err != nil {
-			write500(w, err)
-			return
-		}
-		p := program.NewProgramFromTutorial(base.AnyLabel, t)
+		p := program.NewProgramFromTutorial(base.AnyLabel, ws.tutorial)
 		limit := len(p.Lessons()) - 1
 		if indexFile < 0 || indexFile > limit {
 			http.Error(w,
@@ -305,23 +329,10 @@ func (ws *Server) startConnReaper() {
 }
 
 // Serve offers an http service.
-func (ws *Server) oldServe(hostAndPort string) {
-	http.HandleFunc("/", ws.showControlPage)
-	http.HandleFunc("/runblock", ws.makeBlockRunner())
-	http.HandleFunc("/debug", ws.showDebugPage)
-	http.HandleFunc("/ws", ws.openWebSocket)
-	http.HandleFunc("/favicon.ico", ws.favicon)
-	http.HandleFunc("/image", ws.image)
-	http.HandleFunc("/q", ws.quit)
-	fmt.Println("Serving at " + hostAndPort)
-	glog.Info("Serving at " + hostAndPort)
-	glog.Fatal(http.ListenAndServe(hostAndPort, nil))
-}
-
-// Serve offers an http service.
 func (ws *Server) Serve(hostAndPort string) {
 	r := mux.NewRouter()
 	// r.Host(hostAndPort)
+	r.HandleFunc("/reload", ws.reload)
 	r.HandleFunc("/runblock", ws.makeBlockRunner())
 	r.HandleFunc("/debug", ws.showDebugPage)
 	r.HandleFunc("/ws", ws.openWebSocket)

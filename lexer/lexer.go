@@ -7,10 +7,11 @@ package lexer
 
 import (
 	"fmt"
-	"github.com/monopole/mdrip/base"
-	"github.com/monopole/mdrip/model"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/monopole/mdrip/base"
+	"github.com/monopole/mdrip/model"
 )
 
 type position int

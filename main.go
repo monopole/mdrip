@@ -22,11 +22,16 @@ func main() {
 			glog.Fatal(tmux.Path, " not running")
 		}
 		// Steal the first fileName as a host address argument.
-		t.Adapt(string(c.FileNames()[0]))
+		t.Adapt(string(c.PathArgs()[0]))
 	case config.ModeWeb:
-		webserver.NewServer(c.FileNames()).Serve(c.HostAndPort())
+		t, err := lexer.LoadTutorialFromPaths(c.PathArgs())
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		webserver.NewServer(c.PathArgs(), t).Serve(c.HostAndPort())
 	case config.ModeTest:
-		t, err := lexer.LoadTutorialFromPaths(c.FileNames())
+		t, err := lexer.LoadTutorialFromPaths(c.PathArgs())
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -40,7 +45,7 @@ func main() {
 			}
 		}
 	default:
-		t, err := lexer.LoadTutorialFromPaths(c.FileNames())
+		t, err := lexer.LoadTutorialFromPaths(c.PathArgs())
 		if err != nil {
 			fmt.Println(err)
 			return

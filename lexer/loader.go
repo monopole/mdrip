@@ -1,8 +1,11 @@
 package lexer
 
 import (
+	"bytes"
 	"errors"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -99,7 +102,25 @@ func scanFile(n base.FilePath) (*model.LessonTut, error) {
 	return model.NewLessonTutFromBlockParsed(n, Parse(contents)), nil
 }
 
-func LoadTutorialFromPath(path base.FilePath) (model.Tutorial, error) {
+func shiftToTop(x []model.Tutorial, top string) []model.Tutorial {
+	result := []model.Tutorial{}
+	other := []model.Tutorial{}
+	for _, f := range x {
+		if f.Name() == top {
+			result = append(result, f)
+		} else {
+			other = append(other, f)
+		}
+	}
+	return append(result, other...)
+}
+
+func putReadMeAtTop(x []model.Tutorial) []model.Tutorial {
+	return shiftToTop(x, "README")
+}
+
+func LoadTutorialFromPath(
+	path base.FilePath, nameOverride string) (model.Tutorial, error) {
 	if isDesirableFile(path) {
 		return scanFile(path)
 	}
@@ -109,10 +130,13 @@ func LoadTutorialFromPath(path base.FilePath) (model.Tutorial, error) {
 			return nil, err
 		}
 		if c != nil {
-			return model.NewTopCourse(path, c.Children()), nil
+			if len(nameOverride) > 0 {
+				path = base.FilePath(nameOverride)
+			}
+			return model.NewTopCourse(path, putReadMeAtTop(c.Children())), nil
 		}
 	}
-	return nil, errors.New("cannot load from " + string(path))
+	return nil, errors.New("Unable to grok anything in " + string(path))
 }
 
 func LoadTutorialFromPaths(paths []base.FilePath) (model.Tutorial, error) {
@@ -120,7 +144,7 @@ func LoadTutorialFromPaths(paths []base.FilePath) (model.Tutorial, error) {
 		return nil, errors.New("no paths?")
 	}
 	if len(paths) == 1 {
-		return LoadTutorialFromPath(paths[0])
+		return LoadTutorialFromPath(paths[0], "")
 	}
 	var items = []model.Tutorial{}
 	for _, f := range paths {
@@ -141,7 +165,31 @@ func LoadTutorialFromPaths(paths []base.FilePath) (model.Tutorial, error) {
 		}
 	}
 	if len(items) > 0 {
-		return model.NewTopCourse(base.FilePath(""), items), nil
+		return model.NewTopCourse(base.FilePath(""), putReadMeAtTop(items)), nil
 	}
 	return nil, errors.New("nothing useful found in paths")
+}
+
+func LoadTutorialFromGitHub(url string) (model.Tutorial, error) {
+	gitPath, err := exec.LookPath("git")
+	if err != nil {
+		glog.Error("No git on path", err)
+		return nil, err
+	}
+	tmpDir, err := ioutil.TempDir("", "mdrip-unpack-")
+	if err != nil {
+		glog.Error("Unable to create tmp dir", err)
+		return nil, err
+	}
+	glog.Info("Using " + gitPath + " to clone to " + tmpDir)
+	defer os.RemoveAll(tmpDir)
+	cmd := exec.Command(gitPath, "clone", url, tmpDir)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err = cmd.Run()
+	if err != nil {
+		glog.Error("git clone failure", err)
+		return nil, err
+	}
+	return LoadTutorialFromPath(base.FilePath(tmpDir), url)
 }

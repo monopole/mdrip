@@ -54,7 +54,8 @@ func (v *NavPrinter) VisitCourse(x *model.Course) {
 	v.P("%s", x.Name())
 	v.Up()
 	v.P("</div>")
-	v.P("<div id='NC%d' style='display: none;'>", v.courseCounter)
+	v.P("<div id='NC%d' class='navCourseContent'", v.courseCounter)
+	v.P("    style='display: none;'>")
 	v.Down()
 	for _, c := range x.Children() {
 		c.Accept(v)

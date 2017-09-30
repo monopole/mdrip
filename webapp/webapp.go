@@ -19,6 +19,7 @@ type TypeSessId string
 // want to keep it simple and shippable as a single binary.
 type WebApp struct {
 	sessId TypeSessId
+	name   string
 	host   string
 	tut    model.Tutorial
 	tmpl   *template.Template
@@ -37,26 +38,26 @@ func (wa *WebApp) Lessons() []*program.LessonPgm {
 // This should probably be some text passed to the ctor instead,
 // after pulling it from the command line.
 func (wa *WebApp) AppName() string {
-	return wa.host
+	return wa.name
 }
 
 func (wa *WebApp) TrimName() string {
 	result := strings.TrimSpace(wa.AppName())
 	if len(result) > maxAppNameLen {
-		return result[:maxAppNameLen] + "..."
+		return "..." + result[len(result)-maxAppNameLen:]
 	}
 	return result
 }
 
 const (
 	delta         = 2
-	maxAppNameLen = 20
+	maxAppNameLen = 38
 )
 
 func (wa *WebApp) LayMainWidth() int            { return 900 }
 func (wa *WebApp) LayNavPad() int               { return 7 }
 func (wa *WebApp) LayLeftPad() int              { return 20 }
-func (wa *WebApp) LayNavWidth() int             { return 200 }
+func (wa *WebApp) LayNavWidth() int             { return 320 }
 func (wa *WebApp) LayNavWidthPlusDelta() int    { return wa.LayNavWidth() + delta }
 func (wa *WebApp) LayTitleHeight() int          { return 30 }
 func (wa *WebApp) LayTitleHeightPlusDelta() int { return wa.LayTitleHeight() + delta }
@@ -65,8 +66,8 @@ func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
 
-func NewWebApp(sessId TypeSessId, host string, tut model.Tutorial) *WebApp {
-	return &WebApp{sessId, host, tut, makeParsedTemplate(tut)}
+func NewWebApp(sessId TypeSessId, name string, host string, tut model.Tutorial) *WebApp {
+	return &WebApp{sessId, name, host, tut, makeParsedTemplate(tut)}
 }
 
 func makeParsedTemplate(tut model.Tutorial) *template.Template {
@@ -248,10 +249,17 @@ div.instructions {
 }
 
 div.navCourseTitle {
+  /* top rig bot lef */
+  padding: 0px 0px 0px 0px;
 }
 
 div.navCourseTitle:hover {
   color: #06e;
+}
+
+div.navCourseContent {
+  /* top rig bot lef */
+  padding: {{.LayNavPad}}px 0px 0px 0px;
 }
 
 div.navLessonTitleOn {
@@ -351,7 +359,7 @@ function toggleLeftNav() {
     // Show the nav
     e.innerHTML = '&lt;'
     ln.style.display = 'block';
-    list.style.left = '200px';
+    list.style.left = '{{.LayNavWidth}}px';
   } else {
     // Hide the nav
     e.innerHTML = '&gt;'
@@ -470,24 +478,18 @@ function onRunBlockClick(event) {
 `
 const instructionsHtml = `
 <div class='instructions' onclick="toggleByClass('instructions')">
-<p>You're looking at markdown files harvested from</p>
+<p>This is content harvested from</p>
 <blockquote>
-{{range $i, $c := .Lessons}}
-{{ template "` + tmplNameLessonHead + `" $c }}
-{{end}}
+<code> {{.AppName}} </code>
 </blockquote>
-<p>with code blocks
-tested to run in bash on a linux system.</p>
-<p>Clicking on a command block header
-copies the block to your clipboard so you can mouse over
-to a shell and click again to paste it for execution.</p>
+<p>Clicking on a code block header copies the block to your clipboard.</p>
 <p>
-For one-click usage (preferred for demos):
+For one-click usage (no need to mouse over and paste - nice for demos):
 <ul>
 <li>
 Install <code><a target="_blank"
 href="https://golang.org/doc/install">Go</a></code>
-(the programming language) and
+(the language) and
 <code><a target="_blank"
 href="https://github.com/tmux/tmux/wiki">tmux</a></code>
 (the terminal multiplexer).</li>
