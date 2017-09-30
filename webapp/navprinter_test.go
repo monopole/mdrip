@@ -37,7 +37,8 @@ var npTests = []npTest{
   <div class='navCourseTitle' onclick='toggleNC(0)'>
     hey
   </div>
-  <div id='NC0' style='display: none;'>
+  <div id='NC0' class='navCourseContent'
+      style='display: none;'>
     <div class='navItemBox'>
       <div id='NL0' class='navLessonTitleOff'
           onclick='assureActiveLesson(0)'
