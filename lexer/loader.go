@@ -17,8 +17,6 @@ import (
 
 const (
 	badLeadingChar = "~.#"
-	// github         = "https://github.com/"
-	githubScheme = "git@github.com:"
 )
 
 func isDesirableFile(n base.FilePath) bool {
@@ -124,8 +122,29 @@ func NewLoader(ds *base.DataSource) *Loader {
 	return &Loader{ds}
 }
 
-func smellsLikeGithub(ds *base.DataSource) bool {
-	return ds.N() == 1 && strings.HasPrefix(ds.FirstArg(), githubScheme)
+const (
+	// E.g. https://github.com/monopole/mdrip
+	githubDomain = "https://github.com/"
+	// E.g. git@github.com:monopole/mdrip.git
+	githubScheme = "git@github.com:"
+)
+
+func smellsLikeGithubCloneUrl(ds *base.DataSource) bool {
+	return ds.N() == 1 && (strings.HasPrefix(ds.FirstArg(), githubScheme) ||
+		strings.HasPrefix(ds.FirstArg(), githubDomain))
+}
+
+func extractRepoName(n string) string {
+	if strings.HasPrefix(n, githubScheme) {
+		n = n[len(githubScheme):]
+		k := strings.Index(n, ".git")
+		if k > 0 {
+			n = n[0:k]
+		}
+	} else if strings.HasPrefix(n, githubDomain) {
+		n = n[len(githubDomain):]
+	}
+	return "github:" + n
 }
 
 func smellsLikeAPath(ds *base.DataSource) bool {
@@ -133,9 +152,8 @@ func smellsLikeAPath(ds *base.DataSource) bool {
 }
 
 func (l *Loader) Load() (model.Tutorial, error) {
-	if smellsLikeGithub(l.ds) {
-		name := l.ds.FirstArg()[len(githubScheme):]
-		return loadTutorialFromGitHub(name, l.ds.FirstArg())
+	if smellsLikeGithubCloneUrl(l.ds) {
+		return loadTutorialFromGitHub(l.ds.FirstArg())
 	}
 	if smellsLikeAPath(l.ds) {
 		p := base.FilePath(l.ds.FirstArg())
@@ -180,7 +198,7 @@ func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, 
 	return model.NewTopCourse(name, base.FilePath(name), reorder(items)), nil
 }
 
-func loadTutorialFromGitHub(name, url string) (model.Tutorial, error) {
+func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
 		glog.Error("No git on path", err)
@@ -198,8 +216,8 @@ func loadTutorialFromGitHub(name, url string) (model.Tutorial, error) {
 	cmd.Stdout = &out
 	err = cmd.Run()
 	if err != nil {
-		glog.Error("git clone failure", err)
+		glog.Error("git clone failure ", err)
 		return nil, err
 	}
-	return loadTutorialFromPath(name, base.FilePath(tmpDir))
+	return loadTutorialFromPath(extractRepoName(url), base.FilePath(tmpDir))
 }
