@@ -25,7 +25,7 @@ func (v *LessonPgmExtractor) Lessons() []*LessonPgm {
 }
 
 func (v *LessonPgmExtractor) VisitBlockTut(b *model.BlockTut) {
-	if v.label == base.AnyLabel || b.HasLabel(v.label) {
+	if v.label == base.WildCardLabel || b.HasLabel(v.label) {
 		v.blockAccum = append(v.blockAccum, NewBlockPgmFromBlockTut(b))
 	}
 }

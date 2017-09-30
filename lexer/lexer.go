@@ -19,12 +19,29 @@ type position int
 type itemType int
 
 const (
-	itemError         itemType = iota
-	itemProse                  // Prose between command blocks.
-	itemBlockLabel             // Label for a command block
-	itemLabelledBlock          // All lines between codeFence marks
+	itemError      itemType = iota
+	itemProse               // Prose between command blocks.
+	itemBlockLabel          // Label for a command block
+	itemCodeBlock           // All lines between codeFence marks
 	itemEOF
 )
+
+func textType(t itemType) string {
+	switch t {
+	case itemError:
+		return "ERROR"
+	case itemProse:
+		return "PROSE"
+	case itemBlockLabel:
+		return "LABEL"
+	case itemCodeBlock:
+		return "BLOCK"
+	case itemEOF:
+		return "EOF"
+	default:
+		return "UNKNOWN"
+	}
+}
 
 type item struct {
 	typ itemType // Type of this item.
@@ -39,10 +56,10 @@ func (i item) String() string {
 		return i.val
 	case i.typ == itemBlockLabel:
 		return string(labelMarker) + i.val
-	case i.typ == itemLabelledBlock:
+	case i.typ == itemCodeBlock:
 		return "--------\n" + i.val + "--------\n"
-	case len(i.val) > 10:
-		return fmt.Sprintf("%.30s...", i.val)
+	case len(i.val) > 40-3:
+		return fmt.Sprintf("%.40s...", i.val)
 	}
 	return fmt.Sprintf("%s", i.val)
 }
@@ -52,8 +69,8 @@ const (
 	commentOpen  = "<!--"
 	commentClose = "-->"
 	codeFence    = "```"
-	// All punctuation except for <, so we can watch for markdown comments.
-	mdPunct           = "!->@#$%^&*()_=+\\|`~{}[];:'`\",.?/ "
+	// All punctuation except for < (comment start) and ` (code block start),
+	mdPunct           = "!->@#$%^&*()_=+\\|~{}[];:'\",.?/ \r\n\t"
 	lettersAndNumbers = "012345789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
@@ -165,6 +182,12 @@ func lexText(l *lexer) stateFn {
 			}
 			return lexPutativeComment
 		}
+		if strings.HasPrefix(l.input[l.current:], codeFence) {
+			if l.current > l.start {
+				l.emit(itemProse)
+			}
+			return lexCodeBlock
+		}
 		if l.next() == eof {
 			if l.current > l.start {
 				l.emit(itemProse)
@@ -240,13 +263,13 @@ func lexBlockLabels(l *lexer) stateFn {
 			if !strings.HasPrefix(l.input[l.current:], codeFence) {
 				return l.errorf("Expected command block mark, got: " + l.input[l.current:])
 			}
-			return lexLabelledBlock
+			return lexCodeBlock
 		}
 	}
 }
 
-// lexLabelledBlock scans a command block.  Initial marker known to be present.
-func lexLabelledBlock(l *lexer) stateFn {
+// lexCodeBlock scans a command block.  Initial marker known to be present.
+func lexCodeBlock(l *lexer) stateFn {
 	l.current += position(len(codeFence))
 	l.ignore()
 	// Ignore any language specifier.
@@ -257,7 +280,7 @@ func lexLabelledBlock(l *lexer) stateFn {
 	for {
 		if strings.HasPrefix(l.input[l.current:], codeFence) {
 			if l.current > l.start {
-				l.emit(itemLabelledBlock)
+				l.emit(itemCodeBlock)
 			}
 			l.current += position(len(codeFence))
 			l.ignore()
@@ -290,7 +313,7 @@ func Parse(s string) (result []*model.BlockParsed) {
 			labels = append(labels, base.Label(item.val))
 		case item.typ == itemProse:
 			prose = item.val
-		case item.typ == itemLabelledBlock:
+		case item.typ == itemCodeBlock:
 			result = append(
 				result,
 				model.NewBlockParsed(labels, base.MdProse(prose), base.OpaqueCode(item.val)))

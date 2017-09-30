@@ -187,7 +187,7 @@ func determineMode() ModeType {
 
 func determineLabel() base.Label {
 	if len(*label) == 0 {
-		return base.AnyLabel
+		return base.WildCardLabel
 	}
 	return base.Label(*label)
 }

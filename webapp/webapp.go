@@ -29,7 +29,7 @@ func (wa *WebApp) Host() string       { return wa.host }
 
 // func (wa *WebApp) Tutorial() model.Tutorial { return wa.tut }
 func (wa *WebApp) Lessons() []*program.LessonPgm {
-	v := program.NewLessonPgmExtractor(base.AnyLabel)
+	v := program.NewLessonPgmExtractor(base.WildCardLabel)
 	wa.tut.Accept(v)
 	return v.Lessons()
 }

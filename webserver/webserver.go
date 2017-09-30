@@ -209,7 +209,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 
 func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 	ws.tutorial.Accept(model.NewTutorialTxtPrinter(w))
-	p := program.NewProgramFromTutorial(base.AnyLabel, ws.tutorial)
+	p := program.NewProgramFromTutorial(base.WildCardLabel, ws.tutorial)
 	fmt.Fprintf(w, "\n\nfile count %d\n\n", len(p.Lessons()))
 	for i, lesson := range p.Lessons() {
 		fmt.Fprintf(w, "file %d: %s\n", i, lesson.Path())
@@ -251,7 +251,7 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
 		glog.Info("bid = ", indexBlock)
-		p := program.NewProgramFromTutorial(base.AnyLabel, ws.tutorial)
+		p := program.NewProgramFromTutorial(base.WildCardLabel, ws.tutorial)
 		limit := len(p.Lessons()) - 1
 		if indexFile < 0 || indexFile > limit {
 			http.Error(w,

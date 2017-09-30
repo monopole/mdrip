@@ -20,7 +20,7 @@ func (p *Program) Lessons() []*LessonPgm { return p.lessons }
 func (p *Program) Label() base.Label     { return p.label }
 
 func NewProgram(lessons []*LessonPgm) *Program {
-	return &Program{base.AnyLabel, lessons}
+	return &Program{base.WildCardLabel, lessons}
 }
 
 // Build program from blocks extracted from a tutorial.

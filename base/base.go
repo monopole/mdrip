@@ -40,8 +40,9 @@ type Label string
 func (l Label) String() string { return string(l) }
 
 const (
-	AnyLabel   = Label(`__AnyLabel__`)
-	SleepLabel = Label(`sleep`)
+	WildCardLabel = Label(`__wildcard__`)
+	AnonLabel     = Label(`__anonymous__`)
+	SleepLabel    = Label(`sleep`)
 )
 
 // OpaqueCode is an opaque, uninterpreted, unknown block of text that

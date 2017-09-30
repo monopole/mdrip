@@ -28,7 +28,7 @@ func emptyTutorial() model.Tutorial {
 func TestRunnerWithNothing(t *testing.T) {
 	if NewSubshell(
 		timeout,
-		program.NewProgramFromTutorial(base.AnyLabel, emptyTutorial())).Run().Problem() != nil {
+		program.NewProgramFromTutorial(base.WildCardLabel, emptyTutorial())).Run().Problem() != nil {
 		t.Fail()
 	}
 }

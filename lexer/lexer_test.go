@@ -33,7 +33,7 @@ var lexTests = []lexTest{
 		[]item{
 			{itemProse, "fred "},
 			{itemBlockLabel, "1"},
-			{itemLabelledBlock, block1},
+			{itemCodeBlock, block1},
 			{itemProse, "\n bbb"},
 			tEOF}},
 	{"block2", "aa <!-- @1 @2-->\n" +
@@ -44,11 +44,11 @@ var lexTests = []lexTest{
 			{itemProse, "aa "},
 			{itemBlockLabel, "1"},
 			{itemBlockLabel, "2"},
-			{itemLabelledBlock, block1},
+			{itemCodeBlock, block1},
 			{itemProse, "\n bb cc\ndd "},
 			{itemBlockLabel, "3"},
 			{itemBlockLabel, "4"},
-			{itemLabelledBlock, block2},
+			{itemCodeBlock, block2},
 			{itemProse, "\n ee ff\n"},
 			tEOF}},
 	{"blockWithLangName", "Hello <!-- @1 -->\n" +
@@ -56,7 +56,14 @@ var lexTests = []lexTest{
 		[]item{
 			{itemProse, "Hello "},
 			{itemBlockLabel, "1"},
-			{itemLabelledBlock, "void main whatever\n"},
+			{itemCodeBlock, "void main whatever\n"},
+			tEOF}},
+	{"blockNoLabel", "fred\n" +
+		"```\n" + block1 + "```\n bbb",
+		[]item{
+			{itemProse, "fred\n"},
+			{itemCodeBlock, block1},
+			{itemProse, "\n bbb"},
 			tEOF}},
 }
 
@@ -98,9 +105,12 @@ func TestLex(t *testing.T) {
 	for _, test := range lexTests {
 		got := collect(&test)
 		if !equal(got, test.want) {
-			t.Errorf("%s:\ngot\n\t%+v\nexpected\n\t%v", test.name, got, test.want)
+			t.Errorf("%s:\ngot\n\t%+v\nwant\n\t%v\n", test.name, got, test.want)
 			for i, c := range got {
-				t.Errorf("    %v  \"%v\"\n", i, c)
+				t.Errorf("   got %d %s\n\"%s\"\n\n", i, textType(c.typ), c.val)
+			}
+			for i, c := range test.want {
+				t.Errorf("   want %d %s\n\"%s\"\n\n", i, textType(c.typ), c.val)
 			}
 		}
 	}
