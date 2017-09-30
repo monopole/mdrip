@@ -15,7 +15,8 @@ func TestReload(t *testing.T) {
 	}
 }
 
-func TestLoadTutorialFromGitHub(t *testing.T) {
+// only run locally, not on travis
+func disabledTestLoadTutorialFromGitHub(t *testing.T) {
 	tut, err := LoadTutorialFromGitHub("git@github.com:monopole/mdrip.git")
 	if err != nil {
 		t.Errorf("Error reading from github: %v", err)
