@@ -62,7 +62,7 @@ func NewServer(ds *base.DataSource) (*Server, error) {
 	tut, err := l.Load()
 	if err != nil {
 		fmt.Println(err)
-		return nil, errors.New("Unable to build initial tutorial from " + ds.Name())
+		return nil, errors.New("Unable to build initial tutorial from " + ds.String())
 	}
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
@@ -239,6 +239,16 @@ func (ws *Server) getCodeRunner(sessId webapp.TypeSessId) io.Writer {
 	return ioutil.Discard
 }
 
+func inRange(w http.ResponseWriter, name string, arg, n int) bool {
+	if arg >= 0 || arg < n {
+		return true
+	}
+	http.Error(w,
+		fmt.Sprintf("%s %d out of range 0-%d",
+			name, arg, n-1), http.StatusBadRequest)
+	return false
+}
+
 func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := ws.store.Get(r, cookieName)
@@ -251,22 +261,17 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
 		glog.Info("bid = ", indexBlock)
+
 		p := program.NewProgramFromTutorial(base.WildCardLabel, ws.tutorial)
-		limit := len(p.Lessons()) - 1
-		if indexFile < 0 || indexFile > limit {
-			http.Error(w,
-				fmt.Sprintf("fid %d out of range 0-%d",
-					indexFile, limit), http.StatusBadRequest)
+		if !inRange(w, "fid", indexFile, len(p.Lessons())) {
 			return
 		}
-		limit = len(p.Lessons()[indexFile].Blocks()) - 1
-		if indexBlock < 0 || indexBlock > limit {
-			http.Error(w,
-				fmt.Sprintf("bid %d out of range 0-%d",
-					indexBlock, limit), http.StatusBadRequest)
+		lesson := p.Lessons()[indexFile]
+		if !inRange(w, "bid", indexBlock, len(lesson.Blocks())) {
 			return
 		}
-		block := p.Lessons()[indexFile].Blocks()[indexBlock]
+		block := lesson.Blocks()[indexBlock]
+
 		_, err = ws.getCodeRunner(sessId).Write(block.Code().Bytes())
 		if err != nil {
 			fmt.Fprintln(w, err)

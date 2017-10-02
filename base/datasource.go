@@ -25,12 +25,12 @@ func (d *DataSource) AsPaths() []FilePath {
 	return result
 }
 
-func (d *DataSource) Name() string {
-	name := d.args[0]
-	if len(d.args) > 0 {
-		name += "..."
+func (d *DataSource) String() string {
+	n := d.args[0]
+	if len(d.args) > 1 {
+		n += "..."
 	}
-	return name
+	return n
 }
 
 func NewDataSource(fArgs []string) (*DataSource, error) {

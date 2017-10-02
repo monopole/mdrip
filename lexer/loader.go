@@ -122,40 +122,61 @@ func NewLoader(ds *base.DataSource) *Loader {
 	return &Loader{ds}
 }
 
-const (
-	// E.g. https://github.com/monopole/mdrip
-	githubDomain = "https://github.com/"
-	// E.g. git@github.com:monopole/mdrip.git
-	githubScheme = "git@github.com:"
-)
-
-func smellsLikeGithubCloneUrl(ds *base.DataSource) bool {
-	return ds.N() == 1 && (strings.HasPrefix(ds.FirstArg(), githubScheme) ||
-		strings.HasPrefix(ds.FirstArg(), githubDomain))
+func smellsLikeGithubCloneArg(arg string) bool {
+	return strings.HasPrefix(arg, "gh:") ||
+		strings.HasPrefix(arg, "GH:") ||
+		strings.HasPrefix(arg, "github.com") ||
+		strings.HasPrefix(arg, "git@github.com:") ||
+		strings.Index(arg, "github.com/") > -1
 }
 
-func extractRepoName(n string) string {
-	if strings.HasPrefix(n, githubScheme) {
-		n = n[len(githubScheme):]
-		k := strings.Index(n, ".git")
-		if k > 0 {
-			n = n[0:k]
-		}
-	} else if strings.HasPrefix(n, githubDomain) {
-		n = n[len(githubDomain):]
+// buildGithubCloneArg builds an arg for 'git clone' from a repo name.
+func buildGithubCloneArg(repoName string) string {
+	return "git@github.com:" + repoName + ".git"
+}
+
+// From strings like git@github.com:monopole/mdrip.git or
+// https://github.com/monopole/mdrip, extract github.com.
+func extractGithubRepoName(n string) string {
+	remove := "GH:"
+	if strings.HasPrefix(n, remove) {
+		n = n[len(remove):]
 	}
-	return "github:" + n
-}
-
-func smellsLikeAPath(ds *base.DataSource) bool {
-	return ds.N() == 1 && strings.Index(ds.FirstArg(), "://") < 0
+	remove = "gh:"
+	if strings.HasPrefix(n, remove) {
+		n = n[len(remove):]
+	}
+	remove = "https://"
+	if strings.HasPrefix(n, remove) {
+		n = n[len(remove):]
+	}
+	remove = "http://"
+	if strings.HasPrefix(n, remove) {
+		n = n[len(remove):]
+	}
+	remove = "git@"
+	if strings.HasPrefix(n, remove) {
+		n = n[len(remove):]
+	}
+	remove = "github.com:"
+	if strings.HasPrefix(n, remove) {
+		n = n[len(remove):]
+	}
+	remove = "github.com/"
+	if strings.HasPrefix(n, remove) {
+		n = n[len(remove):]
+	}
+	if strings.HasSuffix(n, ".git") {
+		n = n[0 : len(n)-len(".git")]
+	}
+	return n
 }
 
 func (l *Loader) Load() (model.Tutorial, error) {
-	if smellsLikeGithubCloneUrl(l.ds) {
-		return loadTutorialFromGitHub(l.ds.FirstArg())
-	}
-	if smellsLikeAPath(l.ds) {
+	if l.ds.N() == 1 {
+		if smellsLikeGithubCloneArg(l.ds.FirstArg()) {
+			return loadTutorialFromGitHub(l.ds.FirstArg())
+		}
 		p := base.FilePath(l.ds.FirstArg())
 		return loadTutorialFromPath(p.Base(), p)
 	}
@@ -168,7 +189,7 @@ func loadTutorialFromPath(name string, path base.FilePath) (model.Tutorial, erro
 		return scanFile(path)
 	}
 	if !isDesirableDir(path) {
-		return nil, errors.New("Unable to grok anything in " + string(path))
+		return nil, errors.New("nothing found at file path " + string(path))
 	}
 	c, err := scanDir(path)
 	if err != nil {
@@ -211,7 +232,9 @@ func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 	}
 	glog.Info("Using " + gitPath + " to clone to " + tmpDir)
 	defer os.RemoveAll(tmpDir)
-	cmd := exec.Command(gitPath, "clone", url, tmpDir)
+	repoName := extractGithubRepoName(url)
+	cmd := exec.Command(
+		gitPath, "clone", buildGithubCloneArg(repoName), tmpDir)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err = cmd.Run()
@@ -219,5 +242,5 @@ func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 		glog.Error("git clone failure ", err)
 		return nil, err
 	}
-	return loadTutorialFromPath(extractRepoName(url), base.FilePath(tmpDir))
+	return loadTutorialFromPath("gh:"+repoName, base.FilePath(tmpDir))
 }

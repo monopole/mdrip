@@ -43,21 +43,25 @@ func (wa *WebApp) AppName() string {
 func (wa *WebApp) TrimName() string {
 	result := strings.TrimSpace(wa.AppName())
 	if len(result) > maxAppNameLen {
-		return "..." + result[len(result)-maxAppNameLen:]
+		return result[maxAppNameLen-3:] + "..."
 	}
 	return result
 }
 
 const (
 	delta         = 2
-	maxAppNameLen = 38
+	maxAppNameLen = len("gh:kubernetes/kubernetes.github.io")
 )
 
-func (wa *WebApp) LayMainWidth() int            { return 900 }
-func (wa *WebApp) LayNavPad() int               { return 7 }
-func (wa *WebApp) LayLeftPad() int              { return 20 }
-func (wa *WebApp) LayNavWidth() int             { return 320 }
-func (wa *WebApp) LayNavWidthPlusDelta() int    { return wa.LayNavWidth() + delta }
+func (wa *WebApp) LayMainWidth() int         { return 950 }
+func (wa *WebApp) LayNavWidth() int          { return 250 }
+func (wa *WebApp) LayLessonWidth() int       { return wa.LayMainWidth() - wa.LayNavWidth() }
+func (wa *WebApp) LayInstructionsWidth() int { return wa.LayLessonWidth() - 30 }
+
+func (wa *WebApp) LayNavTopBotPad() int      { return 7 }
+func (wa *WebApp) LayNavLeftPad() int        { return 20 }
+func (wa *WebApp) LayNavWidthPlusDelta() int { return wa.LayNavWidth() + delta }
+
 func (wa *WebApp) LayTitleHeight() int          { return 30 }
 func (wa *WebApp) LayTitleHeightPlusDelta() int { return wa.LayTitleHeight() + delta }
 
@@ -190,18 +194,16 @@ div.titleBar {
   z-index: 100;
   top: 0;
   width: 100%;
-  /* background-color: #ddd; */
   background-color: #ddd;
   height: {{.LayTitleHeight}}px;
   /* top rig bot lef */
-  /* padding: 4px 0px 4px 4px; */
 }
 
 span.titleNav {
   display: inline-block;
   width: {{.LayNavWidth}}px;
   min-width: {{.LayNavWidth}}px;
-  padding: 4px 0px 4px {{.LayLeftPad}}px;
+  padding: 4px 0px 4px {{.LayNavLeftPad}}px;
 }
 
 span.activeLessonName {
@@ -220,23 +222,22 @@ div.leftNav {
   top: {{.LayTitleHeightPlusDelta}}px;
   left: 0;
   /* top rig bot lef */
-  padding: 20px 0px 4px {{.LayLeftPad}}px;
+  padding: 20px 0px 4px {{.LayNavLeftPad}}px;
 }
 
 div.lessonList {
   position: absolute;
   top: {{.LayTitleHeightPlusDelta}}px;
   left: {{.LayNavWidthPlusDelta}}px;
-  width: 100%;
+  width: {{.LayLessonWidth}}px;
   /* top rig bot lef */
-  padding: 0px 0px 4px {{.LayLeftPad}}px;
+  padding: 0px 0px 4px {{.LayNavLeftPad}}px;
 }
 
 div.instructions {
   position: fixed;
-  font-size: 0.7em;
   display: none;
-  width: 480px;
+  width: {{.LayInstructionsWidth}}px;
   z-index: 100;
   margin: auto;
   background-color: #cccccc;
@@ -258,7 +259,7 @@ div.navCourseTitle:hover {
 
 div.navCourseContent {
   /* top rig bot lef */
-  padding: {{.LayNavPad}}px 0px 0px 0px;
+  padding: {{.LayNavTopBotPad}}px 0px 0px 0px;
 }
 
 div.navLessonTitleOn {
@@ -274,12 +275,12 @@ div.navLessonTitleOff:hover {
 
 div.navItemTop {
   /* top rig bot lef */
-  padding: {{.LayNavPad}}px 0px {{.LayNavPad}}px 4px;
+  padding: {{.LayNavTopBotPad}}px 0px {{.LayNavTopBotPad}}px 4px;
 }
 
 div.navItemBox {
   /* top rig bot lef */
-  padding: {{.LayNavPad}}px 0px {{.LayNavPad}}px {{.LayLeftPad}}px;
+  padding: {{.LayNavTopBotPad}}px 0px {{.LayNavTopBotPad}}px {{.LayNavLeftPad}}px;
 }
 
 div.commandBlock {
@@ -483,38 +484,41 @@ const instructionsHtml = `
 </blockquote>
 <p>Clicking on a code block header copies the block to your clipboard.</p>
 <p>
-For one-click usage (no need to mouse over and paste - nice for demos):
+For one-click usage (no need to mouse/aim/paste - nice for demos):
 <ul>
 <li>
 Install <code><a target="_blank"
-href="https://golang.org/doc/install">Go</a></code>
-(the language) and
-<code><a target="_blank"
 href="https://github.com/tmux/tmux/wiki">tmux</a></code>
 (the terminal multiplexer).</li>
-<li>Install the <code>tmux</code>
-websocket adapter
-<code><a target="_blank"
-href="https://github.com/monopole/mdrip">mdrip</a></code>:
+<li>
+Install <code><a target="_blank"
+href="https://golang.org/doc/install">Go</a></code>
+(the language).</li>
+<li>Install <code><a target="_blank"
+href="https://github.com/monopole/mdrip">mdrip</a></code>
+(a <code>tmux</code> websocket adapter):
 <pre>
   TMP_DIR=$(mktemp -d)
   GOPATH=$TMP_DIR go install github.com/monopole/mdrip
 </pre>
 </li>
-<li>Run (in any shell):
+<li>Run tmux:
+<pre>
+  tmux
+</pre>
+</li>
+<li>In some non-tmux shell, run this service:
 <pre>
   $TMP_DIR/bin/mdrip --mode tmux ws://{{.Host}}/ws?id={{.SessId}}
 </pre>
 </li>
-<li>
-Run <code>tmux</code>.
 </ul>
 <p>
 Now, clicking a command block header sends the block
 from this page's server over a websocket to your local
-<code>mdrip</code>, which then  'pastes' the block
-to your active <code>tmux</code> pane.</p><p>
-The socket evaporates after a period of inactivity,
+<code>mdrip</code>, which 'pastes' the block
+to your active <code>tmux</code> pane.<br>
+The service self-exits after a period of inactivity,
 and can be restarted with the same command.</p>
 </div>
 `
