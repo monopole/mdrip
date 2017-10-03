@@ -2,17 +2,16 @@ package lexer
 
 import (
 	"bytes"
-	"errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -138,33 +137,12 @@ func buildGithubCloneArg(repoName string) string {
 // From strings like git@github.com:monopole/mdrip.git or
 // https://github.com/monopole/mdrip, extract github.com.
 func extractGithubRepoName(n string) string {
-	remove := "GH:"
-	if strings.HasPrefix(n, remove) {
-		n = n[len(remove):]
-	}
-	remove = "gh:"
-	if strings.HasPrefix(n, remove) {
-		n = n[len(remove):]
-	}
-	remove = "https://"
-	if strings.HasPrefix(n, remove) {
-		n = n[len(remove):]
-	}
-	remove = "http://"
-	if strings.HasPrefix(n, remove) {
-		n = n[len(remove):]
-	}
-	remove = "git@"
-	if strings.HasPrefix(n, remove) {
-		n = n[len(remove):]
-	}
-	remove = "github.com:"
-	if strings.HasPrefix(n, remove) {
-		n = n[len(remove):]
-	}
-	remove = "github.com/"
-	if strings.HasPrefix(n, remove) {
-		n = n[len(remove):]
+	for _, p := range []string{
+		// Order matters here.
+		"GH:", "gh:", "https://", "http://", "git@", "github.com:", "github.com/"} {
+		if strings.HasPrefix(n, p) {
+			n = n[len(p):]
+		}
 	}
 	if strings.HasSuffix(n, ".git") {
 		n = n[0 : len(n)-len(".git")]
@@ -222,13 +200,11 @@ func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, 
 func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
-		glog.Error("No git on path", err)
-		return nil, err
+		return nil, errors.Wrap(err, "no git on path")
 	}
 	tmpDir, err := ioutil.TempDir("", "mdrip-git-")
 	if err != nil {
-		glog.Error("Unable to create tmp dir", err)
-		return nil, err
+		return nil, errors.Wrap(err, "unable to create tmp dir")
 	}
 	glog.Info("Using " + gitPath + " to clone to " + tmpDir)
 	defer os.RemoveAll(tmpDir)
@@ -239,8 +215,7 @@ func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 	cmd.Stdout = &out
 	err = cmd.Run()
 	if err != nil {
-		glog.Error("git clone failure ", err)
-		return nil, err
+		return nil, errors.Wrap(err, "git clone failure; %v")
 	}
 	return loadTutorialFromPath("gh:"+repoName, base.FilePath(tmpDir))
 }
