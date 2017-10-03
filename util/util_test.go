@@ -24,3 +24,27 @@ func TestSpaces(t *testing.T) {
 		}
 	}
 }
+
+type dtest struct {
+	input string
+	want  string
+}
+
+var dtests = []dtest{
+	{"111_hey",  "hey"},
+	{"hey",  "hey"},
+	{"0_beans", "beans"},
+	{"99999s_beans", "99999s_beans"},
+	{"99999_beans", "beans"},
+}
+
+func TestDropLeadingSorter(t *testing.T) {
+	for _, test := range dtests {
+		got := DropLeadingNumbers(test.input)
+		if got != test.want {
+			t.Errorf(
+				"got \"%s\"\n"  +
+				"want\"%s\"\n",  got, test.want)
+		}
+	}
+}

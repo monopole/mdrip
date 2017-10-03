@@ -122,8 +122,8 @@ func NewLoader(ds *base.DataSource) *Loader {
 }
 
 func smellsLikeGithubCloneArg(arg string) bool {
+	arg = strings.ToLower(arg)
 	return strings.HasPrefix(arg, "gh:") ||
-		strings.HasPrefix(arg, "GH:") ||
 		strings.HasPrefix(arg, "github.com") ||
 		strings.HasPrefix(arg, "git@github.com:") ||
 		strings.Index(arg, "github.com/") > -1
@@ -141,8 +141,8 @@ func buildGithubCloneArg(repoName string) string {
 func extractGithubRepoName(n string) string {
 	for _, p := range []string{
 		// Order matters here.
-		"GH:", "gh:", "https://", "http://", "git@", "github.com:", "github.com/"} {
-		if strings.HasPrefix(n, p) {
+		"gh:", "https://", "http://", "git@", "github.com:", "github.com/"} {
+		if strings.ToLower(n[:len(p)]) == p {
 			n = n[len(p):]
 		}
 	}

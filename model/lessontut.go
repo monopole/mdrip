@@ -1,6 +1,9 @@
 package model
 
-import "github.com/monopole/mdrip/base"
+import (
+	"github.com/monopole/mdrip/base"
+	"github.com/monopole/mdrip/util"
+)
 
 // A LessonTut has a one to one correspondence to a file.
 // It must have a name, and may have blocks.
@@ -23,7 +26,7 @@ func NewLessonTutFromBlockParsed(p base.FilePath, blocks []*BlockParsed) *Lesson
 }
 
 func (l *LessonTut) Accept(v TutVisitor) { v.VisitLessonTut(l) }
-func (l *LessonTut) Name() string        { return l.path.Base() }
+func (l *LessonTut) Name() string        { return util.DropLeadingNumbers(l.path.Base()) }
 func (l *LessonTut) Path() base.FilePath { return l.path }
 func (l *LessonTut) Children() []Tutorial {
 	result := []Tutorial{}

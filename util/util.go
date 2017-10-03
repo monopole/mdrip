@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"regexp"
 )
 
 // getProcessGroupId purports to get a process group Id common to all
@@ -49,6 +50,16 @@ func convertBadWhiteSpaceToBlanks(s string) string {
 			return r
 		}
 	}, s)
+}
+
+var leading = regexp.MustCompile("^[0-9]+_")
+// Drop leading numbers and underscores.
+func DropLeadingNumbers(s string) string {
+	r := leading.FindStringIndex(s)
+	if r == nil {
+		return s
+	}
+	return s[r[1]:]
 }
 
 // Convert long multi-line string to a short one-line sample.
