@@ -39,7 +39,7 @@ func TestExtractGithubRepoName(t *testing.T) {
 			}
 		}
 		got := buildGithubCloneArg(repoName)
-		want := "git@github.com:" + repoName + ".git"
+		want := "https://github.com/" + repoName + ".git"
 		if got != want {
 			t.Errorf("\n"+
 				" got %s\n"+
@@ -55,7 +55,6 @@ func xTestReload(t *testing.T) {
 		t.Errorf("Trouble creating temp dir")
 		return
 	}
-	defer os.RemoveAll(tmpDir)
 
 	var out bytes.Buffer
 	fmt.Fprintln(&out, "hello there")

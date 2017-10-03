@@ -130,8 +130,10 @@ func smellsLikeGithubCloneArg(arg string) bool {
 }
 
 // buildGithubCloneArg builds an arg for 'git clone' from a repo name.
+// Using https instead of ssh so no need for keys
+// (works only with public repos obviously).
 func buildGithubCloneArg(repoName string) string {
-	return "git@github.com:" + repoName + ".git"
+  return "https://github.com/" + repoName + ".git"
 }
 
 // From strings like git@github.com:monopole/mdrip.git or
@@ -200,7 +202,7 @@ func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, 
 func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
-		return nil, errors.Wrap(err, "no git on path")
+		return nil, errors.Wrap(err, "maybe no git on path")
 	}
 	tmpDir, err := ioutil.TempDir("", "mdrip-git-")
 	if err != nil {
@@ -215,7 +217,7 @@ func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 	cmd.Stdout = &out
 	err = cmd.Run()
 	if err != nil {
-		return nil, errors.Wrap(err, "git clone failure; %v")
+		return nil, errors.Wrap(err, "git clone failure")
 	}
 	return loadTutorialFromPath("gh:"+repoName, base.FilePath(tmpDir))
 }
