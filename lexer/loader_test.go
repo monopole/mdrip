@@ -16,9 +16,9 @@ var repoNames = []string{"monopole/mdrip", "kubernetes/kubernetes.github.io"}
 var extractFmts = []string{
 	"gh:%s",
 	"GH:%s",
-	"github.com/%s",
-	"https://github.com/%s",
-	"git@github.com:%s.git",
+	"gitHub.com/%s",
+	"hTTps://github.com/%s",
+	"git@gitHUB.com:%s.git",
 	"github.com:%s",
 }
 

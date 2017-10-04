@@ -51,7 +51,9 @@ func closeSocket(c *websocket.Conn, done chan struct{}) {
 	}
 	select {
 	case <-done:
-	case <-time.After(5 * time.Second):
+		glog.Info("closing socket per done signal")
+	case <-time.After(60 * time.Second):
+		glog.Info("closing socket per timeout")
 	}
 }
 
@@ -64,6 +66,7 @@ func (t Tmux) Adapt(addr string) {
 	if err != nil {
 		glog.Fatal("dial: ", err)
 	}
+	glog.Info("dial succeeded")
 	defer closeSocket(c, done)
 
 	messages := make(chan []byte)
@@ -76,6 +79,7 @@ func (t Tmux) Adapt(addr string) {
 				glog.Info("error on read:", err)
 				return
 			}
+			glog.Info("message received")
 			messages <- message
 		}
 	}()
@@ -86,17 +90,19 @@ func (t Tmux) Adapt(addr string) {
 		glog.Error("trouble saying hello:", err)
 		return
 	}
+	glog.Info("sent hello message")
 
 	for {
 		select {
 		case m := <-messages:
-			glog.Info("received: ", string(m))
+			glog.Info("received for execution: ", string(m))
 			t.Write(m)
 			// TODO: Cancel previous timeout, start new one ??
 		case <-done:
+			glog.Info("done signal found")
 			return
 		case <-time.After(10 * time.Minute):
-			// *Always* stop after this super-timeout.
+			glog.Info("backstop timeout expired")
 			return
 		}
 	}
