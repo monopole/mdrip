@@ -95,8 +95,13 @@ func (t Tmux) Adapt(addr string) {
 	for {
 		select {
 		case m := <-messages:
-			glog.Info("received for execution: ", string(m))
+			n := string(m)
+			if len(n) > 40 {
+				n = n[:40] + "..."
+			}
+			glog.Info("received for execution: ", n)
 			t.Write(m)
+			glog.Info("sent for execution")
 			// TODO: Cancel previous timeout, start new one ??
 		case <-done:
 			glog.Info("done signal found")

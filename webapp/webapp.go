@@ -478,7 +478,7 @@ function onRunBlockClick(event) {
 `
 const instructionsHtml = `
 <div class='instructions' onclick="toggleByClass('instructions')">
-<p>This is content harvested from</p>
+<p>This is markdown content harvested from</p>
 <blockquote>
 <code> {{.AppName}} </code>
 </blockquote>

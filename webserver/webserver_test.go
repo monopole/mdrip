@@ -1,9 +1,9 @@
 package webserver
 
 import (
-"testing"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/loader"
+	"testing"
 )
 
 func TestNewWebServer(t *testing.T) {

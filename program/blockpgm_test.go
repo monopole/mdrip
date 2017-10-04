@@ -16,19 +16,19 @@ func TestBlockPgm(t *testing.T) {
 	expected := "<p><em>foo</em></p>\n"
 	if got != expected {
 		t.Errorf(
-			"Expected \"%s\",\n" +
+			"Expected \"%s\",\n"+
 				"     got \"%s\"", expected, got)
 	}
 	got = bPgm.Name()
 	expected = model.AnonBlockName
 	if got != expected {
-		t.Errorf("name expected \"%s\",\n" +
+		t.Errorf("name expected \"%s\",\n"+
 			"          got \"%s\"", expected, got)
 	}
 	got = string(bPgm.Code())
 	expected = "bar"
 	if got != expected {
-		t.Errorf("name expected \"%s\",\n" +
+		t.Errorf("name expected \"%s\",\n"+
 			"          got \"%s\"", expected, got)
 	}
 }

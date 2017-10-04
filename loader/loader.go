@@ -59,10 +59,10 @@ func isDesirableDir(n base.FilePath) bool {
 	return true
 }
 
-func scanDir(d base.FilePath) (*model.Course, error) {
+func scanDir(d base.FilePath) (model.Tutorial, error) {
 	files, err := d.ReadDir()
 	if err != nil {
-		return nil, err
+		return BadLoad(d), err
 	}
 	var items = []model.Tutorial{}
 	for _, f := range files {
@@ -85,16 +85,24 @@ func scanDir(d base.FilePath) (*model.Course, error) {
 	return model.NewCourse(d, items), nil
 }
 
-func scanFile(n base.FilePath) (*model.LessonTut, error) {
+func scanFile(n base.FilePath) (model.Tutorial, error) {
 	contents, err := n.Read()
 	if err != nil {
-		return nil, err
+		return BadLoad(n), err
 	}
 	parsed := lexer.Parse(contents)
 	if len(parsed) < 1 {
-		return nil, errors.New("no content in " + string(n))
+		return BadLoad(n), errors.New("no content in " + string(n))
 	}
 	return model.NewLessonTutFromBlockParsed(n, parsed), nil
+}
+
+// A tutorial complaining about its data source.
+func BadLoad(n base.FilePath) model.Tutorial {
+	blockParsed := model.NewProseOnlyBlock(base.MdProse(
+		"## Unable to load data from _" + string(n) + "_\n"))
+	blocks := []*model.BlockParsed{blockParsed}
+	return model.NewLessonTutFromBlockParsed(n, blocks)
 }
 
 func shiftToTop(x []model.Tutorial, top string) []model.Tutorial {
@@ -110,6 +118,7 @@ func shiftToTop(x []model.Tutorial, top string) []model.Tutorial {
 	return append(result, other...)
 }
 
+// reorder tutorial array in some fashion
 func reorder(x []model.Tutorial) []model.Tutorial {
 	return shiftToTop(x, "README")
 }
@@ -174,7 +183,7 @@ func loadTutorialFromPath(name string, path base.FilePath) (model.Tutorial, erro
 	}
 	c, err := scanDir(path)
 	if err != nil {
-		return nil, err
+		return BadLoad(path), err
 	}
 	return model.NewTopCourse(name, path, reorder(c.Children())), nil
 }
@@ -195,7 +204,7 @@ func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, 
 		}
 	}
 	if len(items) == 0 {
-		return nil, errors.New("nothing useful found in paths")
+		return BadLoad(paths[0]), errors.New("nothing useful found in paths")
 	}
 	return model.NewTopCourse(name, base.FilePath(name), reorder(items)), nil
 }
@@ -203,11 +212,13 @@ func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, 
 func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
-		return nil, errors.Wrap(err, "maybe no git on path")
+		return BadLoad(base.FilePath(url)),
+			errors.Wrap(err, "maybe no git on path")
 	}
 	tmpDir, err := ioutil.TempDir("", "mdrip-git-")
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to create tmp dir")
+		return BadLoad(base.FilePath(url)),
+			errors.Wrap(err, "unable to create tmp dir")
 	}
 	glog.Info("Using " + gitPath + " to clone to " + tmpDir)
 	defer os.RemoveAll(tmpDir)
@@ -218,7 +229,8 @@ func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 	cmd.Stdout = &out
 	err = cmd.Run()
 	if err != nil {
-		return nil, errors.Wrap(err, "git clone failure")
+		return BadLoad(base.FilePath(url)),
+			errors.Wrap(err, "git clone failure")
 	}
 	return loadTutorialFromPath("gh:"+repoName, base.FilePath(tmpDir))
 }

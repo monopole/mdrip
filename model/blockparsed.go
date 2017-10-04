@@ -8,6 +8,10 @@ type BlockParsed struct {
 	labels []base.Label
 }
 
+func NewProseOnlyBlock(p base.MdProse) *BlockParsed {
+	return NewBlockParsed([]base.Label{}, p, base.OpaqueCode(""))
+}
+
 func NewBlockParsed(labels []base.Label, p base.MdProse, c base.OpaqueCode) *BlockParsed {
 	return &BlockParsed{base.NewBlockBase(p, c), labels}
 }

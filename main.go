@@ -24,7 +24,7 @@ func trueMain(c *config.Config) error {
 		t.Adapt(c.DataSource().FirstArg())
 	case config.ModeWeb:
 		l := loader.NewLoader(c.DataSource())
-		_, err := l.Load()  // Assure initial load possible.
+		_, err := l.Load() // Assure initial load possible.
 		if err != nil {
 			return err
 		}
@@ -58,7 +58,7 @@ func trueMain(c *config.Config) error {
 			p.PrintNormal(os.Stdout)
 		}
 	}
-return nil
+	return nil
 }
 
 func main() {

@@ -35,17 +35,19 @@ func (c myConn) Write(bytes []byte) (n int, err error) {
 	err = c.conn.WriteMessage(websocket.TextMessage, bytes)
 	if err != nil {
 		glog.Error("bad socket write:", err)
+		return 0, err
 	}
-	return len(bytes), err
+	glog.Info("Socket seemed to work.")
+	return len(bytes), nil
 }
 
 type Server struct {
-	loader       *loader.Loader
-	tutorial     model.Tutorial
-	store        sessions.Store
-	upgrader     websocket.Upgrader
-	connections  map[webapp.TypeSessId]*myConn
-	connReaperCh chan bool
+	loader           *loader.Loader
+	tutorial         model.Tutorial
+	store            sessions.Store
+	upgrader         websocket.Upgrader
+	connections      map[webapp.TypeSessId]*myConn
+	connReaperQuitCh chan bool
 }
 
 const (
@@ -71,8 +73,9 @@ func NewServer(l *loader.Loader) (*Server, error) {
 		s,
 		websocket.Upgrader{},
 		make(map[webapp.TypeSessId]*myConn),
-		nil}
-	result.startConnReaper()
+		make(chan bool),
+	}
+	go result.reapConnections()
 	return result, nil
 }
 
@@ -303,33 +306,42 @@ func getIntParam(n string, r *http.Request, d int) int {
 }
 
 func (ws *Server) quit(w http.ResponseWriter, r *http.Request) {
-	close(ws.connReaperCh)
+	close(ws.connReaperQuitCh)
 	os.Exit(0)
 }
 
-// Periodically look for and close idle websockets.
-func (ws *Server) startConnReaper() {
-	if ws.connReaperCh != nil {
-		glog.Fatal("Already have a reaper?")
-	}
-	ws.connReaperCh = make(chan bool)
-	go func() {
-		for {
-			for _, c := range ws.connections {
-				if time.Since(c.lastUse) > 10*time.Minute {
-					c.conn.Close()
-				}
-			}
-			select {
-			case <-time.After(time.Minute):
-			case <-ws.connReaperCh:
-				for _, c := range ws.connections {
-					c.conn.Close()
-				}
-				return
-			}
+const (
+	maxConnectionIdleTime    = 10 * time.Minute
+	connectionScanWaitPeriod = 5 * time.Minute
+)
+
+// Look for and close idle websockets.
+func (ws *Server) closeStaleConnections() {
+	for s, c := range ws.connections {
+		if time.Since(c.lastUse) > maxConnectionIdleTime {
+			glog.Info(
+				"Time since last use in session %v exceeds %v; closing.",
+				s, maxConnectionIdleTime)
+			c.conn.Close()
 		}
-	}()
+	}
+}
+
+// reapConnections periodically scans websockets for idleness.
+// It also closes everything and quits scanning if quit signal received.
+func (ws *Server) reapConnections() {
+	for {
+		ws.closeStaleConnections()
+		select {
+		case <-time.After(connectionScanWaitPeriod):
+		case <-ws.connReaperQuitCh:
+			glog.Info("Received quit, reaping all connections.")
+			for _, c := range ws.connections {
+				c.conn.Close()
+			}
+			return
+		}
+	}
 }
 
 // Serve offers an http service.
