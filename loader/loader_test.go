@@ -1,4 +1,4 @@
-package lexer
+package loader
 
 import (
 	"os"

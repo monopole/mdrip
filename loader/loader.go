@@ -1,17 +1,18 @@
-package lexer
+package loader
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/golang/glog"
+	"github.com/monopole/mdrip/base"
+	"github.com/monopole/mdrip/lexer"
+	"github.com/monopole/mdrip/model"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"fmt"
-	"github.com/golang/glog"
-	"github.com/monopole/mdrip/base"
-	"github.com/monopole/mdrip/model"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -89,7 +90,7 @@ func scanFile(n base.FilePath) (*model.LessonTut, error) {
 	if err != nil {
 		return nil, err
 	}
-	parsed := Parse(contents)
+	parsed := lexer.Parse(contents)
 	if len(parsed) < 1 {
 		return nil, errors.New("no content in " + string(n))
 	}
@@ -133,7 +134,7 @@ func smellsLikeGithubCloneArg(arg string) bool {
 // Using https instead of ssh so no need for keys
 // (works only with public repos obviously).
 func buildGithubCloneArg(repoName string) string {
-  return "https://github.com/" + repoName + ".git"
+	return "https://github.com/" + repoName + ".git"
 }
 
 // From strings like git@github.com:monopole/mdrip.git or

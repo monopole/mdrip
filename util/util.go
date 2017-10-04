@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
-	"regexp"
 )
 
 // getProcessGroupId purports to get a process group Id common to all
@@ -53,6 +53,7 @@ func convertBadWhiteSpaceToBlanks(s string) string {
 }
 
 var leading = regexp.MustCompile("^[0-9]+_")
+
 // Drop leading numbers and underscores.
 func DropLeadingNumbers(s string) string {
 	r := leading.FindStringIndex(s)

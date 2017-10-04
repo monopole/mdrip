@@ -16,7 +16,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
 	"github.com/monopole/mdrip/base"
-	"github.com/monopole/mdrip/lexer"
+	"github.com/monopole/mdrip/loader"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/tmux"
@@ -40,7 +40,7 @@ func (c myConn) Write(bytes []byte) (n int, err error) {
 }
 
 type Server struct {
-	loader       *lexer.Loader
+	loader       *loader.Loader
 	tutorial     model.Tutorial
 	store        sessions.Store
 	upgrader     websocket.Upgrader
@@ -57,13 +57,7 @@ const (
 var keyAuth = []byte("static-visible-secret")
 var keyEncrypt = []byte(nil)
 
-func NewServer(ds *base.DataSource) (*Server, error) {
-	l := lexer.NewLoader(ds)
-	tut, err := l.Load()
-	if err != nil {
-		fmt.Println(err)
-		return nil, errors.New("Unable to build initial tutorial from " + ds.String())
-	}
+func NewServer(l *loader.Loader) (*Server, error) {
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
 		Domain:   "localhost",
@@ -73,7 +67,7 @@ func NewServer(ds *base.DataSource) (*Server, error) {
 	}
 	result := &Server{
 		l,
-		tut,
+		nil,
 		s,
 		websocket.Upgrader{},
 		make(map[webapp.TypeSessId]*myConn),
@@ -168,7 +162,7 @@ func (ws *Server) reload(w http.ResponseWriter, r *http.Request) {
 				fmt.Sprintf("Bad value %s", value), http.StatusBadRequest)
 			return
 		}
-		l := lexer.NewLoader(ds)
+		l := loader.NewLoader(ds)
 		t, err = l.Load()
 		if err != nil {
 			http.Error(w,
@@ -351,6 +345,7 @@ func (ws *Server) Serve(hostAndPort string) {
 	r.HandleFunc("/image", ws.image)
 	r.HandleFunc("/q", ws.quit)
 	r.HandleFunc("/", ws.showControlPage)
+	ws.tutorial, _ = ws.loader.Load()
 	fmt.Println("Serving at " + hostAndPort)
 	glog.Info("Serving at " + hostAndPort)
 	glog.Fatal(http.ListenAndServe(hostAndPort, r))

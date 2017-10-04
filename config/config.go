@@ -3,6 +3,7 @@
 package config
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -228,36 +229,30 @@ func (c *Config) DataSource() *base.DataSource {
 	return c.dataSource
 }
 
-func GetConfig() *Config {
-	flag.Usage = usage
-	flag.Parse()
-
-	dataSource, err := base.NewDataSource(flag.Args())
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		// TODO: if arg is --, read from stdin?
-		usage()
-		os.Exit(1)
-	}
-
-	desiredMode := determineMode()
-	if desiredMode == ModeUnknown {
-		fmt.Fprintln(os.Stderr, `For mode, specify print, test, web or tmux.`)
-		usage()
-		os.Exit(1)
-	}
-
-	if *ignoreTestFailure && desiredMode != ModeTest {
-		fmt.Fprintln(os.Stderr,
-			`Makes no sense to specify --ignoreTestFailure without --mode test.`)
-		usage()
-		os.Exit(1)
-	}
-
-	return &Config{determineLabel(), desiredMode, dataSource}
+// nonsense for tests - need something better.
+func DefaultConfig() *Config {
+	ds, _ := base.NewDataSource([]string{"foo"})
+	return &Config{base.WildCardLabel, ModePrint, ds}
 }
 
-func usage() {
+func GetConfig() (*Config, error) {
+	flag.Usage = Usage
+	flag.Parse()
+	dataSource, err := base.NewDataSource(flag.Args())
+	if err != nil {
+		return nil, err
+	}
+	desiredMode := determineMode()
+	if desiredMode == ModeUnknown {
+		return nil, errors.New(`For mode, specify print, test, web or tmux.`)
+	}
+	if *ignoreTestFailure && desiredMode != ModeTest {
+		return nil, errors.New(`Makes no sense to specify --ignoreTestFailure without --mode test.`)
+	}
+	return &Config{determineLabel(), desiredMode, dataSource}, nil
+}
+
+func Usage() {
 	fmt.Fprintf(os.Stderr, "\nUsage:  %s {fileName}...\n", os.Args[0])
 	fmt.Fprint(os.Stderr, usageText)
 	fmt.Fprint(os.Stderr, "\n\nFlags:\n\n")
