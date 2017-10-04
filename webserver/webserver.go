@@ -127,7 +127,7 @@ func (ws *Server) openWebSocket(w http.ResponseWriter, r *http.Request) {
 		// Possibly the other side shutdown and restarted.
 		// Close and make new one.
 		c.conn.Close()
-		ws.connections[sessId] = nil
+		delete(ws.connections, sessId)
 	}
 	c, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -236,6 +236,15 @@ func (ws *Server) getCodeRunner(sessId webapp.TypeSessId) io.Writer {
 	return ioutil.Discard
 }
 
+func (ws *Server) attemptTmuxWrite(b *program.BlockPgm) error {
+	t := tmux.NewTmux(tmux.Path)
+	if !t.IsUp() {
+		return errors.New("No local tmux to write to.")
+	}
+	_, err := t.Write(b.Code().Bytes())
+	return err
+}
+
 func inRange(w http.ResponseWriter, name string, arg, n int) bool {
 	if arg >= 0 || arg < n {
 		return true
@@ -269,11 +278,23 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 		}
 		block := lesson.Blocks()[indexBlock]
 
-		_, err = ws.getCodeRunner(sessId).Write(block.Code().Bytes())
-		if err != nil {
-			fmt.Fprintln(w, err)
-			return
+		err = nil
+		c := ws.connections[sessId]
+		if c != nil {
+			_, err := c.Write(block.Code().Bytes())
+			if err != nil {
+				glog.Info("socket write failed %v", err)
+				delete(ws.connections, sessId)
+			}
 		}
+		if c == nil || err != nil {
+			err = ws.attemptTmuxWrite(block)
+			if err != nil {
+				glog.Info("tmux write failed %v", err)
+				// nothing more to try
+			}
+		}
+
 		session.Values["file"] = strconv.Itoa(indexFile)
 		session.Values["block"] = strconv.Itoa(indexBlock)
 		err = session.Save(r, w)
@@ -323,6 +344,7 @@ func (ws *Server) closeStaleConnections() {
 				"Time since last use in session %v exceeds %v; closing.",
 				s, maxConnectionIdleTime)
 			c.conn.Close()
+			delete(ws.connections, s)
 		}
 	}
 }
@@ -336,8 +358,9 @@ func (ws *Server) reapConnections() {
 		case <-time.After(connectionScanWaitPeriod):
 		case <-ws.connReaperQuitCh:
 			glog.Info("Received quit, reaping all connections.")
-			for _, c := range ws.connections {
+			for s, c := range ws.connections {
 				c.conn.Close()
+				delete(ws.connections, s)
 			}
 			return
 		}
