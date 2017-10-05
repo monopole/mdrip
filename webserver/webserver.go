@@ -260,13 +260,19 @@ func inRange(w http.ResponseWriter, name string, arg, n int) bool {
 
 func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := ws.store.Get(r, cookieName)
-		if err != nil {
-			write500(w, err)
+		arg := r.URL.Query().Get("sid")
+		if len(arg) == 0 {
+			http.Error(w, "No session id for block runner", http.StatusBadRequest)
 			return
 		}
-		sessId := assureSessionId(session)
-		glog.Info("sessId = ", sessId)
+		sessId := webapp.TypeSessId(arg)
+		//session, err := ws.store.Get(r, cookieName)
+		//if err != nil {
+		//	write500(w, err)
+		//	return
+		//}
+		//sessId := assureSessionId(session)
+		glog.Info("blosessId = ", sessId)
 		indexFile := getIntParam("fid", r, -1)
 		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
@@ -282,7 +288,8 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 		}
 		block := lesson.Blocks()[indexBlock]
 
-		err = nil
+		var err error
+
 		c := ws.connections[sessId]
 		if c == nil {
 			glog.Infof("no socket for session %v", sessId)
@@ -300,13 +307,12 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 				// nothing more to try
 			}
 		}
-
-		session.Values["file"] = strconv.Itoa(indexFile)
-		session.Values["block"] = strconv.Itoa(indexBlock)
-		err = session.Save(r, w)
-		if err != nil {
-			glog.Errorf("Unable to save session: %v", err)
-		}
+		//session.Values["file"] = strconv.Itoa(indexFile)
+		//session.Values["block"] = strconv.Itoa(indexBlock)
+		//err = session.Save(r, w)
+		//if err != nil {
+		//	glog.Errorf("Unable to save session: %v", err)
+		//}
 		fmt.Fprintln(w, "Ok")
 	}
 }
