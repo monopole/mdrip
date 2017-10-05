@@ -1,8 +1,9 @@
 package util
 
 import (
-	"errors"
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -32,6 +33,13 @@ func GetProcesssGroupId(pid int) (int, error) {
 		return 0, convErr
 	}
 	return pgid, nil
+}
+
+// check reports the error fatally if it's non-nil.
+func Check(msg string, err error) {
+	if err != nil {
+		glog.Fatal(errors.Wrap(err, msg))
+	}
 }
 
 // An attempt to kill any and all child processes.

@@ -381,7 +381,6 @@ func (ws *Server) Serve(hostAndPort string) {
 	r.HandleFunc("/q", ws.quit)
 	r.HandleFunc("/", ws.showControlPage)
 	ws.tutorial, _ = ws.loader.Load()
-	fmt.Println("Serving at " + hostAndPort)
 	glog.Info("Serving at " + hostAndPort)
 	glog.Fatal(http.ListenAndServe(hostAndPort, r))
 }

@@ -1,14 +1,14 @@
 package tmux
 
 import (
-	"fmt"
-	"github.com/golang/glog"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/gorilla/websocket"
+	"github.com/monopole/mdrip/util"
 )
 
 type Tmux struct {
@@ -127,11 +127,11 @@ func (t Tmux) Adapt(addr string) {
 // TODO: look for a better tmux api (dbus?)
 func (t Tmux) Write(bytes []byte) (n int, err error) {
 	tmpFile, err := ioutil.TempFile("", "mdrip-block-")
-	check("create temp file", err)
-	check("chmod temp file", os.Chmod(tmpFile.Name(), 0644))
+	util.Check("create temp file", err)
+	util.Check("chmod temp file", os.Chmod(tmpFile.Name(), 0644))
 	defer func() {
 		glog.Info("Used temp file ", tmpFile.Name())
-		check("delete temp file", os.Remove(tmpFile.Name()))
+		util.Check("delete temp file", os.Remove(tmpFile.Name()))
 	}()
 
 	n, err = tmpFile.Write(bytes)
@@ -175,12 +175,4 @@ func (t Tmux) listSessions() (string, error) {
 	raw, err := cmd.Output()
 	glog.Info("List ", string(raw))
 	return string(raw), err
-}
-
-// check reports the error fatally if it's non-nil.
-func check(msg string, err error) {
-	if err != nil {
-		fmt.Printf("Problem with %s: %v\n", msg, err)
-		glog.Fatal(err)
-	}
 }

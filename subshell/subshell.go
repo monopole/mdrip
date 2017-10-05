@@ -3,7 +3,6 @@ package subshell
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -25,14 +24,6 @@ type Subshell struct {
 
 func NewSubshell(timeout time.Duration, p *program.Program) *Subshell {
 	return &Subshell{timeout, p}
-}
-
-// Check reports the error fatally if it's non-nil.
-func check(msg string, err error) {
-	if err != nil {
-		fmt.Printf("Problem with %s: %v\n", msg, err)
-		glog.Fatal(err)
-	}
 }
 
 // userBehavior acts like a command line user.
@@ -124,8 +115,8 @@ func fillErrResult(chAccErr <-chan *BlockOutput, errResult *RunResult) {
 func (s *Subshell) Run() (result *RunResult) {
 	// Write program to a file to be executed.
 	tmpFile, err := ioutil.TempFile("", "mdrip-file-")
-	check("create temp file", err)
-	check("chmod temp file", os.Chmod(tmpFile.Name(), 0744))
+	util.Check("create temp file", err)
+	util.Check("chmod temp file", os.Chmod(tmpFile.Name(), 0744))
 	for _, lesson := range s.program.Lessons() {
 		for _, block := range lesson.Blocks() {
 			write(tmpFile, block.Code().String())
@@ -137,24 +128,24 @@ func (s *Subshell) Run() (result *RunResult) {
 		glog.Info("RunInSubShell: running commands from %s", tmpFile.Name())
 	}
 	defer func() {
-		check("delete temp file", os.Remove(tmpFile.Name()))
+		util.Check("delete temp file", os.Remove(tmpFile.Name()))
 	}()
 
 	// Adding "-e" to force the subshell to die on any error.
 	shell := exec.Command("bash", "-e", tmpFile.Name())
 
 	stdIn, err := shell.StdinPipe()
-	check("in pipe", err)
-	check("close shell's stdin", stdIn.Close())
+	util.Check("in pipe", err)
+	util.Check("close shell's stdin", stdIn.Close())
 
 	stdOut, err := shell.StdoutPipe()
-	check("out pipe", err)
+	util.Check("out pipe", err)
 
 	stdErr, err := shell.StderrPipe()
-	check("err pipe", err)
+	util.Check("err pipe", err)
 
 	err = shell.Start()
-	check("shell start", err)
+	util.Check("shell start", err)
 
 	pid := shell.Process.Pid
 	if glog.V(2) {
