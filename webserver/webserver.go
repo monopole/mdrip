@@ -280,17 +280,19 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 
 		err = nil
 		c := ws.connections[sessId]
-		if c != nil {
+		if c == nil {
+			glog.Infof("no socket for session %v", sessId)
+		} else {
 			_, err := c.Write(block.Code().Bytes())
 			if err != nil {
-				glog.Info("socket write failed %v", err)
+				glog.Infof("socket write failed: %v", err)
 				delete(ws.connections, sessId)
 			}
 		}
 		if c == nil || err != nil {
 			err = ws.attemptTmuxWrite(block)
 			if err != nil {
-				glog.Info("tmux write failed %v", err)
+				glog.Infof("tmux write failed: %v", err)
 				// nothing more to try
 			}
 		}
