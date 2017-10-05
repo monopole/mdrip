@@ -272,7 +272,7 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 		//	return
 		//}
 		//sessId := assureSessionId(session)
-		glog.Info("blosessId = ", sessId)
+		glog.Info("sid = ", sessId)
 		indexFile := getIntParam("fid", r, -1)
 		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
@@ -344,7 +344,7 @@ func (ws *Server) quit(w http.ResponseWriter, r *http.Request) {
 }
 
 const (
-	maxConnectionIdleTime    = 10 * time.Minute
+	maxConnectionIdleTime    = 30 * time.Minute
 	connectionScanWaitPeriod = 5 * time.Minute
 )
 

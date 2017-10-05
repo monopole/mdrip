@@ -76,7 +76,8 @@ func (t Tmux) Adapt(addr string) {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				glog.Info("error on read:", err)
+				glog.Infof("error on read: %v", err)
+				glog.Infof("message with error: %v", message)
 				return
 			}
 			glog.Info("message received")
