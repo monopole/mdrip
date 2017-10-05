@@ -206,7 +206,9 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		write500(w, err)
 		return
 	}
-	app := webapp.NewWebApp(assureSessionId(session), r.Host, ws.tutorial)
+	sessId := assureSessionId(session)
+	glog.Infof("Main page render in sessId: %v", sessId)
+	app := webapp.NewWebApp(sessId, r.Host, ws.tutorial)
 	err = session.Save(r, w)
 	if err != nil {
 		write500(w, err)
