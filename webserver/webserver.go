@@ -4,8 +4,6 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -29,7 +27,7 @@ type myConn struct {
 	lastUse time.Time
 }
 
-func (c myConn) Write(bytes []byte) (n int, err error) {
+func (c *myConn) Write(bytes []byte) (n int, err error) {
 	glog.Info("Attempting socket write.")
 	c.lastUse = time.Now()
 	err = c.conn.WriteMessage(websocket.TextMessage, bytes)
@@ -122,25 +120,32 @@ func (ws *Server) openWebSocket(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if c := ws.connections[sessId]; c != nil {
-		glog.Info("Wut? session found: ", sessId)
+	existingConn := ws.connections[sessId]
+	var c *websocket.Conn
+	if existingConn != nil {
+		glog.Infof("Reusing live session %v found when asking for new session.", sessId)
 		// Possibly the other side shutdown and restarted.
-		// Close and make new one.
-		c.conn.Close()
-		delete(ws.connections, sessId)
+		// Could close and make new one,
+		//  c.conn.Close()
+		//  delete(ws.connections, sessId)
+		// but try to reuse
+		c = existingConn.conn
+	} else {
+		glog.Infof("Attempting to upgrade session %v to a websocket.", sessId)
+		c, err = ws.upgrader.Upgrade(w, r, nil)
 	}
-	c, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		glog.Info("upgrade:", err)
+		glog.Errorf("unable to upgrade for session %v: %v", sessId, err)
+		write500(w, err)
 		return
 	}
-	glog.Info("established websocket")
+	glog.Infof("established websocket for session %v", sessId)
 	go func() {
 		_, message, err := c.ReadMessage()
 		if err == nil {
 			glog.Info("handshake: ", string(message))
 		} else {
-			glog.Info("websocket err:", err)
+			glog.Info("websocket err: ", err)
 		}
 	}()
 	ws.connections[sessId] = &myConn{c, time.Now()}
@@ -151,12 +156,16 @@ func write500(w http.ResponseWriter, e error) {
 }
 
 func (ws *Server) reload(w http.ResponseWriter, r *http.Request) {
+	session, err := ws.store.Get(r, cookieName)
+	if err != nil {
+		write500(w, err)
+		return
+	}
 	value := mux.Vars(r)["gitclone"]
 	if len(value) < 1 {
 		value = r.URL.Query().Get("q")
 	}
 	var t model.Tutorial
-	var err error
 	if len(value) > 0 {
 		// Load data from new source.
 		ds, err := base.NewDataSource([]string{value})
@@ -182,6 +191,11 @@ func (ws *Server) reload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	err = session.Save(r, w)
+	if err != nil {
+		glog.Errorf("Unable to save session: %v", err)
+	}
+
 	ws.tutorial = t
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
@@ -205,6 +219,12 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
+	session, err := ws.store.Get(r, cookieName)
+	if err != nil {
+		write500(w, err)
+		return
+	}
+	err = session.Save(r, w)
 	ws.tutorial.Accept(model.NewTutorialTxtPrinter(w))
 	p := program.NewProgramFromTutorial(base.WildCardLabel, ws.tutorial)
 	fmt.Fprintf(w, "\n\nfile count %d\n\n", len(p.Lessons()))
@@ -215,25 +235,6 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 				j, util.SampleString(b.Code().String(), 50))
 		}
 	}
-}
-
-// Returns a writer one can write a code block to for execution.
-// First tries to find a session socket.  Failing that, try to find
-// a locally running instance of tmux.  Failing that, returns a
-// writer that discards the code.
-func (ws *Server) getCodeRunner(sessId webapp.TypeSessId) io.Writer {
-	c := ws.connections[sessId]
-	if c != nil {
-		glog.Infof("Socket found for ID %v", sessId)
-		return c
-	}
-	t := tmux.NewTmux(tmux.Path)
-	if t.IsUp() {
-		glog.Info("No socket, writing to local tmux.")
-		return t
-	}
-	glog.Info("No sockets, tmux not up, discarding code.")
-	return ioutil.Discard
 }
 
 func (ws *Server) attemptTmuxWrite(b *program.BlockPgm) error {
@@ -263,6 +264,7 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		sessId := assureSessionId(session)
+		glog.Info("sessId = ", sessId)
 		indexFile := getIntParam("fid", r, -1)
 		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
@@ -342,7 +344,7 @@ const (
 func (ws *Server) closeStaleConnections() {
 	for s, c := range ws.connections {
 		if time.Since(c.lastUse) > maxConnectionIdleTime {
-			glog.Info(
+			glog.Infof(
 				"Time since last use in session %v exceeds %v; closing.",
 				s, maxConnectionIdleTime)
 			c.conn.Close()
