@@ -65,6 +65,12 @@ func (wa *WebApp) LayNavWidthPlusDelta() int { return wa.LayNavWidth() + delta }
 func (wa *WebApp) LayTitleHeight() int          { return 30 }
 func (wa *WebApp) LayTitleHeightPlusDelta() int { return wa.LayTitleHeight() + delta }
 
+func (wa *WebApp) LessonCount() int {
+	c := model.NewTutorialLessonCounter()
+	wa.tut.Accept(c)
+	return c.Count()
+}
+
 func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
@@ -351,20 +357,38 @@ function getElByClass(name) {
   var elements = document.getElementsByClassName(name);
   return elements[0];
 }
-function toggleLeftNav() {
+function openLeftNav(e) {
+  e.innerHTML = '&lt;'
   var ln = getElByClass('leftNav');
+  ln.style.display = 'block';
   var list = getElByClass('lessonList');
+  list.style.left = '{{.LayNavWidth}}px';
+}
+function closeLeftNav(e) {
+  e.innerHTML = '&gt;'
+  var ln = getElByClass('leftNav');
+  ln.style.display = 'none';
+  var list = getElByClass('lessonList');
+  list.style.left = '0';
+}
+function assureLeftNavOpen() {
   var e = document.getElementById('navToggle')
   if (e.innerHTML == '&gt;') {
-    // Show the nav
-    e.innerHTML = '&lt;'
-    ln.style.display = 'block';
-    list.style.left = '{{.LayNavWidth}}px';
+    openLeftNav(e)
+  }
+}
+function assureLeftNavClosed() {
+  var e = document.getElementById('navToggle')
+  if (e.innerHTML == '&lt;') {
+    closeLeftNav(e)
+  }
+}
+function toggleLeftNav() {
+  var e = document.getElementById('navToggle')
+  if (e.innerHTML == '&gt;') {
+    openLeftNav(e)
   } else {
-    // Hide the nav
-    e.innerHTML = '&gt;'
-    ln.style.display = 'none';
-    list.style.left = '0';
+    closeLeftNav(e)
   }
 }
 function toggleByClass(name) {
@@ -412,6 +436,11 @@ function assureActiveLesson(index) {
   activeLesson = index
 }
 function onLoad() {
+  if ({{.LessonCount}} > 1) {
+    assureLeftNavOpen()
+  } else {
+    assureLeftNavClosed()
+  }
   assureActiveLesson(0)
 }
 function getDataId(el) {

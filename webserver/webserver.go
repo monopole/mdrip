@@ -41,6 +41,7 @@ func (c *myConn) Write(bytes []byte) (n int, err error) {
 
 type Server struct {
 	loader           *loader.Loader
+	didFirstRender   bool
 	tutorial         model.Tutorial
 	store            sessions.Store
 	upgrader         websocket.Upgrader
@@ -67,6 +68,7 @@ func NewServer(l *loader.Loader) (*Server, error) {
 	}
 	result := &Server{
 		l,
+		false,
 		nil,
 		s,
 		websocket.Upgrader{},
@@ -208,12 +210,25 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 	}
 	sessId := assureSessionId(session)
 	glog.Infof("Main page render in sessId: %v", sessId)
-	app := webapp.NewWebApp(sessId, r.Host, ws.tutorial)
+	if ws.didFirstRender {
+		// Consider reloading data on all renders beyond the first.
+		if !ws.loader.SmellsLikeGithub() {
+			t, err := ws.loader.Load()
+			if err == nil {
+				ws.tutorial = t
+				glog.Info("Reloaded data.")
+			} else {
+				glog.Errorf("Trouble reloading local data: %v", err)
+			}
+		}
+	}
 	err = session.Save(r, w)
 	if err != nil {
 		write500(w, err)
 		return
 	}
+	app := webapp.NewWebApp(sessId, r.Host, ws.tutorial)
+	ws.didFirstRender = true
 	if err := app.Render(w); err != nil {
 		write500(w, err)
 		return

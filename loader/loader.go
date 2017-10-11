@@ -162,6 +162,13 @@ func extractGithubRepoName(n string) string {
 	return n
 }
 
+func (l *Loader) SmellsLikeGithub() bool {
+	if l.ds.N() != 1 {
+		return false
+	}
+	return smellsLikeGithubCloneArg(l.ds.FirstArg())
+}
+
 func (l *Loader) Load() (model.Tutorial, error) {
 	if l.ds.N() == 1 {
 		if smellsLikeGithubCloneArg(l.ds.FirstArg()) {
