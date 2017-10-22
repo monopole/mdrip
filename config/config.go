@@ -19,86 +19,16 @@ const (
 	usageText = `
 Extracts code blocks from the given markdown files for further processing.
 
-
-E.g. if the markdown file contains
-
-  Blah blah blah.
-  Blah blah blah.
-
-  <!-- @goHome @foo -->
-  '''
-  cd $HOME
-  '''
-
-  Blah blah blah.
-  Blah blah blah.
-
-  <!-- @platitude @apple -->
-  '''
-  echo "an apple a day keeps the doctor away"
-  '''
-
-  Blah blah blah.
-  Blah blah blah.
-
-  <!-- @reportNearbyStar @foo @bar -->
-  '''
-  echo "Proxima Centauri"
-  '''
-
-  Blah blah blah.
-  Blah blah blah.
-
-then the command 'mdrip --label foo {fileName}' emits:
-
-  cd $HOME
-  echo "Proxima Centauri"
-
-while the command 'mdrip --label platitude {fileName}' emits:
-
-  echo "an apple a day keeps the doctor away"
-
-
 Modes:
 
  --mode print  (the default)
 
-   Print extracted code to stdout.
-
-   Use
+   Print extracted code to stdout. Use
       eval "$(mdrip file.md)"
-   to run in current terminal, impacting your environment.
-
-   Use
+   to run in current terminal, impacting your environment. Use
       mdrip file.md | source /dev/stdin
    to run in a piped shell that exits with extracted code status.
    Does not impact your current shell.
-
- --mode web
-
-   Starts a web server at http://localhost:8000 to offer a rendered
-   version of the markdown facilitating execution of command blocks.
-
-   Change port using --port flag.  See also flag --hostname.
-
- --mode tmux
-
-   Only useful if both a local tmux instance is running, and somewhere
-   on the net mdrip is running in '--mode web'.
-
-   In this mode the first argument to mdrip, normally treated as a
-   markdown filename, is treated as a URL.  mdrip attempts to open a
-   websocket to that URL.
-
-   Meanwhile, when a web user clicks on a code block served by mdrip
-   (in --mode web) an attempt is made to find a websocket associated
-   with the user's web session.
-
-   If a socket is found, the code block is sent to the socket.  Upon
-   receipt, mdrip (in --mode tmux) sends the block to local tmux as if
-   the user had typed it.
-
-   This results in 'one click' behavior that's surprisingly handy.
 
  --mode test
 
@@ -122,6 +52,35 @@ Modes:
    Normally, mdrip exits with non-zero status only when used
    incorrectly, e.g. file not found, bad flags, etc.  In in test mode,
    mdrip will exit with the status of any failing code block.
+
+ --mode demo
+
+   Starts a web server at http://localhost:8000 to offer a rendered
+   version of the markdown facilitating execution of command blocks.
+
+   Clicked command blocks are automatically copied to the user's clipboard
+   and "pasted" to the active window of a local tmux session (if it exists).
+
+   See also flags --hostname and --port.
+
+ --mode tmux
+
+   Only useful if both a local tmux instance is running, and somewhere
+   on the net mdrip is running in '--mode demo'.
+
+   In this mode the first argument to mdrip, normally treated as a
+   markdown filename, is treated as a URL.  mdrip attempts to open a
+   websocket to that URL.
+
+   Meanwhile, when a web user clicks on a code block served by mdrip
+   (in --mode demo) an attempt is made to find a websocket associated
+   with the user's web session.
+
+   If a socket is found, the code block is sent to the socket.  Upon
+   receipt, mdrip (in --mode tmux) sends the block to local tmux as if
+   the user had typed it.
+
+   This results in 'one click' behavior that's surprisingly handy.
 `
 )
 
@@ -131,13 +90,13 @@ const (
 	ModeUnknown ModeType = iota
 	ModePrint
 	ModeTest
-	ModeWeb
+	ModeDemo
 	ModeTmux
 )
 
 var (
 	mode = flag.String("mode", "print",
-		`Mode is print, test, web or tmux.`)
+		`Mode is print, test, demo or tmux.`)
 
 	label = flag.String("label", "",
 		`Using "--label foo" means extract only blocks annotated with "<!-- @foo -->".`)
@@ -146,10 +105,10 @@ var (
 		`In --mode print, run the first {n} blocks in the current shell, and the rest in a trapped subshell.`)
 
 	useHostname = flag.Bool("useHostname", false,
-		`In --mode web, use the hostname utility to specify where to serve, else implicitly use localhost.`)
+		`In --mode demo, use the hostname utility to specify where to serve, else implicitly use localhost.`)
 
 	port = flag.Int("port", 8000,
-		`In --mode web, expose HTTP at the given port.`)
+		`In --mode demo, expose HTTP at the given port.`)
 
 	blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
 		`In --mode test, the max amount of time to wait for a command block to exit.`)
@@ -173,12 +132,12 @@ func determineMode() ModeType {
 		return ModeUnknown
 	}
 	// Use 3rd letter since test and tmux have `t` as char 1,
-	// and test and web have `e` as char 2.
+	// and test and demo have `e` as char 2.
 	switch unicode.ToLower([]rune(*mode)[2]) {
 	case 's': // test
 		return ModeTest
-	case 'b': // web
-		return ModeWeb
+	case 'm': // demo
+		return ModeDemo
 	case 'u': // tmux
 		return ModeTmux
 	default:
@@ -244,7 +203,7 @@ func GetConfig() (*Config, error) {
 	}
 	desiredMode := determineMode()
 	if desiredMode == ModeUnknown {
-		return nil, errors.New(`For mode, specify print, test, web or tmux.`)
+		return nil, errors.New(`For mode, specify print, test, demo or tmux.`)
 	}
 	if *ignoreTestFailure && desiredMode != ModeTest {
 		return nil, errors.New(`Makes no sense to specify --ignoreTestFailure without --mode test.`)

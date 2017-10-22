@@ -1,6 +1,6 @@
 // Inspired by golang.org/src/pkg/text/template/parse/lex.go
 //
-// Cannot use stuct embedding to reuse, since all the good parts are
+// Cannot use struct embedding to reuse, since all the good parts are
 // private.
 
 package lexer
@@ -18,6 +18,7 @@ type position int
 
 type itemType int
 
+// Things that the lexer emits.
 const (
 	itemError      itemType = iota
 	itemProse               // Prose between command blocks.

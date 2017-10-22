@@ -22,7 +22,7 @@ func trueMain(c *config.Config) error {
 		}
 		// Treat the first arg as a host address argument.
 		t.Adapt(c.DataSource().FirstArg())
-	case config.ModeWeb:
+	case config.ModeDemo:
 		l := loader.NewLoader(c.DataSource())
 		_, err := l.Load() // Assure initial load possible.
 		if err != nil {
