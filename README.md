@@ -118,17 +118,15 @@ content (markdown).
 
 #### Labels
 
-To control _which_ blocks are executed, fenced blocks
+To control which blocks are executed, fenced blocks
 can be preceeded in the markdown by HTML comments with
 embedded labels in this form:
 
 <blockquote>
-<code>
-&lt;&#33;-- @initializeCluster @tutorial03 @test --&gt;<br>
-&#96;&#96;&#96;<br>
-echo hello<br>
-&#96;&#96;&#96;<br>
-</code>
+<code>&lt;&#33;-- @initializeCluster @tutorial03 @test --&gt;</code><br>
+<code>&#96;&#96;&#96;</code><br>
+<code>echo hello</code><br>
+<code>&#96;&#96;&#96;</code><br>
 </blockquote>
 
 If these mdrip-friendly but rendering-invisible @labels
