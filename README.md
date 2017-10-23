@@ -36,17 +36,19 @@ go get github.com/monopole/mdrip
 
 `mdrip` has various flags, but accepts only one bare argument:
 
-> `mdrip {filePath}`
+```
+mdrip {filePath}
+```
 
 The program searches the given path for files named
-`*.md`, and parses the markdown into memory.  What
-happens next depends on the `--mode` flag.
-
-The `filePath` argument can be a file name, a directory
+`*.md`, and parses the markdown into memory.  The
+`filePath` argument can be a file name, a directory
 path, or a github URL in the style
-`gh:{handle}/{repoName}`.  The last case is a convenience
-that clones the repo into a disposable tmp dir and scans
-its contents from there in one step.
+`gh:{handle}/{repoName}`.  The last case is a
+convenience that clones the repo into a disposable tmp
+dir and scans its contents from there in one step.
+
+What happens next depends on the `--mode` flag.
 
 ### demo mode
 
