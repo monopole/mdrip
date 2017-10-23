@@ -122,12 +122,14 @@ To control _which_ blocks are executed, fenced blocks
 can be preceeded in the markdown by HTML comments with
 embedded labels in this form:
 
-<blockquote><code>
+<blockquote>
+<code>
 &lt;&#33;-- @initializeCluster @tutorial03 @test --&gt;<br>
 &#96;&#96;&#96;<br>
 echo hello<br>
 &#96;&#96;&#96;<br>
-</code></blockquote>
+</code>
+</blockquote>
 
 If these mdrip-friendly but rendering-invisible @labels
 exist, the `--label` flag can be used to extract only
