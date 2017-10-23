@@ -27,7 +27,7 @@ GOPATH=$MDRIP_HOME go get github.com/monopole/mdrip
 alias mdrip=$MDRIP_HOME/bin/mdrip
 ```
 
-or if you understand the implications, simply
+or just
 ```
 go get github.com/monopole/mdrip
 ```
@@ -52,8 +52,6 @@ its contents from there in one step.
 
 This mode faciliates markdown-based demos.
 
-The command
-
 ```
 mdrip --mode demo {filePath}
 ```
@@ -77,7 +75,6 @@ window.
 
 In this default mode, extracted code blocks are printed to `stdout`.
 
-This means that
 ```
 eval "$(mdrip file.md)"
 ```
