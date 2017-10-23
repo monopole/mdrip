@@ -118,29 +118,25 @@ content (markdown).
 
 #### Labels
 
-To control which blocks are executed, fenced blocks
-can be preceeded in the markdown by HTML comments with
-embedded labels in this form:
-
+Fenced code blocks can be preceeded in the markdown by
+a one-line HTML comment with embedded labels in this form:
 
 <blockquote>
 <pre>
-&lt;&#33;-- @initializeCluster @tutorial03 @test --&gt;<br>
-&#96;&#96;&#96;<br>
-echo hello<br>
-&#96;&#96;&#96;<br>
+&lt;&#33;-- @initializeCluster @tutorial03 @test --&gt;
+&#96;&#96;&#96;
+echo hello
+&#96;&#96;&#96;
 </pre>
 </blockquote>
 
-
-If these mdrip-friendly but rendering-invisible @labels
-exist, the `--label` flag can be used to extract only
+Then the `--label` flag can be used to extract only
 code blocks with the given label, e.g.
 
 > `mdrip --label test {filePath}`
 
-discards all code blocks save those with a preceding `@test`
-label.
+discards all code blocks other than those with a
+preceding `@test` label.
 
 Use this to ignore blocks that aren't suitable for a
 test sequence, e.g. a sequence that
