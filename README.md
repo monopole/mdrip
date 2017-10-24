@@ -1,60 +1,54 @@
 # mdrip
 
-[fenced code blocks]: https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks
-[_here_ documents]: http://tldp.org/LDP/abs/html/here-docs.html
-[literate programming]: http://en.wikipedia.org/wiki/Literate_programming
+[fenced code blocks]: https://help.github.com/articles/creating-and-highlighting-code-blocks/#fenced-code-blocks
 [travis-mdrip]: https://travis-ci.org/monopole/mdrip
+
+`mdrip` rips [fenced code blocks] from markdown files,
+making them available for execution in tests and
+demonstrations.
 
 [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip)
 
-`mdrip` rips [fenced code blocks] from markdown files,
-making them available for execution in
-[_demo_](#demo-mode),
-[_print_](#print-mode) and
-[_test_](#test-mode)
-modes.
 
 ## Installation
 
-Assuming Go installed:
+Assuming [Go](https://golang.org/dl) installed just:
 
-```
-export MDRIP_HOME=$(mktemp -d)
-GOPATH=$MDRIP_HOME go get github.com/monopole/mdrip
-alias mdrip=$MDRIP_HOME/bin/mdrip
-```
-
-or just
 ```
 go get github.com/monopole/mdrip
 ```
 
-## Execution
+or put it in a `/tmp` dir with
+```
+tmp=$(mktemp -d)
+GOPATH=$tmp go get github.com/monopole/mdrip
+alias mdrip=$tmp/bin/mdrip
+```
 
-`mdrip` has various flags, but accepts only one bare argument:
+## Execution
 
 > `mdrip {filePath}`
 
-The program searches the given path for files named
-`*.md`, and parses the markdown into memory.  The
-`filePath` argument can be a file name, a directory
-path, or a github URL in the style
-`gh:{handle}/{repoName}`.  The last case is a
-convenience that clones the repo into a disposable tmp
-dir and scans its contents from there in one step.
+searches the given path for files named `*.md`, and
+parses the markdown into memory.
+
+The `filePath` argument can be a single file, a
+directory, or a github URL in the style
+`gh:{handle}/{repoName}`.  This last is a convenience
+that clones the repo into a disposable `/tmp` directory
+and scans the markdown from there.
 
 What happens next depends on the `--mode` flag.
 
-### demo mode
+## Modes
 
-This mode facilitates markdown-based demos.
-
-The command
+### demo: facilitate markdown-based demos
 
 > `mdrip --mode demo {filePath}`
 
-serves rendered markdown at `http://localhost:8000`
-(change the endpoint using `--port` and `--hostname`).
+This serves rendered markdown at
+`http://localhost:8000`.  Change the endpoint using
+`--port` and `--hostname`.
 
 [tmux]: https://github.com/tmux/tmux/wiki
 
@@ -69,48 +63,54 @@ This one-click operation is surprisingly handy for
 demos wherein one has a tmux window next to a browser
 window.
 
+### print: extract code to stdout
 
-### print mode
-
-In this default mode, extracted code blocks are printed to `stdout`.
+In this default mode, the command
 
 > `eval "$(mdrip file.md)"`
 
-runs extracted blocks in the current terminal, while
+runs extracted blocks in the current
+terminal, while
 
 > `mdrip file.md | source /dev/stdin`
 
-runs extracted blocks in a piped shell that exits with extracted code status.
+runs extracted blocks in a piped shell that exits with
+extracted code status.  The difference between these
+two compositions is the same as the difference between
 
-The difference between these two mode of operation is the
-same as the difference between
-`eval "$( exit )"` and `echo exit | source /dev/stdin`.
-The former affects your terminal, the latter does not.
+> `eval "$(exit)"`
 
-To stop on error, pipe `mdrip` output to `bash -e`.
+and
 
-### test mode
+> `echo exit | source /dev/stdin`
 
-To assure that, say, a tutorial about some procedure
-continues to work, some test suite can assert that the
-following command exits with status 0:
+The former affects your current shell, the latter does
+not.  To stop on error, pipe `mdrip` output to `bash
+-e`.
+
+### test: place markdown code under test
 
 > `mdrip --mode test /path/to/tutorial.md`
 
-This runs extracted blocks in an `mdrip` subshell,
+runs extracted blocks in an `mdrip` subshell,
 leaving the executing shell unchanged.
 
 In this mode, `mdrip` captures the stdout and stderr of
 the subprocess, reporting only blocks that fail,
 facilitating error diagnosis.  Normally, mdrip exits
 with non-zero status only when used incorrectly,
-e.g. file not found, bad flags, etc.  In in test mode,
+e.g. file not found, bad flags, etc.  In test mode,
 mdrip will exit with the status of any failing code
 block.
 
+[literate programming]: http://en.wikipedia.org/wiki/Literate_programming
+[_here_ documents]: http://tldp.org/LDP/abs/html/here-docs.html
+
 This mode is an instance of [literate programming] in
 that code (shell commands) are embedded in explanatory
-content (markdown).
+content (markdown).  One can use [_here_ documents] to
+incorporate any programming language into the tests
+(see the [example](#example) below).
 
 #### Labels
 
@@ -134,10 +134,12 @@ code blocks with the given label, e.g.
 discards all code blocks other than those with a
 preceding `@test` label.
 
-Use this to ignore blocks that aren't suitable for a
-test sequence, e.g. a sequence that
-password-authenticates a particular user (a test
-framework will do this by other means).
+This can be used, for example, to gather blocks that
+should be placed under test, and ignore those that
+shouldn't.  An example of the latter would be commands
+that prompt an interactive user to login (test
+frameworks typically have their own notion of an
+authenticated user).
 
 ##### Special labels
 
@@ -172,8 +174,8 @@ Install [mdrip](#Installation) to try this.
 [Go tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
 [raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md
 
-This short [Go tutorial], see raw code [here][raw-example],
-has bash code blocks that write, compile and run a Go program.
+This [Go tutorial] has code blocks that write, compile
+and run a Go program.
 
 Use this to extract blocks to `stdout`:
 
@@ -195,21 +197,20 @@ because that example tutorial has several baked-in errors.
 To see success, download the example and confirm
 that it fails locally:
 ```
-TMP_DIR=$(mktemp -d)
-cd $TMP_DIR
-git clone https://github.com/monopole/mdrip.git
-mdrip --mode test --label lesson1 mdrip/data/example_tutorial.md
+tmp=$(mktemp -d)
+git clone https://github.com/monopole/mdrip.git $tmp
+file=$tmp/data/example_tutorial.md
+mdrip --mode test --label lesson1 $file
 ```
 
-Now fix the problems:
+Fix the problems:
 ```
-file=$TMP_DIR/mdrip/data/example_tutorial.md
 sed -i 's|comment this|// comment this|' $file
 sed -i 's|intended to fail|intended to succeed|' $file
 sed -i 's|badCommandToTriggerTestFailure|echo Hello|' $file
 ```
 
-And run the test again:
+Run the test again:
 ```
 mdrip --mode test --label lesson1 $file
 echo $?

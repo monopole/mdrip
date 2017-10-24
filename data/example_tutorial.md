@@ -4,7 +4,7 @@ First create a directory to work in.
 
 <!-- @init @lesson1 @cleanup -->
 ```
-DEMO_DIR=/tmp/mdrip_example
+DEMO_DIR=$(mktemp -d)
 mkdir -p $DEMO_DIR/src/example
 ```
 
@@ -47,11 +47,4 @@ Clean up with this command:
 <!-- @cleanup @lesson1 @sleep -->
 ```
 /bin/rm -rf $DEMO_DIR
-```
-
-<!-- @sleepyTime @lesson1 -->
-```
-sleep 2s
-sleep 2s
-sleep 2s
 ```
