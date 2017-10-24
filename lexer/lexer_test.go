@@ -14,7 +14,10 @@ type lexTest struct {
 const (
 	block1 = "echo $PATH\n" +
 		"echo $GOPATH"
-	block2 = "kill -9 $pid"
+	block2       = "kill -9 $pid"
+	indentedCode = "> ```\n" +
+		"> hey\n" +
+		"> ```\n"
 )
 
 var (
@@ -22,6 +25,64 @@ var (
 )
 
 var lexTests = []lexTest{
+	{"empty", "", []item{tEOF}},
+	{"spaces", " \t\n", []item{{itemProse, " \t\n"}, tEOF}},
+	{"text", "blah blah",
+		[]item{{itemProse, "blah blah"}, tEOF}},
+	{"comment1", "<!-- -->", []item{tEOF}},
+	{"comment2", "a <!-- --> b", []item{{itemProse, "a "}, {itemProse, " b"}, tEOF}},
+	{"block1", "fred <!-- @1 -->\n" +
+		"```\n" + block1 + "```\n bbb",
+		[]item{
+			{itemProse, "fred "},
+			{itemBlockLabel, "1"},
+			{itemCodeBlock, block1},
+			{itemProse, "\n bbb"},
+			tEOF}},
+	{"block2", "aa <!-- @1 @2-->\n" +
+		"```\n" + block1 + "```\n bb cc\n" +
+		"dd <!-- @3 @4-->\n" +
+		"```\n" + block2 + "```\n ee ff\n",
+		[]item{
+			{itemProse, "aa "},
+			{itemBlockLabel, "1"},
+			{itemBlockLabel, "2"},
+			{itemCodeBlock, block1},
+			{itemProse, "\n bb cc\ndd "},
+			{itemBlockLabel, "3"},
+			{itemBlockLabel, "4"},
+			{itemCodeBlock, block2},
+			{itemProse, "\n ee ff\n"},
+			tEOF}},
+	{"blockWithLangName", "Hello <!-- @1 -->\n" +
+		"```java\nvoid main whatever\n```",
+		[]item{
+			{itemProse, "Hello "},
+			{itemBlockLabel, "1"},
+			{itemCodeBlock, "void main whatever\n"},
+			tEOF}},
+	{"blockNoLabel", "fred\n" +
+		"```\n" + block1 + "```\n bbb",
+		[]item{
+			{itemProse, "fred\n"},
+			{itemCodeBlock, block1},
+			{itemProse, "\n bbb"},
+			tEOF}},
+	{"blockQuote",
+		"fred\n" +
+			indentedCode +
+			"bbb",
+		[]item{
+			{itemProse, "fred\n" + indentedCode + "bbb"},
+			tEOF}},
+}
+
+var XXlexTests = []lexTest{
+}
+
+var DRAIN_lexTests = []lexTest{}
+
+var ORIGINAL_lexTests = []lexTest{
 	{"empty", "", []item{tEOF}},
 	{"spaces", " \t\n", []item{{itemProse, " \t\n"}, tEOF}},
 	{"text", "blah blah",
@@ -106,11 +167,13 @@ func TestLex(t *testing.T) {
 		got := collect(&test)
 		if !equal(got, test.want) {
 			t.Errorf("%s:\ngot\n\t%+v\nwant\n\t%v\n", test.name, got, test.want)
+			t.Errorf("Details - got:\n")
 			for i, c := range got {
-				t.Errorf("   got %d %s\n\"%s\"\n\n", i, textType(c.typ), c.val)
+				t.Errorf("   %d %s\n\"%s\"\n\n", i, textType(c.typ), c.val)
 			}
+			t.Errorf("Details - want:\n")
 			for i, c := range test.want {
-				t.Errorf("   want %d %s\n\"%s\"\n\n", i, textType(c.typ), c.val)
+				t.Errorf("   %d %s\n\"%s\"\n\n", i, textType(c.typ), c.val)
 			}
 		}
 	}

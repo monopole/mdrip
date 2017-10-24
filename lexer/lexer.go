@@ -65,16 +65,6 @@ func (i item) String() string {
 	return fmt.Sprintf("%s", i.val)
 }
 
-const (
-	labelMarker  = '@'
-	commentOpen  = "<!--"
-	commentClose = "-->"
-	codeFence    = "```"
-	// All punctuation except for < (comment start) and ` (code block start),
-	mdPunct           = "!->@#$%^&*()_=+\\|~{}[];:'\",.?/ \r\n\t"
-	lettersAndNumbers = "012345789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-)
-
 const eof = -1
 
 type stateFn func(*lexer) stateFn
@@ -128,6 +118,12 @@ func (l *lexer) accept(valid string) bool {
 	return false
 }
 
+func (l *lexer) acceptEol() {
+	if !isEndOfLine(l.next()) {
+		l.backup()
+	}
+}
+
 // Consumes a run of runes from the valid set
 func (l *lexer) acceptRun(valid string) {
 	// is the next character of the input an element
@@ -174,20 +170,48 @@ func isEndOfLine(r rune) bool {
 	return r == '\r' || r == '\n'
 }
 
-// lexText scans until an opening comment delimiter.
+const (
+	labelMarker  = '@'
+	commentOpen  = "<!--"
+	commentClose = "-->"
+	codeFence    = "```"
+	blockQuote   = ">"
+	// All punctuation except for
+	// < html comment start
+	// > block quote start
+	// ` code block start
+	// \r carriage return
+	// \n new line
+	mdPunct           = ",.?!-@#$%^&*()_=+|~{}[];:/ \t'\"\\"
+	lettersAndNumbers = "012345789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+)
+
+func isBlockQuoteStart(remainder string) bool {
+	return strings.HasPrefix(remainder, blockQuote) ||
+		strings.HasPrefix(remainder, " " + blockQuote) ||
+		strings.HasPrefix(remainder, "  " + blockQuote)
+}
+
+// Roughly this reads line by line and changes behavior.
 func lexText(l *lexer) stateFn {
 	for {
-		if strings.HasPrefix(l.input[l.current:], commentOpen) {
+		l.acceptEol()
+		remainder := l.input[l.current:]
+		if strings.HasPrefix(remainder, commentOpen) {
 			if l.current > l.start {
 				l.emit(itemProse)
 			}
 			return lexPutativeComment
 		}
-		if strings.HasPrefix(l.input[l.current:], codeFence) {
+		if strings.HasPrefix(remainder, codeFence) {
 			if l.current > l.start {
 				l.emit(itemProse)
 			}
 			return lexCodeBlock
+		}
+		if isBlockQuoteStart(remainder) {
+			l.acceptRun(mdPunct + "><`" + lettersAndNumbers)
+			return lexBlockQuote
 		}
 		if l.next() == eof {
 			if l.current > l.start {
@@ -198,6 +222,25 @@ func lexText(l *lexer) stateFn {
 			return nil
 		}
 		l.acceptRun(mdPunct + lettersAndNumbers)
+	}
+}
+
+// Same as lexText, except ignore comments and code fences.
+func lexBlockQuote(l *lexer) stateFn {
+	for {
+		l.acceptEol()
+		if !isBlockQuoteStart(l.input[l.current:]) {
+			return lexText
+		}
+		if l.next() == eof {
+			if l.current > l.start {
+				l.emit(itemProse)
+			}
+			l.ignore()
+			l.emit(itemEOF)
+			return nil
+		}
+		l.acceptRun(mdPunct + "><`" + lettersAndNumbers)
 	}
 }
 
