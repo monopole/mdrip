@@ -158,19 +158,21 @@ framework will do this by other means).
 ## Example
 
 Install [mdrip](#Installation) to try this.
- 
-> Hint: if you also install [tmux]
-> you can run the commands below in _demo mode_:
+
+> Aside: To use `mdrip` to demo itself, install it and [tmux].
+> Start tmux, and start an mdrip server:
 >
 > &nbsp; &nbsp; `mdrip --mode demo gh:monopole/mdrip/README.md`
 >
-> Then just click from your locally served web page
-> to run the commands.
+> Switch to a tmux window with an available prompt, then
+> load `http://localhost:8000` in a browser.
+> In the browser, click on the command blocks below to send them
+> directly to your active tmux window.
 
 [Go tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
 [raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md
 
-This short [Go tutorial], with raw code [here][raw-example],
+This short [Go tutorial], see raw code [here][raw-example],
 has bash code blocks that write, compile and run a Go program.
 
 Use this to extract blocks to `stdout`:
