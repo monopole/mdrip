@@ -227,6 +227,9 @@ div.leftNav {
   z-index: 100;
   top: {{.LayTitleHeightPlusDelta}}px;
   left: 0;
+  height: 100%;
+  width: {{.LayNavWidth}}px;
+  overflow: auto;
   /* top rig bot lef */
   padding: 20px 0px 4px {{.LayNavLeftPad}}px;
 }

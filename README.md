@@ -3,10 +3,7 @@
 [fenced code blocks]: https://help.github.com/articles/github-flavored-markdown/#fenced-code-blocks
 [_here_ documents]: http://tldp.org/LDP/abs/html/here-docs.html
 [literate programming]: http://en.wikipedia.org/wiki/Literate_programming
-[tmux]: https://github.com/tmux/tmux/wiki
 [travis-mdrip]: https://travis-ci.org/monopole/mdrip
-[Go tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
-[raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md
 
 [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip)
 
@@ -32,13 +29,11 @@ or just
 go get github.com/monopole/mdrip
 ```
 
-## Execution modes
+## Execution
 
 `mdrip` has various flags, but accepts only one bare argument:
 
-```
-mdrip {filePath}
-```
+> `mdrip {filePath}`
 
 The program searches the given path for files named
 `*.md`, and parses the markdown into memory.  The
@@ -52,14 +47,16 @@ What happens next depends on the `--mode` flag.
 
 ### demo mode
 
-This mode faciliates markdown-based demos.
+This mode facilitates markdown-based demos.
 
-```
-mdrip --mode demo {filePath}
-```
+The command
+
+> `mdrip --mode demo {filePath}`
 
 serves rendered markdown at `http://localhost:8000`
-(see also flags `--port` and `--hostname`).
+(change the endpoint using `--port` and `--hostname`).
+
+[tmux]: https://github.com/tmux/tmux/wiki
 
 Clicking on a code block in your browser will
 copy its contents to your clipboard, and if you happen
@@ -77,13 +74,12 @@ window.
 
 In this default mode, extracted code blocks are printed to `stdout`.
 
-```
-eval "$(mdrip file.md)"
-```
+> `eval "$(mdrip file.md)"`
+
 runs extracted blocks in the current terminal, while
-```
-mdrip file.md | source /dev/stdin
-```
+
+> `mdrip file.md | source /dev/stdin`
+
 runs extracted blocks in a piped shell that exits with extracted code status.
 
 The difference between these two mode of operation is the
@@ -99,9 +95,7 @@ To assure that, say, a tutorial about some procedure
 continues to work, some test suite can assert that the
 following command exits with status 0:
 
-```
-mdrip --mode test /path/to/tutorial.md
-```
+> `mdrip --mode test /path/to/tutorial.md`
 
 This runs extracted blocks in an `mdrip` subshell,
 leaving the executing shell unchanged.
@@ -163,23 +157,60 @@ framework will do this by other means).
 
 ## Example
 
-This short [Go tutorial] has bash code blocks that
-write, compile and run a Go program.
+Install [mdrip](#Installation) to try this.
+ 
+> Hint: if you also install [tmux]
+> you can run the commands below in _demo mode_:
+>
+> &nbsp; &nbsp; `mdrip --mode demo gh:monopole/mdrip/README.md`
+>
+> Then just click from your locally served web page
+> to run the commands.
 
-Send code from that file to `stdout`:
+[Go tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
+[raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md
+
+This short [Go tutorial], with raw code [here][raw-example],
+has bash code blocks that write, compile and run a Go program.
+
+Use this to extract blocks to `stdout`:
 
 ```
-mdrip lesson1 \
-    $MDRIP_HOME/src/github.com/monopole/mdrip/data/example_tutorial.md
+mdrip --label lesson1 gh:monopole/mdrip/data/example_tutorial.md
 ```
 
-Alternatively, run its code in a subshell:
+Test the code from the markdown in a subshell:
 ```
-mdrip --mode test lesson1 \
-    $MDRIP_HOME/src/github.com/monopole/mdrip/data/example_tutorial.md
+clear
+mdrip --mode test --label lesson1 \
+    gh:monopole/mdrip/data/example_tutorial.md
+echo $?
 ```
 
-The above command has no output and exits with status zero if all the
-scripts labelled `@lesson1` in the given markdown succeed.  On any
-failure, however, the command dumps a report and exits with non-zero
-status.
+The above command should show an error, and exit with non-zero status,
+because that example tutorial has several baked-in errors.
+
+To see success, download the example and confirm
+that it fails locally:
+```
+TMP_DIR=$(mktemp -d)
+cd $TMP_DIR
+git clone https://github.com/monopole/mdrip.git
+mdrip --mode test --label lesson1 mdrip/data/example_tutorial.md
+```
+
+Now fix the problems:
+```
+file=$TMP_DIR/mdrip/data/example_tutorial.md
+sed -i 's|comment this|// comment this|' $file
+sed -i 's|intended to fail|intended to succeed|' $file
+sed -i 's|badCommandToTriggerTestFailure|echo Hello|' $file
+```
+
+And run the test again:
+```
+mdrip --mode test --label lesson1 $file
+echo $?
+```
+
+The return code should be zero.

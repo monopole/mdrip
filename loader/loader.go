@@ -128,6 +128,10 @@ type Loader struct {
 	ds *base.DataSource
 }
 
+func (l *Loader) Source() string {
+	return l.ds.String()
+}
+
 func NewLoader(ds *base.DataSource) *Loader {
 	return &Loader{ds}
 }

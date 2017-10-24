@@ -177,6 +177,7 @@ func (ws *Server) reload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		l := loader.NewLoader(ds)
+		glog.Infof("Loading from new source.")
 		t, err = l.Load()
 		if err != nil {
 			http.Error(w,
@@ -187,6 +188,7 @@ func (ws *Server) reload(w http.ResponseWriter, r *http.Request) {
 		ws.loader = l
 	} else {
 		// reload from same source, presumably changed.
+		glog.Infof("Reloading.")
 		t, err = ws.loader.Load()
 		if err != nil {
 			write500(w, err)
@@ -212,6 +214,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 	glog.Infof("Main page render in sessId: %v", sessId)
 	if ws.didFirstRender {
 		// Consider reloading data on all renders beyond the first.
+		glog.Infof("Already did first render.")
 		if !ws.loader.SmellsLikeGithub() {
 			t, err := ws.loader.Load()
 			if err == nil {
@@ -395,7 +398,7 @@ func (ws *Server) reapConnections() {
 }
 
 // Serve offers an http service.
-func (ws *Server) Serve(hostAndPort string) {
+func (ws *Server) Serve(hostAndPort string) error {
 	r := mux.NewRouter()
 	r.HandleFunc("/r", ws.reload)
 	r.HandleFunc("/r/", ws.reload)
@@ -407,7 +410,13 @@ func (ws *Server) Serve(hostAndPort string) {
 	r.HandleFunc("/image", ws.image)
 	r.HandleFunc("/q", ws.quit)
 	r.HandleFunc("/", ws.showControlPage)
-	ws.tutorial, _ = ws.loader.Load()
-	glog.Info("Serving at " + hostAndPort)
+	var err error
+	fmt.Printf("Loading data from %s...\n", ws.loader.Source())
+	ws.tutorial, err = ws.loader.Load()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Serving at " + hostAndPort)
 	glog.Fatal(http.ListenAndServe(hostAndPort, r))
+	return nil
 }

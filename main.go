@@ -24,15 +24,14 @@ func trueMain(c *config.Config) error {
 		t.Adapt(c.DataSource().FirstArg())
 	case config.ModeDemo:
 		l := loader.NewLoader(c.DataSource())
-		_, err := l.Load() // Assure initial load possible.
-		if err != nil {
-			return err
-		}
 		s, err := webserver.NewServer(l)
 		if err != nil {
 			return err
 		}
-		s.Serve(c.HostAndPort())
+		err = s.Serve(c.HostAndPort())
+		if err != nil {
+			return err
+		}
 	case config.ModeTest:
 		t, err := loader.NewLoader(c.DataSource()).Load()
 		if err != nil {
