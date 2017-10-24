@@ -188,8 +188,8 @@ const (
 
 func isBlockQuoteStart(remainder string) bool {
 	return strings.HasPrefix(remainder, blockQuote) ||
-		strings.HasPrefix(remainder, " " + blockQuote) ||
-		strings.HasPrefix(remainder, "  " + blockQuote)
+		strings.HasPrefix(remainder, " "+blockQuote) ||
+		strings.HasPrefix(remainder, "  "+blockQuote)
 }
 
 // Roughly this reads line by line and changes behavior.

@@ -9,14 +9,18 @@ import (
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 	"io/ioutil"
+	"path/filepath"
 )
 
-var repoNames = []string{"monopole/mdrip", "kubernetes/kubernetes.github.io"}
+var repoNames = []string{"monopole/mdrip", "kubernetes/website"}
+
+var paths = []string{"", "README.md", "foo/index.md"}
 
 var extractFmts = []string{
 	"gh:%s",
 	"GH:%s",
 	"gitHub.com/%s",
+	"https://github.com/%s",
 	"hTTps://github.com/%s",
 	"git@gitHUB.com:%s.git",
 	"github.com:%s",
@@ -24,26 +28,41 @@ var extractFmts = []string{
 
 func TestExtractGithubRepoName(t *testing.T) {
 	for _, repoName := range repoNames {
-		for _, extractFmt := range extractFmts {
-			input := fmt.Sprintf(extractFmt, repoName)
-			if !smellsLikeGithubCloneArg(input) {
-				t.Errorf("Should smell like github arg: %s\n", input)
-				continue
+		for _, pathName := range paths {
+			for _, extractFmt := range extractFmts {
+				spec := repoName
+				if len(pathName) > 0 {
+					spec = filepath.Join(spec, pathName)
+				}
+				input := fmt.Sprintf(extractFmt, spec)
+				if !smellsLikeGithubCloneArg(input) {
+					t.Errorf("Should smell like github arg: %s\n", input)
+					continue
+				}
+				repo, path, err := extractGithubRepoName(input)
+				if err != nil {
+					t.Errorf("problem %v", err)
+				}
+				if repo != repoName {
+					t.Errorf("\n"+
+						"       from %s\n"+
+						"    gotRepo %s\n"+
+						"desiredRepo %s\n", input, repo, repoName)
+				}
+				if path != pathName {
+					t.Errorf("\n"+
+						"       from %s\n"+
+						"    gotPath %s\n"+
+						"desiredPath %s\n", input, path, pathName)
+				}
 			}
-			got := extractGithubRepoName(input)
-			if got != repoName {
+			got := buildGithubCloneArg(repoName)
+			want := "https://github.com/" + repoName + ".git"
+			if got != want {
 				t.Errorf("\n"+
-					"       from %s\n"+
-					"        got %s\n"+
-					"desiredRepo %s\n", input, got, repoName)
+					" got %s\n"+
+					"want %s\n", got, want)
 			}
-		}
-		got := buildGithubCloneArg(repoName)
-		want := "https://github.com/" + repoName + ".git"
-		if got != want {
-			t.Errorf("\n"+
-				" got %s\n"+
-				"want %s\n", got, want)
 		}
 	}
 }

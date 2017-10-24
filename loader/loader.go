@@ -3,16 +3,17 @@ package loader
 import (
 	"bytes"
 	"fmt"
-	"github.com/golang/glog"
-	"github.com/monopole/mdrip/base"
-	"github.com/monopole/mdrip/lexer"
-	"github.com/monopole/mdrip/model"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/golang/glog"
+	"github.com/monopole/mdrip/base"
+	"github.com/monopole/mdrip/lexer"
+	"github.com/monopole/mdrip/model"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -148,7 +149,7 @@ func buildGithubCloneArg(repoName string) string {
 
 // From strings like git@github.com:monopole/mdrip.git or
 // https://github.com/monopole/mdrip, extract github.com.
-func extractGithubRepoName(n string) string {
+func extractGithubRepoName(n string) (string, string, error) {
 	for _, p := range []string{
 		// Order matters here.
 		"gh:", "https://", "http://", "git@", "github.com:", "github.com/"} {
@@ -159,7 +160,17 @@ func extractGithubRepoName(n string) string {
 	if strings.HasSuffix(n, ".git") {
 		n = n[0 : len(n)-len(".git")]
 	}
-	return n
+	i := strings.Index(n, string(filepath.Separator))
+	if i < 1 {
+		return "", "", errors.New("No separator.")
+	}
+	j := strings.Index(n[i+1:], string(filepath.Separator))
+	if j < 0 {
+		// No path, so show entire repo.
+		return n, "", nil
+	}
+	j += i + 1
+	return n[:j], n[j+1:], nil
 }
 
 func (l *Loader) SmellsLikeGithub() bool {
@@ -229,7 +240,7 @@ func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 	}
 	glog.Info("Using " + gitPath + " to clone to " + tmpDir)
 	defer os.RemoveAll(tmpDir)
-	repoName := extractGithubRepoName(url)
+	repoName, path, err := extractGithubRepoName(url)
 	cmd := exec.Command(
 		gitPath, "clone", buildGithubCloneArg(repoName), tmpDir)
 	var out bytes.Buffer
@@ -239,5 +250,9 @@ func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
 		return BadLoad(base.FilePath(url)),
 			errors.Wrap(err, "git clone failure")
 	}
-	return loadTutorialFromPath("gh:"+repoName, base.FilePath(tmpDir))
+	fullPath := tmpDir
+	if len(path) > 0 {
+		fullPath = filepath.Join(fullPath, path)
+	}
+	return loadTutorialFromPath("gh:"+repoName, base.FilePath(fullPath))
 }
