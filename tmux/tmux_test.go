@@ -1,7 +1,5 @@
 package tmux
 
-// go test -v github.com/monopole/mdrip/tmux --alsologtostderr
-
 import (
 	"strings"
 	"testing"
@@ -16,16 +14,6 @@ const (
 func TestBadName(t *testing.T) {
 	if IsProgramInstalled(badName) {
 		t.Errorf("Should fail using a nonsensical name like \"%s\".", badName)
-	}
-}
-
-func TestAssureNotUp(t *testing.T) {
-	if !IsProgramInstalled(Path) {
-		t.Skip(skipNoTmux)
-	}
-	x := NewTmux(Path)
-	if x.IsUp() {
-		t.Error("tmux must not be up during test runs")
 	}
 }
 
