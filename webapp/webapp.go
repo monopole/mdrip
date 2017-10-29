@@ -104,7 +104,7 @@ func makeAppTemplate(leftNavBody string) string {
 {{define "` + tmplNameWebApp + `"}}
 <html>
 <head>
-<style type="text/css">` + headerCss + `
+<style type="text/css">` + cssMain + cssHamburger + `
 </style>
 <script type="text/javascript">` + headerJs + `
 </script>
@@ -113,9 +113,12 @@ func makeAppTemplate(leftNavBody string) string {
 <div class='main'>
 ` + instructionsHtml + `
   <div class='titleBar'>
+    <div class='hamburger' onclick='toggleLeftNav(this)'>
+      <div class='hambar1'></div>
+      <div class='hambar2'></div>
+      <div class='hambar3'></div>
+    </div>
     <span class='titleNav' onclick='assureActiveLesson(0)'> {{ .TrimName }} </span>
-    <button class='navToggle' type='button' onclick='toggleLeftNav()'
-        id='navToggle' >&lt;</button>
     <button type='button' onclick="toggleByClass('instructions')">?</button>
     <span class='activeLessonName'>lesson name</span>
     </span>
@@ -132,6 +135,36 @@ func makeAppTemplate(leftNavBody string) string {
 {{end}}
 `
 }
+
+const cssHamburger = `
+.hamburger {
+    padding: 7px 0 0 0;
+    display: inline-block;
+    cursor: pointer;
+}
+.hambar1, .hambar2, .hambar3 {
+    width: 14px;
+    height: 2px;
+    background-color: #333;
+    /* top rig bot lef */
+    margin: 2px 0 2px 0;
+    transition: 0.4s;
+}
+/* Rotate first bar */
+.hamIsAnX .hambar1 {
+    -webkit-transform: rotate(-45deg) translate(-9px, 3px) ;
+    transform: rotate(-45deg) translate(-4px, 3px) ;
+}
+/* Fade second bar */
+.hamIsAnX .hambar2 {
+    opacity: 0;
+}
+/* Rotate last bar */
+.hamIsAnX .hambar3 {
+    -webkit-transform: rotate(45deg) translate(-8px, -3px) ;
+    transform: rotate(45deg) translate(-4px, -3px) ;
+}
+`
 
 const (
 	tmplNameWebApp     = "webApp"
@@ -180,7 +213,7 @@ const (
 `
 )
 
-const headerCss = `
+const cssMain = `
 body {
   font-family: "Veranda", Veranda, sans-serif;
   /* background-color: antiquewhite; */
@@ -203,6 +236,7 @@ div.titleBar {
   background-color: #ddd;
   height: {{.LayTitleHeight}}px;
   /* top rig bot lef */
+  padding: 0 0 0 6px;
 }
 
 span.titleNav {
@@ -360,38 +394,39 @@ function getElByClass(name) {
   var elements = document.getElementsByClassName(name);
   return elements[0];
 }
-function openLeftNav(e) {
-  e.innerHTML = '&lt;'
+function openLeftNav() {
   var ln = getElByClass('leftNav');
   ln.style.display = 'block';
   var list = getElByClass('lessonList');
   list.style.left = '{{.LayNavWidth}}px';
 }
-function closeLeftNav(e) {
-  e.innerHTML = '&gt;'
+function closeLeftNav() {
   var ln = getElByClass('leftNav');
   ln.style.display = 'none';
   var list = getElByClass('lessonList');
   list.style.left = '0';
 }
 function assureLeftNavOpen() {
-  var e = document.getElementById('navToggle')
-  if (e.innerHTML == '&gt;') {
-    openLeftNav(e)
+  var e = getElByClass('hamburger');
+  if (!e.classList.contains('hamIsAnX')) {
+    e.classList.add('hamIsAnX');
   }
+  openLeftNav()
 }
 function assureLeftNavClosed() {
-  var e = document.getElementById('navToggle')
-  if (e.innerHTML == '&lt;') {
-    closeLeftNav(e)
+  var e = getElByClass('hamburger');
+  if (e.classList.contains('hamIsAnX')) {
+    e.classList.remove('hamIsAnX');
   }
+  closeLeftNav()
 }
-function toggleLeftNav() {
-  var e = document.getElementById('navToggle')
-  if (e.innerHTML == '&gt;') {
-    openLeftNav(e)
+function toggleLeftNav(e) {
+  if (e.classList.contains('hamIsAnX')) {
+    closeLeftNav()
+    e.classList.remove('hamIsAnX');
   } else {
-    closeLeftNav(e)
+    openLeftNav()
+    e.classList.add('hamIsAnX');
   }
 }
 function toggleByClass(name) {

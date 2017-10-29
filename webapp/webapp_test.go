@@ -21,7 +21,7 @@ var orderedPageParts = []string{
 	"div.oneLesson",
 	"</style>",
 	"<script",
-	"toggleLeftNav()",
+	"toggleLeftNav(",
 	"onLoad()",
 	"/script>",
 	"/head>",
