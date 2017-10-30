@@ -16,7 +16,7 @@ func (n FilePath) ReadDir() ([]os.FileInfo, error) {
 func (n FilePath) Base() string {
 	arg := string(n)
 	ext := filepath.Ext(arg)
-	if len(ext) < 1 {
+	if len(ext) < 1 || ext != ".md" {
 		return filepath.Base(arg)
 	}
 	return filepath.Base(arg[:strings.Index(arg, ext)])

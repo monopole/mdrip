@@ -14,6 +14,8 @@ var btests = []btest{
 	{"empty", "", "."},
 	{"one", "foo", "foo"},
 	{"five", "dir1/dir2/mississippi.md", "mississippi"},
+	{"onlymd", "dir1/dir2/mississippi.txt", "mississippi.txt"},
+	{"onlymd", "dir1/v1.2", "v1.2"},
 }
 
 func TestBase(t *testing.T) {
