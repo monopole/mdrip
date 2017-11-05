@@ -230,12 +230,25 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		write500(w, err)
 		return
 	}
-	app := webapp.NewWebApp(sessId, r.Host, ws.tutorial)
+
+	app := webapp.NewWebApp(
+		sessId, r.Host,
+		ws.tutorial, getLessonIndex(ws.tutorial, r.URL.Path))
 	ws.didFirstRender = true
+
 	if err := app.Render(w); err != nil {
 		write500(w, err)
 		return
 	}
+}
+
+func getLessonIndex(tut model.Tutorial, path string) int {
+	v := NewLessonFinder()
+	tut.Accept(v)
+	if len(path) > 0 && path[0] == '/' {
+		return v.GetLessonIndex(path[1:])
+	}
+	return v.GetLessonIndex(path)
 }
 
 func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
@@ -358,7 +371,11 @@ func getIntParam(n string, r *http.Request, d int) int {
 
 func (ws *Server) quit(w http.ResponseWriter, r *http.Request) {
 	close(ws.connReaperQuitCh)
-	os.Exit(0)
+	fmt.Fprint(w, "\nbye bye\n")
+	go func() {
+		time.Sleep(2 * time.Second)
+		os.Exit(0)
+	}()
 }
 
 const (
@@ -400,16 +417,16 @@ func (ws *Server) reapConnections() {
 // Serve offers an http service.
 func (ws *Server) Serve(hostAndPort string) error {
 	r := mux.NewRouter()
-	r.HandleFunc("/r", ws.reload)
-	r.HandleFunc("/r/", ws.reload)
-	r.HandleFunc("/r/{gitclone:.*}", ws.reload)
+	r.HandleFunc("/_/r", ws.reload)
+	r.HandleFunc("/_/r/", ws.reload)
+	r.HandleFunc("/_/r/{gitclone:.*}", ws.reload)
 	r.HandleFunc("/_/runblock", ws.makeBlockRunner())
 	r.HandleFunc("/_/debug", ws.showDebugPage)
 	r.HandleFunc("/_/ws", ws.openWebSocket)
+	r.HandleFunc("/_/image", ws.image)
+	r.HandleFunc("/_/q", ws.quit)
 	r.HandleFunc("/favicon.ico", ws.favicon)
-	r.HandleFunc("/image", ws.image)
-	r.HandleFunc("/q", ws.quit)
-	r.HandleFunc("/", ws.showControlPage)
+	r.PathPrefix("/").HandlerFunc(ws.showControlPage)
 	var err error
 	fmt.Printf("Loading data from %s...\n", ws.loader.Source())
 	ws.tutorial, err = ws.loader.Load()

@@ -27,7 +27,7 @@ var npTests = []npTest{
 		`<div class='navItemTop'>
   <div id='NL0' class='navLessonTitleOff'
       onclick='assureActiveLesson(0)'
-      data-path=''>
+      data-path='.'>
     .
   </div>
 </div>
@@ -42,7 +42,7 @@ var npTests = []npTest{
     <div class='navItemBox'>
       <div id='NL0' class='navLessonTitleOff'
           onclick='assureActiveLesson(0)'
-          data-path=''>
+          data-path='hey/.'>
         .
       </div>
     </div>

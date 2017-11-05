@@ -27,31 +27,25 @@ Modes:
       eval "$(mdrip file.md)"
    to run in current terminal, impacting your environment. Use
       mdrip file.md | source /dev/stdin
-   to run in a piped shell that exits with extracted code status.
-   Does not impact your current shell.
+   to run in an ephemeral shell that exits with extracted code status.
 
  --mode test
 
    Use this flag for markdown-based feature tests.
 
-   Suppose one has a tutorial consisting of command line instructions
-   in a markdown file.
+   To assure that the code blocks in a markdown file continue to work,
+   some test suite can assert that this command exits with status 0:
 
-   To assure that those instructions continue to work, some test suite
-   can assert that the following command exits with status 0:
+     mdrip --mode test /path/to/tutorial
 
-     mdrip --mode test /path/to/tutorial.md
-
-   This runs extracted blocks in an mdrip subshell, leaving the
-   executing shell unchanged.
-
-   In this mode, mdrip captures the stdout and stderr of the
-   subprocess, reporting only blocks that fail, facilitating error
-   diagnosis.
+   This extracts code blocks from markdown on that path, and runs them
+   in an mdrip subshell, leaving the executing shell unchanged.
+   mdrip captures the stdout and stderr of the subprocess, and reports
+   output from failing blocks, facilitating error diagnosis.
 
    Normally, mdrip exits with non-zero status only when used
    incorrectly, e.g. file not found, bad flags, etc.  In in test mode,
-   mdrip will exit with the status of any failing code block.
+   mdrip exits with the status of any failing code block.
 
  --mode demo
 
@@ -59,18 +53,18 @@ Modes:
    version of the markdown facilitating execution of command blocks.
 
    Clicked command blocks are automatically copied to the user's clipboard
-   and "pasted" to the active window of a local tmux session (if it exists).
-
+   and, if tmux is running, "pasted" to the active tmux window.
    See also flags --hostname and --port.
 
  --mode tmux
 
-   Only useful if both a local tmux instance is running, and somewhere
-   on the net mdrip is running in '--mode demo'.
+   Only useful if both a local tmux instance is running, and an mdrip
+   is running remotely (not locally) in '--mode demo'.
 
    In this mode the first argument to mdrip, normally treated as a
    markdown filename, is treated as a URL.  mdrip attempts to open a
-   websocket to that URL.
+   websocket to that URL.  Discover the URL from mdrip's demo mode help
+   button.
 
    Meanwhile, when a web user clicks on a code block served by mdrip
    (in --mode demo) an attempt is made to find a websocket associated

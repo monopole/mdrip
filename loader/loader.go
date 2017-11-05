@@ -203,6 +203,8 @@ func loadTutorialFromPath(name string, path base.FilePath) (model.Tutorial, erro
 	if !isDesirableDir(path) {
 		return nil, errors.New("nothing found at file path " + string(path))
 	}
+	glog.Infof("Loading %s from path %s\n", name, path)
+
 	c, err := scanDir(path)
 	if err != nil {
 		return BadLoad(path), err

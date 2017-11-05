@@ -3,6 +3,7 @@ package webapp
 import (
 	"github.com/monopole/mdrip/model"
 	"io"
+	"strings"
 )
 
 // NavPrinter prints leftnav HTML to a Writer.
@@ -10,12 +11,13 @@ type NavPrinter struct {
 	model.TxtPrinter
 	courseCounter int
 	lessonCounter int
+	name          []string
 }
 
 func NewTutorialNavPrinter(w io.Writer) *NavPrinter {
 	return &NavPrinter{
 		*model.NewTutorialTxtPrinter(w),
-		-1, -1}
+		-1, -1, make([]string, 0)}
 }
 
 func (v *NavPrinter) navItemStyle() string {
@@ -29,13 +31,26 @@ func (v *NavPrinter) navItemStyle() string {
 func (v *NavPrinter) VisitBlockTut(x *model.BlockTut) {
 }
 
+func (v *NavPrinter) addName(t model.Tutorial) {
+	v.name = append(v.name, t.Name())
+}
+
+func (v *NavPrinter) rmName() {
+	v.name = v.name[:len(v.name)-1]
+}
+
+func (v *NavPrinter) path() string {
+	return strings.Join(v.name, "/")
+}
+
 func (v *NavPrinter) VisitLessonTut(x *model.LessonTut) {
 	v.lessonCounter++
+	v.addName(x)
 	v.P("<div class='%s'>", v.navItemStyle())
 	v.Down()
 	v.P("<div id='NL%d' class='navLessonTitleOff'", v.lessonCounter)
 	v.P("    onclick='assureActiveLesson(%d)'", v.lessonCounter)
-	v.P("    data-path='%s'>", x.Path())
+	v.P("    data-path='%s'>", v.path())
 	// Could loop over children here - decided not to.
 	v.Down()
 	v.P("%s", x.Name())
@@ -43,10 +58,12 @@ func (v *NavPrinter) VisitLessonTut(x *model.LessonTut) {
 	v.P("</div>")
 	v.Up()
 	v.P("</div>")
+	v.rmName()
 }
 
 func (v *NavPrinter) VisitCourse(x *model.Course) {
 	v.courseCounter++
+	v.addName(x)
 	v.P("<div class='%s'>", v.navItemStyle())
 	v.Down()
 	v.P("<div class='navCourseTitle' onclick='toggleNC(%d)'>", v.courseCounter)
@@ -64,6 +81,7 @@ func (v *NavPrinter) VisitCourse(x *model.Course) {
 	v.P("</div>")
 	v.Up()
 	v.P("</div>")
+	v.rmName()
 }
 
 func (v *NavPrinter) VisitTopCourse(x *model.TopCourse) {

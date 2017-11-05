@@ -18,10 +18,11 @@ type TypeSessId string
 // Not using react, angular2, polymer, etc. because
 // want to keep it simple and shippable as a single binary.
 type WebApp struct {
-	sessId TypeSessId
-	host   string
-	tut    model.Tutorial
-	tmpl   *template.Template
+	sessId        TypeSessId
+	host          string
+	tut           model.Tutorial
+	tmpl          *template.Template
+	initialLesson int
 }
 
 func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
@@ -53,6 +54,7 @@ const (
 	maxAppNameLen = len("gh:kubernetes/kubernetes.github.io")
 )
 
+func (wa *WebApp) InitialLesson() int        { return wa.initialLesson }
 func (wa *WebApp) LayMainWidth() int         { return 950 }
 func (wa *WebApp) LayNavWidth() int          { return 250 }
 func (wa *WebApp) LayLessonWidth() int       { return wa.LayMainWidth() - wa.LayNavWidth() }
@@ -75,8 +77,8 @@ func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
 
-func NewWebApp(sessId TypeSessId, host string, tut model.Tutorial) *WebApp {
-	return &WebApp{sessId, host, tut, makeParsedTemplate(tut)}
+func NewWebApp(sessId TypeSessId, host string, tut model.Tutorial, n int) *WebApp {
+	return &WebApp{sessId, host, tut, makeParsedTemplate(tut), n}
 }
 
 func makeParsedTemplate(tut model.Tutorial) *template.Template {
@@ -472,6 +474,11 @@ function assureActiveLesson(index) {
   path = e.getAttribute('data-path')
   getElByClass('activeLessonName').innerHTML = path
   activeLesson = index
+  if (history.pushState) {
+    window.history.pushState("not using data yet", "someTitle", "/" + path);
+  } else {
+    document.location.href = path;
+  }
 }
 function onLoad() {
   if ({{.LessonCount}} > 1) {
@@ -479,7 +486,7 @@ function onLoad() {
   } else {
     assureLeftNavClosed()
   }
-  assureActiveLesson(0)
+  assureActiveLesson({{.InitialLesson}})
 }
 function getDataId(el) {
   return el.getAttribute("data-id");

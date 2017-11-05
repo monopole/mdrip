@@ -8,13 +8,14 @@ package model
 // Example: tutorial on Benelux.
 //
 // The first lesson is an overview of Benelux, with sibling (not child)
-// courses covering Belgium, Netherlands, and Luxembourg - as one would arrange
-// a physical book (parts, chapters, paragraphs).  These courses may hold lessons
-// on provinces, or sub-courses regional histories, cities etc.  A depth first
-// traversal of the hierarchy is the path through all the material
-// (same as in a book).
+// courses covering Belgium, Netherlands, and Luxembourg - as one would begin
+// a textbook with an introduction.  Said courses may hold lessons on
+// provinces, or sub-courses regional histories, cities etc.  A user could drop
+// in anywhere, but content should be arranged such that a depth-first
+// traversal of the hierarchy is a meaningful path through all content - i.e.
+// that's how one would read the entire book.
 //
-// Associated content REST addresses reflect the file system hierarchy, e.g.
+// Associated content REST addresses reflect file system hierarchy, e.g.
 //
 //     benelux.com/overview                  // Describes Benelux in general.
 //     benelux.com/history                   // Benelux history, economy, etc.
@@ -80,7 +81,7 @@ package model
 //         02_flevoland.md
 //       ...
 //
-// Where, say README (a github name convention) is converted to "overview"
+// Where, say README is converted to "overview"
 // by a file loader, and likewise leading numbers in file names are dropped
 // - though the implied presentation order is preserved in the nav so one
 // can retain a lesson ordering.
