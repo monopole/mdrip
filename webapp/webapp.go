@@ -539,7 +539,7 @@ function onRunBlockClick(event) {
       requestRunning = false;
     }
   };
-  xhr.open('GET', '/runblock?fid=' + fileId + '&bid=' + blockId + '&sid={{.SessId}}', true);
+  xhr.open('GET', '/_/runblock?fid=' + fileId + '&bid=' + blockId + '&sid={{.SessId}}', true);
   xhr.send();
 }
 `
@@ -579,7 +579,7 @@ href="https://github.com/monopole/mdrip">mdrip</a></code>
   $TMP_DIR/bin/mdrip \
       --alsologtostderr --v 0 \
       --stderrthreshold INFO \
-      --mode tmux ws://{{.Host}}/ws?id={{.SessId}}
+      --mode tmux ws://{{.Host}}/_/ws?id={{.SessId}}
 </pre>
 </li>
 </ul>

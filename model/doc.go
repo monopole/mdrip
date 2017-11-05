@@ -5,14 +5,14 @@ package model
 // The file hierarchy holding the markdown defines tutorial structure,
 // organizing markdown files (lessons) into nestable groups (courses).
 //
-// Suppose one offers a tutorial on Benelux - an economic union of
-// three neighbouring states in western Europe.
+// Example: tutorial on Benelux.
 //
-// The first lesson is an overview of Benelux, with sibling (_not_ child)
-// courses covering Belgium, Netherlands, and Luxembourg (as one might arrange
-// a physical book).  These courses may hold lessons on provinces, or sub-courses
-// drilling into cities, regional histories etc.  This hierarchy is optional, but
-// supported and helpful to organize material.
+// The first lesson is an overview of Benelux, with sibling (not child)
+// courses covering Belgium, Netherlands, and Luxembourg - as one would arrange
+// a physical book (parts, chapters, paragraphs).  These courses may hold lessons
+// on provinces, or sub-courses regional histories, cities etc.  A depth first
+// traversal of the hierarchy is the path through all the material
+// (same as in a book).
 //
 // Associated content REST addresses reflect the file system hierarchy, e.g.
 //
@@ -20,7 +20,7 @@ package model
 //     benelux.com/history                   // Benelux history, economy, etc.
 //     benelux.com/economy
 //     benelux.com/belgium/overview          // Describes Belgium in general.
-//     benelux.com/belgium/tintin            // Dive into important details.
+//     benelux.com/belgium/tintin            // Dive into details.
 //     benelux.com/belgium/beer
 //     benelux.com/belgium/antwerp/overview  // Dive into Antwerp, etc.
 //     benelux.com/belgium/antwerp/diamonds
@@ -33,17 +33,17 @@ package model
 //     benelux.com/netherlands/flevoland
 //     ...
 //
-// All content is accessible from standard nav tools:
+// All content is accessible from a left nav:
 //
 //      overview     |                           {main page outline
 //      belgium      |                            here - title, h1,
 //     [netherlands] |       {main page           h2, h3 etc.}
 //      luxembourg   |        content here}
 //
-// At all times exactly one of the left nav choices is selected., and the
+// At all times exactly one of the left nav choices is selected, and the
 // main page shows content associated with that selection.
 //
-// The first item, in this case "overview", is the initial highlight.
+// The first item, in this case the "overview", is the initial highlight.
 // If one hits the domain without a REST path, one is redirected to
 // /overview and that item is highlighted in the menu, and its
 // content is shown.
@@ -51,14 +51,14 @@ package model
 // Items in the left nav either name content and show it when clicked, or
 // they name sub-courses and expand choices when clicked.
 // In the latter case, the main content and the left nav highlighting
-// don't change.  A second click hides the exposed sub-course names.
+// don't change.  Subsequent clicks toggle sub-course names.
 //
 // Only the name of a lesson (a leaf) with content can 1) be highlighted,
 // 2) change the main page content when clicked, and 3) serve at a meaningful
 // REST address.  Everything else is a course, and only expands or hides
 // its own appearance.
 //
-// By design, this scheme maps to this filesystem layout:
+// This scheme maps to this filesystem layout:
 //
 //     benelux/
 //       01_history.md
@@ -87,9 +87,9 @@ package model
 //
 // The proposed command line to read and serve content is
 //
-//      mdrip --mode web /foo/benelux
+//      mdrip --mode demo /foo/benelux
 // or
-//      mdrip --mode web /foo/benelux/README.md
+//      mdrip --mode demo /foo/benelux/README.md
 //
 // The arg names either a directory or a file.
 //
