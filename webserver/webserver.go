@@ -243,12 +243,12 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func getLessonIndex(tut model.Tutorial, path string) int {
-	v := NewLessonFinder()
+	v := newLessonFinder()
 	tut.Accept(v)
 	if len(path) > 0 && path[0] == '/' {
-		return v.GetLessonIndex(path[1:])
+		return v.getLessonIndex(path[1:])
 	}
-	return v.GetLessonIndex(path)
+	return v.getLessonIndex(path)
 }
 
 func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {

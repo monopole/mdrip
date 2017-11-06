@@ -52,10 +52,10 @@ var pfTests = []pfTest{
 
 func TestLessonFinder(t *testing.T) {
 	for _, test := range pfTests {
-		v := NewLessonFinder()
+		v := newLessonFinder()
 		test.input.Accept(v)
 		for _, w := range test.results {
-			got := v.GetLessonIndex(w.path)
+			got := v.getLessonIndex(w.path)
 			if got != w.lessIdx {
 				t.Errorf("%s %s:\ngot\n\"%d\"\nwant\n\"%d\"\n",
 					test.name, w.path, got, w.lessIdx)

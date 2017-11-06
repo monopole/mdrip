@@ -54,6 +54,7 @@ const (
 	maxAppNameLen = len("gh:kubernetes/kubernetes.github.io")
 )
 
+func (wa *WebApp) TransitionSpeed() string   { return "0.4s" }
 func (wa *WebApp) InitialLesson() int        { return wa.initialLesson }
 func (wa *WebApp) LayMainWidth() int         { return 950 }
 func (wa *WebApp) LayNavWidth() int          { return 250 }
@@ -140,31 +141,27 @@ func makeAppTemplate(leftNavBody string) string {
 
 const cssHamburger = `
 .hamburger {
-    padding: 7px 0 0 0;
-    display: inline-block;
-    cursor: pointer;
+  padding: 7px 0 0 0;
+  display: inline-block;
+  cursor: pointer;
 }
 .hambar1, .hambar2, .hambar3 {
-    width: 14px;
-    height: 2px;
-    background-color: #333;
-    /* top rig bot lef */
-    margin: 2px 0 2px 0;
-    transition: 0.4s;
+  width: 14px;
+  height: 2px;
+  background-color: #333;
+  /* top rig bot lef */
+  margin: 2px 0 2px 2px;
+  transition: {{.TransitionSpeed}};
 }
-/* Rotate first bar */
 .hamIsAnX .hambar1 {
-    -webkit-transform: rotate(-45deg) translate(-9px, 3px) ;
-    transform: rotate(-45deg) translate(-4px, 3px) ;
+  -webkit-transform: translate(-3px, 0px) rotate(-45deg);
+  transform: translate(-3px, 0px) rotate(-45deg);
 }
-/* Fade second bar */
 .hamIsAnX .hambar2 {
-    opacity: 0;
 }
-/* Rotate last bar */
 .hamIsAnX .hambar3 {
-    -webkit-transform: rotate(45deg) translate(-8px, -3px) ;
-    transform: rotate(45deg) translate(-4px, -3px) ;
+  -webkit-transform: translate(-3px, 0px) rotate(45deg);
+  transform: translate(-3px, 0px) rotate(45deg);
 }
 `
 
@@ -241,6 +238,13 @@ div.titleBar {
   padding: 0 0 0 6px;
 }
 
+button {
+  /* background-color: #f00; */
+  /* top rig bot lef */
+  padding: 2px 2px 0px 2px;
+  margin: 0 0 0px 0px;
+}
+
 span.titleNav {
   display: inline-block;
   width: {{.LayNavWidth}}px;
@@ -277,6 +281,7 @@ div.lessonList {
   width: {{.LayLessonWidth}}px;
   /* top rig bot lef */
   padding: 0px 0px 4px {{.LayNavLeftPad}}px;
+  transition: left {{.TransitionSpeed}};
 }
 
 div.instructions {

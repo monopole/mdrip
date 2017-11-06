@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/monopole/mdrip/base"
-	"github.com/monopole/mdrip/util"
 )
 
 type Tutorial interface {
@@ -42,6 +41,6 @@ type Course struct {
 
 func NewCourse(p base.FilePath, c []Tutorial) *Course { return &Course{p.Base(), p, c} }
 func (c *Course) Accept(v TutVisitor)                 { v.VisitCourse(c) }
-func (c *Course) Name() string                        { return util.DropLeadingNumbers(c.name) }
+func (c *Course) Name() string                        { return c.name }
 func (c *Course) Path() base.FilePath                 { return c.path }
 func (c *Course) Children() []Tutorial                { return c.children }

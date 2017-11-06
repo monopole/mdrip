@@ -20,6 +20,20 @@ const (
 	badLeadingChar = "~.#"
 )
 
+func isSortFile(n base.FilePath) bool {
+	s, err := os.Stat(string(n))
+	if err != nil {
+		return false
+	}
+	if s.IsDir() {
+		return false
+	}
+	if !s.Mode().IsRegular() {
+		return false
+	}
+	return filepath.Base(s.Name()) == "SORT.txt"
+}
+
 func isDesirableFile(n base.FilePath) bool {
 	s, err := os.Stat(string(n))
 	if err != nil {
@@ -66,6 +80,7 @@ func scanDir(d base.FilePath) (model.Tutorial, error) {
 		return BadLoad(d), err
 	}
 	var items = []model.Tutorial{}
+	var sortRules = []string{}
 	for _, f := range files {
 		p := d.Join(f)
 		if isDesirableFile(p) {
@@ -73,17 +88,26 @@ func scanDir(d base.FilePath) (model.Tutorial, error) {
 			if err == nil {
 				items = append(items, l)
 			}
-		} else if isDesirableDir(p) {
+			continue
+		}
+		if isDesirableDir(p) {
 			c, err := scanDir(p)
 			if err == nil {
 				items = append(items, c)
+			}
+			continue
+		}
+		if isSortFile(p) {
+			contents, err := p.Read()
+			if err == nil {
+				sortRules = strings.Split(contents, "\n")
 			}
 		}
 	}
 	if len(items) == 0 {
 		return nil, errors.New("no content in directory " + string(d))
 	}
-	return model.NewCourse(d, items), nil
+	return model.NewCourse(d, reorder(items, sortRules)), nil
 }
 
 func scanFile(n base.FilePath) (model.Tutorial, error) {
@@ -120,7 +144,10 @@ func shiftToTop(x []model.Tutorial, top string) []model.Tutorial {
 }
 
 // reorder tutorial array in some fashion
-func reorder(x []model.Tutorial) []model.Tutorial {
+func reorder(x []model.Tutorial, sortRules []string) []model.Tutorial {
+	for i := len(sortRules) - 1; i >= 0; i-- {
+		x = shiftToTop(x, sortRules[i])
+	}
 	return shiftToTop(x, "README")
 }
 
@@ -209,7 +236,7 @@ func loadTutorialFromPath(name string, path base.FilePath) (model.Tutorial, erro
 	if err != nil {
 		return BadLoad(path), err
 	}
-	return model.NewTopCourse(name, path, reorder(c.Children())), nil
+	return model.NewTopCourse(name, path, c.Children()), nil
 }
 
 func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, error) {
@@ -220,17 +247,20 @@ func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, 
 			if err == nil {
 				items = append(items, l)
 			}
-		} else if isDesirableDir(f) {
+			continue
+		}
+		if isDesirableDir(f) {
 			c, err := scanDir(f)
 			if err == nil {
 				items = append(items, c)
 			}
+			continue
 		}
 	}
 	if len(items) == 0 {
 		return BadLoad(paths[0]), errors.New("nothing useful found in paths")
 	}
-	return model.NewTopCourse(name, base.FilePath(name), reorder(items)), nil
+	return model.NewTopCourse(name, base.FilePath(name), items), nil
 }
 
 func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
