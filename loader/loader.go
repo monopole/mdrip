@@ -31,7 +31,7 @@ func isSortFile(n base.FilePath) bool {
 	if !s.Mode().IsRegular() {
 		return false
 	}
-	return filepath.Base(s.Name()) == "SORT.txt"
+	return filepath.Base(s.Name()) == "SORT_MD.txt"
 }
 
 func isDesirableFile(n base.FilePath) bool {
