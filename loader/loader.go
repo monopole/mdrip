@@ -20,7 +20,7 @@ const (
 	badLeadingChar = "~.#"
 )
 
-func isSortFile(n base.FilePath) bool {
+func isOrderFile(n base.FilePath) bool {
 	s, err := os.Stat(string(n))
 	if err != nil {
 		return false
@@ -31,7 +31,7 @@ func isSortFile(n base.FilePath) bool {
 	if !s.Mode().IsRegular() {
 		return false
 	}
-	return filepath.Base(s.Name()) == "SORT_MD.txt"
+	return filepath.Base(s.Name()) == "README_ORDER.txt"
 }
 
 func isDesirableFile(n base.FilePath) bool {
@@ -80,7 +80,7 @@ func scanDir(d base.FilePath) (model.Tutorial, error) {
 		return BadLoad(d), err
 	}
 	var items = []model.Tutorial{}
-	var sortRules = []string{}
+	var ordering = []string{}
 	for _, f := range files {
 		p := d.Join(f)
 		if isDesirableFile(p) {
@@ -97,17 +97,17 @@ func scanDir(d base.FilePath) (model.Tutorial, error) {
 			}
 			continue
 		}
-		if isSortFile(p) {
+		if isOrderFile(p) {
 			contents, err := p.Read()
 			if err == nil {
-				sortRules = strings.Split(contents, "\n")
+				ordering = strings.Split(contents, "\n")
 			}
 		}
 	}
 	if len(items) == 0 {
 		return nil, errors.New("no content in directory " + string(d))
 	}
-	return model.NewCourse(d, reorder(items, sortRules)), nil
+	return model.NewCourse(d, reorder(items, ordering)), nil
 }
 
 func scanFile(n base.FilePath) (model.Tutorial, error) {
@@ -144,9 +144,9 @@ func shiftToTop(x []model.Tutorial, top string) []model.Tutorial {
 }
 
 // reorder tutorial array in some fashion
-func reorder(x []model.Tutorial, sortRules []string) []model.Tutorial {
-	for i := len(sortRules) - 1; i >= 0; i-- {
-		x = shiftToTop(x, sortRules[i])
+func reorder(x []model.Tutorial, ordering []string) []model.Tutorial {
+	for i := len(ordering) - 1; i >= 0; i-- {
+		x = shiftToTop(x, ordering[i])
 	}
 	return shiftToTop(x, "README")
 }
