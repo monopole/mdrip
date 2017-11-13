@@ -233,7 +233,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 
 	app := webapp.NewWebApp(
 		sessId, r.Host,
-		ws.tutorial, getLessonIndex(ws.tutorial, r.URL.Path))
+		ws.tutorial, getCoursePath(ws.tutorial, r.URL.Path))
 	ws.didFirstRender = true
 
 	if err := app.Render(w); err != nil {
@@ -242,13 +242,13 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getLessonIndex(tut model.Tutorial, path string) int {
+func getCoursePath(tut model.Tutorial, path string) []int {
 	v := newLessonFinder()
 	tut.Accept(v)
 	if len(path) > 0 && path[0] == '/' {
-		return v.getLessonIndex(path[1:])
+		return v.getIndices(path[1:])
 	}
-	return v.getLessonIndex(path)
+	return v.getIndices(path)
 }
 
 func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {

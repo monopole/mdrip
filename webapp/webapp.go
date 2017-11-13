@@ -22,7 +22,7 @@ type WebApp struct {
 	host          string
 	tut           model.Tutorial
 	tmpl          *template.Template
-	initialLesson int
+	initialPath   []int
 }
 
 func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
@@ -55,7 +55,18 @@ const (
 )
 
 func (wa *WebApp) TransitionSpeed() string   { return "0.4s" }
-func (wa *WebApp) InitialLesson() int        { return wa.initialLesson }
+func (wa *WebApp) InitialLesson() int {
+	if len(wa.initialPath) == 0 {
+		return 0
+	}
+	return wa.initialPath[len(wa.initialPath)-1]
+}
+func (wa *WebApp) CoursePath() []int {
+	if len(wa.initialPath) == 0 {
+		return []int{}
+	}
+	return wa.initialPath[:len(wa.initialPath)-1]
+}
 func (wa *WebApp) LayMainWidth() int         { return 950 }
 func (wa *WebApp) LayNavWidth() int          { return 250 }
 func (wa *WebApp) LayLessonWidth() int       { return wa.LayMainWidth() - wa.LayNavWidth() }
@@ -78,7 +89,7 @@ func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
 
-func NewWebApp(sessId TypeSessId, host string, tut model.Tutorial, n int) *WebApp {
+func NewWebApp(sessId TypeSessId, host string, tut model.Tutorial, n []int) *WebApp {
 	return &WebApp{sessId, host, tut, makeParsedTemplate(tut), n}
 }
 
@@ -487,11 +498,14 @@ function assureActiveLesson(index) {
 }
 function onLoad() {
   if ({{.LessonCount}} > 1) {
-    assureLeftNavOpen()
+    assureLeftNavOpen();
   } else {
-    assureLeftNavClosed()
+    assureLeftNavClosed();
   }
-  assureActiveLesson({{.InitialLesson}})
+  assureActiveLesson({{.InitialLesson}});
+  {{range $i, $c := .CoursePath}}
+  toggleNC({{$c}});
+  {{end}}
 }
 function getDataId(el) {
   return el.getAttribute("data-id");
