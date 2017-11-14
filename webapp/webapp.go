@@ -15,14 +15,19 @@ import (
 type TypeSessId string
 
 // WebApp presents a tutorial to a web browser.
-// Not using react, angular2, polymer, etc. because
-// want to keep it simple and shippable as a single binary.
+// Not a complex app, so eschewing react, angular2, polymer, etc.
 type WebApp struct {
-	sessId        TypeSessId
-	host          string
-	tut           model.Tutorial
-	tmpl          *template.Template
-	initialPath   []int
+	sessId     TypeSessId
+	host       string
+	tut        model.Tutorial
+	tmpl       *template.Template
+	lessonPath []int
+}
+
+func NewWebApp(
+	sessId TypeSessId, host string,
+	tut model.Tutorial, lp []int) *WebApp {
+	return &WebApp{sessId, host, tut, makeParsedTemplate(tut), lp}
 }
 
 func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
@@ -54,18 +59,38 @@ const (
 	maxAppNameLen = len("gh:kubernetes/kubernetes.github.io")
 )
 
-func (wa *WebApp) TransitionSpeed() string   { return "0.4s" }
+func (wa *WebApp) TransitionSpeed() string { return "0.4s" }
+
+// Return the last element or zero.
 func (wa *WebApp) InitialLesson() int {
-	if len(wa.initialPath) == 0 {
+	if len(wa.lessonPath) == 0 {
 		return 0
 	}
-	return wa.initialPath[len(wa.initialPath)-1]
+	return wa.lessonPath[len(wa.lessonPath)-1]
 }
+
+// Return everything BUT the last element
+// i.e. omit the file, just return the directory path.
 func (wa *WebApp) CoursePath() []int {
-	if len(wa.initialPath) == 0 {
+	if len(wa.lessonPath) == 0 {
 		return []int{}
 	}
-	return wa.initialPath[:len(wa.initialPath)-1]
+	return wa.lessonPath[:len(wa.lessonPath)-1]
+}
+
+// Emit a javascript 2D array
+// with length equal to the number of lessons.
+// each entry should contain an array of course indices
+// that should be active when the lesson is actice.
+func (wa *WebApp) LessonPaths() []int {
+	return []int{}
+//	var lessonPaths = [
+//		[],
+//		[0], [0], [0], [0],
+//		[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1],
+//		[], []
+//	];
+//
 }
 func (wa *WebApp) LayMainWidth() int         { return 950 }
 func (wa *WebApp) LayNavWidth() int          { return 250 }
@@ -87,10 +112,6 @@ func (wa *WebApp) LessonCount() int {
 
 func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
-}
-
-func NewWebApp(sessId TypeSessId, host string, tut model.Tutorial, n []int) *WebApp {
-	return &WebApp{sessId, host, tut, makeParsedTemplate(tut), n}
 }
 
 func makeParsedTemplate(tut model.Tutorial) *template.Template {
@@ -408,6 +429,33 @@ pre.codeblock {
 `
 
 const headerJs = `
+var lessonPaths = [
+  [],
+  [0], [0], [0], [0],
+  [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1],
+  [], []
+];
+var lessonPaths = {{.LessonPaths}}
+function goNext() {
+  assureActiveLesson((activeLesson + 1) % lessonPaths.length)
+}
+function goPrev() {
+  if (activeLesson < 1) {
+    assureActiveLesson(lessonPaths.length - 1)
+    return
+  }
+  assureActiveLesson(activeLesson - 1)
+}
+function assureActivePath(lesson) {
+  if (lesson < 0 || lesson > lessonPaths.length) {
+    console.log("lesson out of lessonsPaths range " + lesson.toString())
+    return
+  }
+  courses = lessonPaths[lesson]
+  for (i = 0; i < courses.length; i++) {
+    assureActiveCourse(courses[i]);
+  }
+}
 function getElByClass(name) {
   var elements = document.getElementsByClassName(name);
   return elements[0];
@@ -450,7 +498,28 @@ function toggleLeftNav(e) {
 function toggleByClass(name) {
   dToggle(getElByClass(name))
 }
+function assureActiveCourse(id) {
+  console.log("Activating course " + id.toString());
+  el = document.getElementById('NC' + id.toString())
+  if (el == null) {
+    console.log("unable to activate course " + id.toString());
+    return;
+  }
+  el.style.display = 'block'
+}
+function assureNoActiveCourse() {
+  console.log("Activating no active courses.")
+  for (id = 0; id < 100; id++) {
+    el = document.getElementById('NC' + id.toString())
+    if (el == null) {
+      return;
+    }
+    console.log("Deactivating course " + id.toString())
+    el.style.display = 'none'
+  }
+}
 function toggleNC(index) {
+  console.log("toggleNC called with index = " + index.toString())
   dToggle(document.getElementById('NC' + index.toString()))
 }
 function dToggle(e) {
@@ -476,17 +545,21 @@ function assureActiveLesson(index) {
   if (activeLesson == index) {
     return
   }
-  if (activeLesson != -1) {
+  if (activeLesson > -1) {
     assureNoActiveLesson()
+    assureNoActiveCourse()
   }
+  assureActivePath(index)
   // show lesson body.
   var e = document.getElementById('BL' + index.toString())
   e.style.display = 'block'
 
-  // show lesson nav.
+  // highlight the lesson in the nav.
   var e = document.getElementById('NL' + index.toString())
   e.className = 'navLessonTitleOn'
 
+  // display the path to the lesson on the page and
+  // in the browser's navigation bar
   path = e.getAttribute('data-path')
   getElByClass('activeLessonName').innerHTML = path
   activeLesson = index
@@ -503,9 +576,6 @@ function onLoad() {
     assureLeftNavClosed();
   }
   assureActiveLesson({{.InitialLesson}});
-  {{range $i, $c := .CoursePath}}
-  toggleNC({{$c}});
-  {{end}}
 }
 function getDataId(el) {
   return el.getAttribute("data-id");

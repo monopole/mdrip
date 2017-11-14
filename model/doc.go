@@ -7,13 +7,15 @@ package model
 //
 // Example: tutorial on Benelux.
 //
-// The first lesson is an overview of Benelux, with sibling (not child)
+// The first lesson could be an overview of Benelux, with sibling (not child)
 // courses covering Belgium, Netherlands, and Luxembourg - as one would begin
-// a textbook with an introduction.  Said courses may hold lessons on
-// provinces, or sub-courses regional histories, cities etc.  A user could drop
-// in anywhere, but content should be arranged such that a depth-first
-// traversal of the hierarchy is a meaningful path through all content - i.e.
-// that's how one would read the entire book.
+// a textbook with an introduction.
+//
+// Said courses may hold lessons on provinces, or sub-courses regional
+// histories, cities etc.  A user could drop in anywhere, but content should
+// be arranged such that a depth-first traversal of the hierarchy is a
+// meaningful path through all content - i.e. one ought to be able to read
+// it as a book.
 //
 // Associated content REST addresses reflect file system hierarchy, e.g.
 //
@@ -62,45 +64,35 @@ package model
 // This scheme maps to this filesystem layout:
 //
 //     benelux/
-//       01_history.md
-//       02_economy.md
+//       history.md
+//       economy.md
 //       README.md
-//       03_belgium/
-//         01_tintin.md
-//         02_beer.md
-//         03_antwerp/
+//       belgium/
+//         tintin.md
+//         beer.md
+//         antwerp/
 //           README.md
-//           01_diamonds.md
+//           diamonds.md
 //           ...
-//         04_east-flanders.md
-//         05_brabant.md
+//         east-flanders.md
+//         brabant.md
 //         ...
-//       04_netherlands/
+//       netherlands/
 //         README.md
-//         01_drenthe.md
-//         02_flevoland.md
+//         drenthe.md
+//         flevoland.md
 //       ...
 //
-// Where, say README is converted to "overview"
-// by a file loader, and likewise leading numbers in file names are dropped
-// - though the implied presentation order is preserved in the nav so one
-// can retain a lesson ordering.
+// Where, say README is converted to "overview" by a file loader, and likewise
+// the ordering of files and directories in the tutorials is presented in, say,
+// a file called README_ORDER.txt so that 'history' precedes 'economy', etc.
 //
-// The proposed command line to read and serve content is
+// Useful data structures would facilitate mapping a string path, e.g.
+//   belgium/antwerp/diamonds
+// to some list of div ids to know what items to show/hide when first
+// loading a page.
 //
-//      mdrip --mode demo /foo/benelux
-// or
-//      mdrip --mode demo /foo/benelux/README.md
-//
-// The arg names either a directory or a file.
-//
-// If the arg is a directory name, the tree below it is read in an attempt
-// to build REST-fully addressable content and UX.  The names shown in the UX
-// could be raw file names or could be processed a bit, e.g. underscores or
-// hyphens become spaces, the ordering of the content in the UX could be
-// controlled by omittable numerical prefixes on file names, etc.
-// Errors in tree structure dealt with reasonably or cause immediate server
-// failure.
-//
-// If only one file is read, then only that content is shown -
-// no left nav needed.
+// Another handy structure would facilitate a prev/next navigation through
+// the lessons.  The lessons are all leaves of the tree.  Moving from lesson
+// n to lesson n+1 means changing the main content and changing what is shown
+// or highlighted in the left nav.

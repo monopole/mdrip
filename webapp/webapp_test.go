@@ -35,7 +35,7 @@ var orderedPageParts = []string{
 
 var waTests = []waTest{
 	{"emptyTutorial",
-		NewWebApp("", "", emptyLesson, 0),
+		NewWebApp("", "", emptyLesson, []int{}),
 		orderedPageParts},
 }
 
