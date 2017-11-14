@@ -32,8 +32,6 @@ func makeCourse(n string, t ...model.Tutorial) *model.Course {
 	return model.NewCourse(base.FilePath(n), t)
 }
 
-// var hoser = [][]int{ {0}, {0} }
-
 var tut1 = makeLesson("L0")
 var tut2 = makeCourse(
 	"C0",
@@ -84,21 +82,6 @@ var pfTests1 = []pfTest1{
 			{"C0/L6/apple", []int{0}}}},
 }
 
-var pfTests2 = []pfTest2{
-	{"bareLesson2",
-		tut1,
-		[][]int{},
-	},
-	{"smallCourse2",
-		tut2,
-		[][]int{{0}, {0}},
-	},
-	{"biggerCourse2",
-		tut3,
-		[][]int{{0}, {0, 1}, {0, 1}, {0}, {0, 2}, {0, 2}, {0}},
-	},
-}
-
 func slicesEqual(a, b []int) bool {
 	if len(a) != len(b) {
 		return false
@@ -111,7 +94,7 @@ func slicesEqual(a, b []int) bool {
 	return true
 }
 
-func xTestLessonFinder1(t *testing.T) {
+func TestLessonFinder1(t *testing.T) {
 	for _, test := range pfTests1 {
 		v := newLessonFinder()
 		test.input.Accept(v)
@@ -123,13 +106,29 @@ func xTestLessonFinder1(t *testing.T) {
 		}
 	}
 }
+
+var pfTests2 = []pfTest2{
+	{"bareLesson2",
+		tut1,
+		[][]int{{0}}, /* wrong */
+	},
+	{"smallCourse2",
+		tut2,
+		[][]int{{0}, {0}},
+	},
+	{"biggerCourse2",
+		tut3,
+		[][]int{{0}, {0, 1}, {0, 1}, {0}, {0, 2}, {0, 2}, {0}},
+	},
+}
+
 func xTestLessonFinder2(t *testing.T) {
 	for _, test := range pfTests2 {
 		v := newLessonFinder()
 		test.input.Accept(v)
 		result := v.getCoursePaths()
 		if len(result) != len(test.results) {
-			t.Errorf("%s length test : %d != %d\n",
+			t.Errorf("%s length test : got %d, want %d\n",
 				test.name, len(result), len(test.results))
 		} else {
 			for i := range test.results {

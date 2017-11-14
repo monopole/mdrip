@@ -24,7 +24,8 @@ type lessonFinder struct {
 func newLessonFinder() *lessonFinder {
 	return &lessonFinder{
 		make(map[base.FilePath][]int),
-		0, -1, []string{}, []int{}, [][]int{{}}}
+		0, -1, []string{},
+		[]int{}, [][]int{}}
 }
 
 func (v *lessonFinder) getCoursePaths() [][]int {
@@ -63,8 +64,12 @@ func (v *lessonFinder) addMapEntry() {
 func (v *lessonFinder) addIndexEntry() {
 	newSlice := make([]int, len(v.coursePathIndex))
 	copy(newSlice, v.coursePathIndex)
-	v.superIndex[v.nextLesson] = newSlice
+	if v.nextLesson != len(v.superIndex) {
+		panic(fmt.Sprintf("Ordering problem: nextLesson =%d, len(superIndex) = %d",
+			v.nextLesson, len(v.superIndex)))
+	}
 	glog.V(2).Infof("  adding lesson entry %5d  %v\n", v.nextLesson, v.nextLesson, newSlice)
+	v.superIndex = append(v.superIndex, newSlice)
 }
 
 func (v *lessonFinder) VisitBlockTut(x *model.BlockTut) {
