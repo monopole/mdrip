@@ -94,7 +94,7 @@ func slicesEqual(a, b []int) bool {
 	return true
 }
 
-func TestLessonFinder1(t *testing.T) {
+func TestGetLessonPath(t *testing.T) {
 	for _, test := range pfTests1 {
 		v := newLessonFinder()
 		test.input.Accept(v)
@@ -110,7 +110,7 @@ func TestLessonFinder1(t *testing.T) {
 var pfTests2 = []pfTest2{
 	{"bareLesson2",
 		tut1,
-		[][]int{{0}}, /* wrong */
+		[][]int{{}}, /* wrong */
 	},
 	{"smallCourse2",
 		tut2,
@@ -122,7 +122,7 @@ var pfTests2 = []pfTest2{
 	},
 }
 
-func xTestLessonFinder2(t *testing.T) {
+func TestGetCoursePaths(t *testing.T) {
 	for _, test := range pfTests2 {
 		v := newLessonFinder()
 		test.input.Accept(v)

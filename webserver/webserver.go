@@ -231,24 +231,24 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app := webapp.NewWebApp(
-		sessId, r.Host,
-		ws.tutorial, getLessonPath(ws.tutorial, r.URL.Path))
+	app := makeWebApp(ws.tutorial, sessId, r.Host, r.URL.Path)
 	ws.didFirstRender = true
-
 	if err := app.Render(w); err != nil {
 		write500(w, err)
 		return
 	}
 }
 
-func getLessonPath(tut model.Tutorial, path string) []int {
+func makeWebApp(tut model.Tutorial, sessId webapp.TypeSessId, host, path string) *webapp.WebApp {
 	v := newLessonFinder()
 	tut.Accept(v)
+	var lessonPath []int
 	if len(path) > 0 && path[0] == '/' {
-		return v.getLessonPath(path[1:])
+		lessonPath = v.getLessonPath(path[1:])
+	} else {
+		lessonPath = v.getLessonPath(path)
 	}
-	return v.getLessonPath(path)
+	return webapp.NewWebApp(sessId, host, tut, lessonPath, v.getCoursePaths())
 }
 
 func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {

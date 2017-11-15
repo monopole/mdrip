@@ -22,12 +22,13 @@ type WebApp struct {
 	tut        model.Tutorial
 	tmpl       *template.Template
 	lessonPath []int
+	coursePaths [][]int
 }
 
 func NewWebApp(
 	sessId TypeSessId, host string,
-	tut model.Tutorial, lp []int) *WebApp {
-	return &WebApp{sessId, host, tut, makeParsedTemplate(tut), lp}
+	tut model.Tutorial, lp []int, cp [][]int) *WebApp {
+	return &WebApp{sessId, host, tut, makeParsedTemplate(tut), lp, cp}
 }
 
 func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
@@ -71,7 +72,7 @@ func (wa *WebApp) InitialLesson() int {
 
 // Return everything BUT the last element
 // i.e. omit the file, just return the directory path.
-func (wa *WebApp) CoursePath() []int {
+func (wa *WebApp) xCoursePath() []int {
 	if len(wa.lessonPath) == 0 {
 		return []int{}
 	}
@@ -82,15 +83,15 @@ func (wa *WebApp) CoursePath() []int {
 // with length equal to the number of lessons.
 // each entry should contain an array of course indices
 // that should be active when the lesson is actice.
-func (wa *WebApp) LessonPaths() []int {
-	return []int{}
-//	var lessonPaths = [
-//		[],
-//		[0], [0], [0], [0],
-//		[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1],
-//		[], []
-//	];
-//
+func (wa *WebApp) CoursePaths() [][]int {
+	return wa.coursePaths
+	//	var lessonPaths = [
+	//		[],
+	//		[0], [0], [0], [0],
+	//		[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1],
+	//		[], []
+	//	];
+	//
 }
 func (wa *WebApp) LayMainWidth() int         { return 950 }
 func (wa *WebApp) LayNavWidth() int          { return 250 }
@@ -429,29 +430,23 @@ pre.codeblock {
 `
 
 const headerJs = `
-var lessonPaths = [
-  [],
-  [0], [0], [0], [0],
-  [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1],
-  [], []
-];
-var lessonPaths = {{.LessonPaths}}
+var coursePaths = {{.CoursePaths}}
 function goNext() {
-  assureActiveLesson((activeLesson + 1) % lessonPaths.length)
+  assureActiveLesson((activeLesson + 1) % coursePaths.length)
 }
 function goPrev() {
   if (activeLesson < 1) {
-    assureActiveLesson(lessonPaths.length - 1)
+    assureActiveLesson(coursePaths.length - 1)
     return
   }
   assureActiveLesson(activeLesson - 1)
 }
 function assureActivePath(lesson) {
-  if (lesson < 0 || lesson > lessonPaths.length) {
+  if (lesson < 0 || lesson > coursePaths.length) {
     console.log("lesson out of lessonsPaths range " + lesson.toString())
     return
   }
-  courses = lessonPaths[lesson]
+  courses = coursePaths[lesson]
   for (i = 0; i < courses.length; i++) {
     assureActiveCourse(courses[i]);
   }
@@ -499,27 +494,22 @@ function toggleByClass(name) {
   dToggle(getElByClass(name))
 }
 function assureActiveCourse(id) {
-  console.log("Activating course " + id.toString());
   el = document.getElementById('NC' + id.toString())
   if (el == null) {
-    console.log("unable to activate course " + id.toString());
     return;
   }
   el.style.display = 'block'
 }
 function assureNoActiveCourse() {
-  console.log("Activating no active courses.")
   for (id = 0; id < 100; id++) {
     el = document.getElementById('NC' + id.toString())
     if (el == null) {
       return;
     }
-    console.log("Deactivating course " + id.toString())
     el.style.display = 'none'
   }
 }
 function toggleNC(index) {
-  console.log("toggleNC called with index = " + index.toString())
   dToggle(document.getElementById('NC' + index.toString()))
 }
 function dToggle(e) {

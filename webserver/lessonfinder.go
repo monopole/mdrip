@@ -9,37 +9,46 @@ import (
 	"github.com/monopole/mdrip/model"
 )
 
+// lessonFinder traverses a tutorial tree to build quick
+// data structures (a map and an array) that can answer
+// common questions without the need for more traversals.
 type lessonFinder struct {
-	coursePathMap   map[base.FilePath][]int
-	nextLesson      int
-	courseCounter   int
-	name            []string
-	coursePathIndex []int
-	superIndex      [][]int
+	nextLesson            int
+	courseCounter         int
+	namePathAccumulator   []string
+	coursePathAccumulator []int
+	coursePathMap         map[base.FilePath][]int
+	coursePathIndex       [][]int
 }
 
-// newLessonFinder builds a path -> lesson index map.
-// For full paths to files this is simple, but for
-// paths to directories one always wants the first lesson.
 func newLessonFinder() *lessonFinder {
 	return &lessonFinder{
-		make(map[base.FilePath][]int),
 		0, -1, []string{},
-		[]int{}, [][]int{}}
+		[]int{}, make(map[base.FilePath][]int), [][]int{}}
 }
 
-func (v *lessonFinder) getCoursePaths() [][]int {
-	return v.superIndex
-}
-
-// Returns ordered list of course IDs, ending with the lesson ID.
-// Represents a directory path followed by a filename.
+// getLessonPath returns ordered list of course IDs,
+// ending with the lesson ID.  The argument should be
+// a path, e.g. benelux/belgium/beer, the result is
+// something like [0, 2, 6], where benelux is course #0,
+// belgium is course #2 inside benelux, and beer is lesson
+// #6 inside belgium.
 func (v *lessonFinder) getLessonPath(path string) []int {
 	r := v.coursePathMap[base.FilePath(path)]
 	if r == nil {
 		return []int{0}
 	}
 	return r
+}
+
+// getCoursePaths returns a array of arrays.
+// The index is a lesson ID, and the entry at that
+// index is an array of course IDs above the lesson.
+// In the example provided for getLessonPath, the
+// value at index 6 would be [0, 2], i.e. the beer
+// lesson is found under benelux/belgium.
+func (v *lessonFinder) getCoursePaths() [][]int {
+	return v.coursePathIndex
 }
 
 // For debugging.
@@ -53,54 +62,53 @@ func (v *lessonFinder) print() {
 }
 
 func (v *lessonFinder) addMapEntry() {
-	newSlice := make([]int, len(v.coursePathIndex), len(v.coursePathIndex)+1)
-	copy(newSlice, v.coursePathIndex)
-	x := append(newSlice, v.nextLesson)
-	k := base.FilePath(strings.Join(v.name, "/"))
-	glog.V(2).Infof("  adding entry %20s %d %v\n", string(k), v.nextLesson, x)
-	v.coursePathMap[k] = x
+	newSlice := make([]int, len(v.coursePathAccumulator), len(v.coursePathAccumulator)+1)
+	copy(newSlice, v.coursePathAccumulator)
+	v.coursePathMap[base.FilePath(strings.Join(v.namePathAccumulator, "/"))] =
+		append(newSlice, v.nextLesson)
 }
 
 func (v *lessonFinder) addIndexEntry() {
-	newSlice := make([]int, len(v.coursePathIndex))
-	copy(newSlice, v.coursePathIndex)
-	if v.nextLesson != len(v.superIndex) {
-		panic(fmt.Sprintf("Ordering problem: nextLesson =%d, len(superIndex) = %d",
-			v.nextLesson, len(v.superIndex)))
+	newSlice := make([]int, len(v.coursePathAccumulator))
+	copy(newSlice, v.coursePathAccumulator)
+	if v.nextLesson != len(v.coursePathIndex) {
+		panic(
+			fmt.Sprintf(
+				"Ordering problem: nextLesson =%d, len(coursePathIndex) = %d",
+				v.nextLesson, len(v.coursePathIndex)))
 	}
-	glog.V(2).Infof("  adding lesson entry %5d  %v\n", v.nextLesson, v.nextLesson, newSlice)
-	v.superIndex = append(v.superIndex, newSlice)
+	v.coursePathIndex = append(v.coursePathIndex, newSlice)
 }
 
 func (v *lessonFinder) VisitBlockTut(x *model.BlockTut) {
-	v.name = append(v.name, x.Name())
+	v.namePathAccumulator = append(v.namePathAccumulator, x.Name())
 	v.addMapEntry()
-	v.name = v.name[:len(v.name)-1]
+	v.namePathAccumulator = v.namePathAccumulator[:len(v.namePathAccumulator)-1]
 }
 
 func (v *lessonFinder) VisitLessonTut(x *model.LessonTut) {
 	glog.V(2).Infof("visiting lesson %s \n", x.Name())
 	v.addIndexEntry()
-	v.name = append(v.name, x.Name())
+	v.namePathAccumulator = append(v.namePathAccumulator, x.Name())
 	v.addMapEntry()
 	for _, c := range x.Children() {
 		c.Accept(v)
 	}
-	v.name = v.name[:len(v.name)-1]
+	v.namePathAccumulator = v.namePathAccumulator[:len(v.namePathAccumulator)-1]
 	v.nextLesson++
 }
 
 func (v *lessonFinder) VisitCourse(x *model.Course) {
 	v.courseCounter++
 	glog.V(2).Infof("visiting course %s \n", x.Name())
-	v.name = append(v.name, x.Name())
-	v.coursePathIndex = append(v.coursePathIndex, v.courseCounter)
+	v.namePathAccumulator = append(v.namePathAccumulator, x.Name())
+	v.coursePathAccumulator = append(v.coursePathAccumulator, v.courseCounter)
 	v.addMapEntry()
 	for _, c := range x.Children() {
 		c.Accept(v)
 	}
-	v.name = v.name[:len(v.name)-1]
-	v.coursePathIndex = v.coursePathIndex[:len(v.coursePathIndex)-1]
+	v.namePathAccumulator = v.namePathAccumulator[:len(v.namePathAccumulator)-1]
+	v.coursePathAccumulator = v.coursePathAccumulator[:len(v.coursePathAccumulator)-1]
 }
 
 func (v *lessonFinder) VisitTopCourse(x *model.TopCourse) {
