@@ -87,8 +87,8 @@ func (wa *WebApp) CoursePaths() [][]int {
 	return wa.coursePaths
 }
 
-func (wa *WebApp) LayBodyWideWidth() int   { return 1400 }
-func (wa *WebApp) LayBodyMediumWidth() int { return 900 }
+func (wa *WebApp) LayBodyWideWidth() int   { return 1200 }
+func (wa *WebApp) LayBodyMediumWidth() int { return 800 }
 func (wa *WebApp) LayMinHeaderWidth() int  { return 400 }
 func (wa *WebApp) LayNavBoxWidth() int     { return 210 }
 func (wa *WebApp) LayHeaderHeight() int    { return 120 }
@@ -166,7 +166,7 @@ func makeAppTemplate(htmlNavActual string) string {
 
   <div class='navRightBox'>
     <nav class='navActual'>
-      <p> T O C </p> <p> COMING </p> <p> HERE </p>
+      <!-- <p> T O C </p> <p> COMING </p> <p> HERE </p> -->
     </nav>
   </div>
 
@@ -272,7 +272,8 @@ href="https://github.com/monopole/mdrip">mdrip</a></code>
 (a <code>tmux</code> websocket adapter):
 <pre>
   TMP_DIR=$(mktemp -d)
-  GOPATH=$TMP_DIR go install github.com/monopole/mdrip
+  mkdir -p $TUT_DIR/bin
+  GOBIN=$TMP_DIR/bin go install github.com/monopole/mdrip
 </pre>
 </li>
 <li>Run tmux:
@@ -344,7 +345,7 @@ header {
   box-shadow: 2px 2px 2px 0 rgba(0,0,0,.2), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
 }
 .navRightBox {
-  opacity: 0.6;
+  opacity: 0.7;
 }
 .navLeftBox {
 }
@@ -459,8 +460,10 @@ title {
 
 .helpBox {
   position: fixed;
-  top: 151px;
-	width: inherit;
+  top: {{.LayHeaderHeight}}px;
+  left: {{.LayNavBoxWidth}}px;
+  right: {{.LayNavBoxWidth}}px;
+	/* width: inherit; */
 	z-index: 3;
   background: #00838f;
   color: white;
