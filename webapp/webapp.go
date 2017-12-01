@@ -271,9 +271,7 @@ href="https://golang.org/doc/install">Go</a></code>
 href="https://github.com/monopole/mdrip">mdrip</a></code>
 (a <code>tmux</code> websocket adapter):
 <pre>
-  TMP_DIR=$(mktemp -d)
-  mkdir -p $TUT_DIR/bin
-  GOBIN=$TMP_DIR/bin go install github.com/monopole/mdrip
+  GOBIN=$TMPDIR go install github.com/monopole/mdrip
 </pre>
 </li>
 <li>Run tmux:
@@ -283,11 +281,12 @@ href="https://github.com/monopole/mdrip">mdrip</a></code>
 </li>
 <li>In some non-tmux shell, run this service:
 <pre>
-  $TMP_DIR/bin/mdrip \
+  host=ws://{{.Host}}
+  $TMPDIR/mdrip \
       --alsologtostderr --v 0 \
       --stderrthreshold INFO \
       --mode tmux \
-      ws://{{.Host}}/_/ws?id={{.SessId}}
+      ${host}/_/ws?id={{.SessId}}
 </pre>
 </li>
 </ul>
@@ -306,7 +305,8 @@ body {
   margin: 0;
   background-color: darkgray;
   /* font-family: "Roboto", sans-serif; */
-  font-family: "Veranda", Veranda, sans-serif;
+  /* font-family: "Veranda", Veranda, sans-serif; */
+  font-family: Verdana, Geneva, sans-serif;
   position: relative;
   font-size: 14pt;
   line-height: 1.4;
@@ -328,7 +328,7 @@ header {
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
-  box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
+  box-shadow: 0 2px 2px 2px rgba(0,0,0,.4);
 }
 
 .navLeftBox, .navRightBox {
@@ -342,12 +342,16 @@ header {
   min-width: 0px;  /* initially hideNav */
   transition: width 0.2s, min-width 0.2s;
   /* offset-x | offset-y | blur-radius | spread-radius | color */
-  box-shadow: 2px 2px 2px 0 rgba(0,0,0,.2), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
+  /* box-shadow: 2px 2px 2px 0 rgba(0,0,0,.2), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12); */
 }
 .navRightBox {
   opacity: 0.7;
+  /* shadow on bottom, top and left */
+  box-shadow: 0 2px 2px 2px rgba(0,0,0,.2), -2px 0px 2px 2px rgba(0,0,0,.2);
 }
 .navLeftBox {
+  /* shadow on bottom, top and right */
+  box-shadow: 0 2px 2px 2px rgba(0,0,0,.2), 2px 0px 2px 2px rgba(0,0,0,.2);
 }
 .navActual {
   padding-left: 1em;
@@ -436,7 +440,8 @@ footer {
 
 title {
   font-size: larger;
-  color: white;
+  font-weight: bold;
+  color: #ff6e40;;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -445,7 +450,8 @@ title {
 }
 
 .activeLessonName {
-  color: white;
+  color: #ff6e40;;
+  font-weight: bold;
 }
 
 .lessonNavRow {
@@ -463,13 +469,12 @@ title {
   top: {{.LayHeaderHeight}}px;
   left: {{.LayNavBoxWidth}}px;
   right: {{.LayNavBoxWidth}}px;
-	/* width: inherit; */
+  height: 0px;  /* initially hideHelp */
 	z-index: 3;
   background: #00838f;
   color: white;
   transition: height 0.2s;
-  overflow: hidden;
-  height: 0px;  /* initially hideHelp */
+  overflow: auto;
 }
 
 .helpActual {
@@ -516,7 +521,6 @@ title {
   width: 100%;
   cursor: pointer;
   display: inline-block;
-  font-size: smaller;
 }
 .lessonPrevTitle {
   text-align: right;
@@ -594,9 +598,10 @@ pre.codeblockBody {
   cursor: pointer;
 }
 .burgBar1, .burgBar2, .burgBar3 {
+  background-color: #ff6e40;
   width: 14px;
   height: 2px;
-  background-color: #333;
+  /* background-color: #333; */
   /* top rig bot lef */
   margin: 2px 0 2px 2px;
   transition: 0.2s;
@@ -623,6 +628,7 @@ function getDataId(el) {
 }
 
 var nav = new function() {
+  var theHelpBox = null;
   var theBurger = null;
   var theLeftBox = null;
   var theRightBox = null;
@@ -708,14 +714,21 @@ var nav = new function() {
   var handleWidthChange = function(discard) {
     if (mqWide.matches) {
       theBody.width = bodyWideWidth;
+      theHelpBox.left = navBoxWidth;
+      theHelpBox.right =
+        'calc(100vw - ' + bodyWideWidth + ' + ' + navBoxWidth + ' - 12px)';
       showIt = showWide
       hideIt = hideWide
     } else if (mqMedium.matches) {
       theBody.width = '100%';
+      theHelpBox.left = '0px';
+      theHelpBox.right = '0px';
       showIt = showMedium
       hideIt = hideMedium
     } else {
       theBody.width = '100%';
+      theHelpBox.left = '0px';
+      theHelpBox.right = '0px';
       expandCenter();
       showIt = showNarrow
       hideIt = hideNarrow
@@ -735,6 +748,7 @@ var nav = new function() {
   }
   this.initialize = function(showNav) {
     theBurger = getElByClass('navBurger');
+    theHelpBox = getElByClass('helpBox').style;
     theLeftBox = getElByClass('navLeftBox').style;
     theRightBox = getElByClass('navRightBox').style;
     theLeftSpacer = getElByClass('navLeftSpacer').style;
@@ -925,6 +939,15 @@ var lessonMgr = new function() {
     dToggle(getNavCourse(index));
   }
 
+  var smoothScroll = function() {
+    var currentScroll =
+        document.documentElement.scrollTop || document.body.scrollTop;
+    if (currentScroll > 0) {
+      window.requestAnimationFrame(smoothScroll);
+      window.scrollTo(0,currentScroll - (currentScroll/5));
+    }
+  }
+
   this.assureActiveLesson = function(index) {
     if (activeIndex == index) {
       return
@@ -963,6 +986,7 @@ var lessonMgr = new function() {
     } else {
       document.location.href = path;
     }
+    smoothScroll()
   }
 
   this.goNext = function() {
@@ -993,5 +1017,19 @@ function onLoad() {
   ];
   lessonMgr.initialize({{.CoursePaths}});
   lessonMgr.assureActiveLesson({{.InitialLesson}});
+  window.addEventListener('keydown', function (event) {
+    if (event.defaultPrevented) {
+      return;
+    }
+    switch (event.key) {
+      case 'ArrowLeft':
+        lessonMgr.goPrev();
+        break;
+      case 'ArrowRight':
+        lessonMgr.goNext();
+        break;
+      default:
+    }
+  }, true);
 }
 `
