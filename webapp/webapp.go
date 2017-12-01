@@ -60,8 +60,6 @@ const (
 	maxAppNameLen = len("gh:kubernetes/kubernetes.github.io")
 )
 
-func (wa *WebApp) TransitionSpeed() string { return "0.4s" }
-
 // Return the last element or zero.
 func (wa *WebApp) InitialLesson() int {
 	if len(wa.lessonPath) == 0 {
@@ -87,14 +85,27 @@ func (wa *WebApp) CoursePaths() [][]int {
 	return wa.coursePaths
 }
 
-func (wa *WebApp) LayBodyWideWidth() int   { return 1200 }
-func (wa *WebApp) LayBodyMediumWidth() int { return 800 }
-func (wa *WebApp) LayMinHeaderWidth() int  { return 400 }
-func (wa *WebApp) LayNavBoxWidth() int     { return 210 }
-func (wa *WebApp) LayHeaderHeight() int    { return 120 }
-func (wa *WebApp) LayFooterHeight() int    { return 70 }
-func (wa *WebApp) LayNavTopBotPad() int    { return 7 }
-func (wa *WebApp) LayNavLeftPad() int      { return 20 }
+func (wa *WebApp) TransitionSpeed() string          { return "0.3s" }
+func (wa *WebApp) LayBodyWideWidth() int            { return 1200 }
+func (wa *WebApp) LayBodyMediumWidth() int          { return 800 }
+func (wa *WebApp) LayMinHeaderWidth() int           { return 400 }
+func (wa *WebApp) LayNavBoxWidth() int              { return 210 }
+func (wa *WebApp) LayHeaderHeight() int             { return 120 }
+func (wa *WebApp) LayFooterHeight() int             { return 70 }
+func (wa *WebApp) LayNavTopBotPad() int             { return 7 }
+func (wa *WebApp) LayNavLeftPad() int               { return 20 }
+func (wa *WebApp) ColorBackground() string          { return "#f6f6ef" }
+func (wa *WebApp) ColorTitle() string               { return "white" }
+func (wa *WebApp) ColorHeader() string              { return "#00838f" }
+func (wa *WebApp) ColorCodeBlockText() string       { return "#33ff66" }
+func (wa *WebApp) ColorCodeBlockBackground() string { return "black" }
+func (wa *WebApp) ColorNavBackground() string       { return "lightgray" }
+func (wa *WebApp) ColorNavText() string             { return "black" }
+func (wa *WebApp) ColorNavSelected() string         { return wa.ColorBackground() }
+func (wa *WebApp) ColorHover() string               { return "#06e" }
+func (wa *WebApp) ColorControls() string            { return "black" }
+
+//func (wa *WebApp) ColorHeader() string
 
 func (wa *WebApp) LessonCount() int {
 	c := model.NewTutorialLessonCounter()
@@ -153,7 +164,7 @@ func makeAppTemplate(htmlNavActual string) string {
     <div class='navButtonBox'> &nbsp; </div>
   </header>
 
-  <div class='navLeftBox'>
+  <div class='navLeftBox navLeftBoxShadow'>
     <nav class='navActual'>
       ` + htmlNavActual + `
     </nav>
@@ -164,7 +175,7 @@ func makeAppTemplate(htmlNavActual string) string {
     </div>
   </div>
 
-  <div class='navRightBox'>
+  <div class='navRightBox navRightBoxShadow'>
     <nav class='navActual'>
       <!-- <p> T O C </p> <p> COMING </p> <p> HERE </p> -->
     </nav>
@@ -308,7 +319,7 @@ body {
   /* font-family: "Veranda", Veranda, sans-serif; */
   font-family: Verdana, Geneva, sans-serif;
   position: relative;
-  font-size: 14pt;
+  font-size: 12pt;
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   width: 100%;
@@ -322,7 +333,7 @@ header, .headerSpacer {
 header {
   position: fixed;
   top: 0;
-  background: linear-gradient(0deg, #f6f6ef, #00838f);
+  background: linear-gradient(0deg, {{.ColorBackground}}, {{.ColorHeader}});
   display: flex;
   justify-content: space-between;
   flex-direction: row;
@@ -335,21 +346,19 @@ header {
   position: fixed;
   top: calc({{.LayHeaderHeight}}px + 2px);  /* leave room for header drop-shadow */
   height: calc(100vh - ({{.LayFooterHeight}}px + {{.LayHeaderHeight}}px + 4px));
-  background-color: #f6f6ef;
+  background-color: {{.ColorNavBackground}};
+  color: {{.ColorNavText}};
   display: inline-block;
   overflow: hidden;  /* initially hideNav */
   width: 0px;  /* initially hideNav */
   min-width: 0px;  /* initially hideNav */
-  transition: width 0.2s, min-width 0.2s;
-  /* offset-x | offset-y | blur-radius | spread-radius | color */
-  /* box-shadow: 2px 2px 2px 0 rgba(0,0,0,.2), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12); */
+  transition: width {{.TransitionSpeed}}, min-width {{.TransitionSpeed}};
 }
-.navRightBox {
-  opacity: 0.7;
+.navRightBoxShadow {
   /* shadow on bottom, top and left */
   box-shadow: 0 2px 2px 2px rgba(0,0,0,.2), -2px 0px 2px 2px rgba(0,0,0,.2);
 }
-.navLeftBox {
+.navLeftBoxShadow {
   /* shadow on bottom, top and right */
   box-shadow: 0 2px 2px 2px rgba(0,0,0,.2), 2px 0px 2px 2px rgba(0,0,0,.2);
 }
@@ -362,7 +371,8 @@ header {
 }
 
 .navCourseTitle:hover {
-  color: #06e;
+  color: {{.ColorHover}};
+  font-weight: bold;
 }
 
 .navItemTop {
@@ -381,14 +391,15 @@ header {
 }
 
 .navLessonTitleOn {
-  background-color: #ddd;
+  background-color: {{.ColorNavSelected}};
 }
 
 .navLessonTitleOff {
 }
 
 .navLessonTitleOff:hover {
-  color: #06e;
+  color: {{.ColorHover}};
+  font-weight: bold;
 }
 
 .scrollingColumn {
@@ -402,14 +413,14 @@ header {
 }
 
 .proseRow {
-  background-color: #f6f6ef;
+  background-color: {{.ColorBackground}};
   width: inherit;
   display: flex;
   flex-direction: row;
 }
 
 footer {
-  background: linear-gradient(0deg, #00838f, #f6f6ef);
+  background: linear-gradient(0deg, {{.ColorHeader}}, {{.ColorBackground}});
   height: {{.LayFooterHeight}}px;
 }
 
@@ -421,6 +432,8 @@ footer {
   min-height: 3em;
   min-width: 2em;
   cursor: pointer;
+  color: {{.ColorControls}};
+  font-weight: bold;
 }
 .navButtonBox {
   min-width: 6em;
@@ -441,7 +454,7 @@ footer {
 title {
   font-size: larger;
   font-weight: bold;
-  color: #ff6e40;;
+  color: {{.ColorTitle}};
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -450,7 +463,6 @@ title {
 }
 
 .activeLessonName {
-  color: #ff6e40;;
   font-weight: bold;
 }
 
@@ -471,9 +483,9 @@ title {
   right: {{.LayNavBoxWidth}}px;
   height: 0px;  /* initially hideHelp */
 	z-index: 3;
-  background: #00838f;
-  color: white;
-  transition: height 0.2s;
+  background-color: {{.ColorHeader}};
+  color: {{.ColorTitle}};
+  transition: height {{.TransitionSpeed}};
   overflow: auto;
 }
 
@@ -488,7 +500,7 @@ title {
   overflow-x: hidden;
   overflow-y: auto;
   align-items: flex-start;
-  transition: width 0.2s;
+  transition: width {{.TransitionSpeed}};
 }
 
 .proseActual {
@@ -514,6 +526,8 @@ title {
 .lessonPointer {
   /* top right bottom left */
   padding: 0 1em 0 1em;
+  color: {{.ColorControls}};
+  font-weight: bold;
 }
 
 .lessonPrevTitle, .lessonNextTitle {
@@ -522,10 +536,12 @@ title {
   cursor: pointer;
   display: inline-block;
 }
+.lessonPrevTitle:hover, .lessonNextTitle:hover {
+  color: {{.ColorHover}};
+  font-weight: bold;
+}
 .lessonPrevTitle {
   text-align: right;
-}
-.lessonNextTitle {
 }
 
 .commandBlockBody {
@@ -549,7 +565,7 @@ title {
 }
 
 .codeBlockButton:hover {
-  color: #06e;
+  color: {{.ColorHover}};
 }
 
 .codeBlockSpacer {
@@ -560,9 +576,8 @@ title {
 pre.codeblockBody {
   font-family: "Lucida Console", Monaco, monospace;
   font-size: 0.9em;
-  color: #33ff66;
-  /* color: orange; */
-  background-color: black;
+  color: {{.ColorCodeBlockText}};
+  background-color: {{.ColorCodeBlockBackground}};;
   /* top rig bot lef */
   padding: 10px 20px 0px 20px;
   margin: 0px 0px 0px 20px;
@@ -572,11 +587,8 @@ pre.codeblockBody {
 }
 
 .codeBlockControl {
-  /* font-family: "Courier New", Courier, monospace; */
   font-family: "Lucida Console", Monaco, monospace;
-  font-size: 1.0em;
-  /* font-weight: bold; */
-  /* font-style: oblique; */
+  /* font-size: 1.0em; */
   margin: 20px 10px 12px 20px;
   padding: 0px;
 }
@@ -590,7 +602,7 @@ pre.codeblockBody {
 .oneLesson {
   display: none;
   padding: 0 1em 0 1em;
-  width: inherit;
+  width: '100%';
 }
 
 .navBurger {
@@ -598,23 +610,23 @@ pre.codeblockBody {
   cursor: pointer;
 }
 .burgBar1, .burgBar2, .burgBar3 {
-  background-color: #ff6e40;
-  width: 14px;
-  height: 2px;
-  /* background-color: #333; */
+  width: 28px;
+  height: 4px;
+  background-color: {{.ColorControls}};
   /* top rig bot lef */
-  margin: 2px 0 2px 2px;
-  transition: 0.2s;
+  margin: 6px 0 6px 0px;
+  transition: {{.TransitionSpeed}};
+	box-shadow: 0px 1px 1px 1px rgba(0,0,0,0.4);
 }
 .burgIsAnX .burgBar1 {
   -webkit-transform: translate(-3px, 0px) rotate(-45deg);
-  transform: translate(-3px, 0px) rotate(-45deg);
+  transform: translate(-4px, 0px) rotate(-45deg);
 }
 .burgIsAnX .burgBar2 {
 }
 .burgIsAnX .burgBar3 {
   -webkit-transform: translate(-3px, 0px) rotate(45deg);
-  transform: translate(-3px, 0px) rotate(45deg);
+  transform: translate(-4px, 0px) rotate(45deg);
 }
 `
 
@@ -625,6 +637,10 @@ function getElByClass(n) {
 
 function getDataId(el) {
   return el.getAttribute("data-id");
+}
+
+function isVertScrollBarVisible() {
+  return document.body.scrollHeight > document.body.clientHeight;
 }
 
 var nav = new function() {
@@ -642,6 +658,10 @@ var nav = new function() {
   var bodyWideWidth = '{{.LayBodyWideWidth}}px';
   var bodyMediumWidth = '{{.LayBodyMediumWidth}}px';
 
+  var fudge = function() {
+    // approximate scroll bar width
+    return isVertScrollBarVisible() ? '14px' : '0px';
+  }
   var showBurger = function() {
     theBurger.classList.add('burgIsAnX');
   }
@@ -659,12 +679,16 @@ var nav = new function() {
     x.overflow = 'auto';
   }
   var hideBoxes = function() {
-    hideABox(theLeftBox);
-    hideABox(theRightBox);
+    theLeftBox.classList.remove('navLeftBoxShadow');
+    theRightBox.classList.remove('navRightBoxShadow');
+    hideABox(theLeftBox.style);
+    hideABox(theRightBox.style);
   }
   var showBoxes = function() {
-    showABox(theLeftBox);
-    showABox(theRightBox);
+    theLeftBox.classList.add('navLeftBoxShadow');
+    theRightBox.classList.add('navRightBoxShadow');
+    showABox(theLeftBox.style);
+    showABox(theRightBox.style);
   }
   var expandCenter = function() {
     theLeftSpacer.display = 'none';
@@ -677,7 +701,7 @@ var nav = new function() {
     theProseColumn.width = '100%';
   }
   var showNarrow = function() {
-    theRightBox.right = '0px'
+    theRightBox.style.right = '0px'
     showBoxes()
     showBurger()
   }
@@ -686,7 +710,8 @@ var nav = new function() {
     squeezeCenter()
   }
   var showWide = function() {
-    theRightBox.right = 'calc(100vw - (' + bodyWideWidth + ' + 12px))';
+    theRightBox.style.right =
+       'calc(100vw - (' + bodyWideWidth + ' + ' + fudge() + '))';
     showBoxes()
     showBurger()
     squeezeCenter()
@@ -711,12 +736,13 @@ var nav = new function() {
   var isVisible = function() {
     return theBurger.classList.contains('burgIsAnX')
   }
-  var handleWidthChange = function(discard) {
+  this.handleWidthChange = function(discard) {
     if (mqWide.matches) {
       theBody.width = bodyWideWidth;
       theHelpBox.left = navBoxWidth;
       theHelpBox.right =
-        'calc(100vw - ' + bodyWideWidth + ' + ' + navBoxWidth + ' - 12px)';
+        'calc(100vw - ' + bodyWideWidth + ' + '
+        + navBoxWidth + ' - ' + fudge() + ')';
       showIt = showWide
       hideIt = hideWide
     } else if (mqMedium.matches) {
@@ -749,8 +775,8 @@ var nav = new function() {
   this.initialize = function(showNav) {
     theBurger = getElByClass('navBurger');
     theHelpBox = getElByClass('helpBox').style;
-    theLeftBox = getElByClass('navLeftBox').style;
-    theRightBox = getElByClass('navRightBox').style;
+    theLeftBox = getElByClass('navLeftBox');
+    theRightBox = getElByClass('navRightBox');
     theLeftSpacer = getElByClass('navLeftSpacer').style;
     theRightSpacer = getElByClass('navRightSpacer').style;
     theBody = document.getElementById('body').style;
@@ -760,9 +786,9 @@ var nav = new function() {
     mqMedium = window.matchMedia(
         '(min-width: ' + bodyMediumWidth
         + ') and (max-width: ' + bodyWideWidth + ')');
-    mqWide.addListener(handleWidthChange);
-    mqMedium.addListener(handleWidthChange)
-    handleWidthChange('whatever');
+    mqWide.addListener(this.handleWidthChange);
+    mqMedium.addListener(this.handleWidthChange)
+    this.handleWidthChange('whatever');
     if (showNav) {
       if (!isVisible()) {
         showIt()
@@ -948,10 +974,36 @@ var lessonMgr = new function() {
     }
   }
 
+  var updateUrl = function(path) {
+    theLessonName.innerHTML = path
+    if (history.pushState) {
+      window.history.pushState("not using data yet", "someTitle", "/" + path);
+    } else {
+      document.location.href = path;
+    }
+  }
+
+  var updateHeader = function(index) {
+    e = getNavLesson(nextIndex(index));
+    path = e.getAttribute('data-path');
+    theNextName[0].innerHTML = path;
+    theNextName[1].innerHTML = path;
+
+    e = getNavLesson(prevIndex(index));
+    path = e.getAttribute('data-path');
+    thePrevName[0].innerHTML = path;
+    thePrevName[1].innerHTML = path;
+
+    e = getNavLesson(index);
+    e.className = 'navLessonTitleOn'
+    updateUrl(e.getAttribute('data-path'))
+  }
+
   this.assureActiveLesson = function(index) {
     if (activeIndex == index) {
       return
     }
+    var prevState = isVertScrollBarVisible();
     if (activeIndex > -1) {
       assureNoActiveLesson()
       assureNoActiveCourse()
@@ -963,30 +1015,12 @@ var lessonMgr = new function() {
       return;
     }
     e.style.display = 'block'
-
-    e = getNavLesson(nextIndex(index))
-    path = e.getAttribute('data-path')
-    theNextName[0].innerHTML = path;
-    theNextName[1].innerHTML = path;
-
-    e = getNavLesson(prevIndex(index))
-    path = e.getAttribute('data-path')
-    thePrevName[0].innerHTML = path;
-    thePrevName[1].innerHTML = path;
-
-    e = getNavLesson(index)
-    e.className = 'navLessonTitleOn'
-
-    path = e.getAttribute('data-path')
-    theLessonName.innerHTML = path
-
-    activeIndex = index
-    if (history.pushState) {
-      window.history.pushState("not using data yet", "someTitle", "/" + path);
-    } else {
-      document.location.href = path;
-    }
+    updateHeader(index);
     smoothScroll()
+    if (prevState != isVertScrollBarVisible()) {
+      nav.handleWidthChange('whatever');
+    }
+    activeIndex = index;
   }
 
   this.goNext = function() {
