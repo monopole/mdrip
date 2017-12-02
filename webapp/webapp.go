@@ -103,7 +103,7 @@ func (wa *WebApp) ColorNavBackground() string       { return "lightgray" }
 func (wa *WebApp) ColorNavText() string             { return "black" }
 func (wa *WebApp) ColorNavSelected() string         { return wa.ColorBackground() }
 func (wa *WebApp) ColorHover() string               { return "#06e" }
-func (wa *WebApp) ColorControls() string            { return "black" }
+func (wa *WebApp) ColorControls() string            { return wa.ColorHeader() }
 
 //func (wa *WebApp) ColorHeader() string
 
@@ -425,6 +425,7 @@ footer {
 }
 
 .helpButtonBox, .navButtonBox {
+  font-size: larger;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -528,6 +529,7 @@ title {
   padding: 0 1em 0 1em;
   color: {{.ColorControls}};
   font-weight: bold;
+  font-size: larger;
 }
 
 .lessonPrevTitle, .lessonNextTitle {
