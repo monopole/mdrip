@@ -227,15 +227,17 @@ const (
 {{define "` + tmplNameBlockPgm + `"}}
 <div class="proseblock"> {{.HtmlProse}} </div>
 {{if .Code}}
-<h3 class="codeBlockControl">
-  <span class="codeBlockButton" onclick="codeBlock.run(event)">
-     {{.Name}}
-  </span>
-  <span class="codeBlockSpacer"> &nbsp; </span>
-</h3>
+<div class="codeBox">
+  <div class="codeBlockControl">
+    <span class="codeBlockButton" onclick="codeBlock.run(event)">
+      {{.Name}}
+    </span>
+    <span class="codeBlockSpacer"> &nbsp; </span>
+  </div>
 <pre class="codeblockBody">
 {{ .Code }}
 </pre>
+</div>
 {{end}}
 {{end}}
 `
@@ -575,30 +577,27 @@ title {
   width: 5px;
 }
 
+.codeBox {
+  padding-left: 20px;
+}
+
+.codeBlockControl {
+  font-family: "Lucida Console", Monaco, monospace;
+  font-weight: bold;
+}
+
 pre.codeblockBody {
   font-family: "Lucida Console", Monaco, monospace;
   font-size: 0.9em;
   color: {{.ColorCodeBlockText}};
   background-color: {{.ColorCodeBlockBackground}};;
-  /* top rig bot lef */
-  padding: 10px 20px 0px 20px;
-  margin: 0px 0px 0px 20px;
-  border: 0px;
+  padding-top: 10px;
+  padding-left: 10px;
   overflow-x: auto;
   max-width: calc({{.LayBodyMediumWidth}}px - 20px)
 }
 
-.codeBlockControl {
-  font-family: "Lucida Console", Monaco, monospace;
-  /* font-size: 1.0em; */
-  margin: 20px 10px 12px 20px;
-  padding: 0px;
-}
-
 .proseblock {
-  /* font-size: 1.2em; */
-  /* top rig bot lef */
-  padding: 10px 20px 0px 0px;
 }
 
 .oneLesson {
@@ -876,12 +875,12 @@ var codeBlock = new function() {
     }
     requestRunning = true;
     var b = event.target;
-    var commandBlockDiv = b.parentNode.parentNode;
+    var codeBox = b.parentNode.parentNode;
     // Fragile, but brief!
-    var codeBody = commandBlockDiv.childNodes[5].firstChild;
+    var codeBody = codeBox.childNodes[3].firstChild;
     attemptCopyToBuffer(codeBody.textContent)
-    var blockId = getDataId(commandBlockDiv);
-    var fileId = getDataId(commandBlockDiv.parentNode);
+    var blockId = getDataId(codeBox.parentNode);
+    var fileId = getDataId(codeBox.parentNode.parentNode);
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
       if (xhr.readyState == XMLHttpRequest.DONE) {

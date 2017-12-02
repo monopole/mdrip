@@ -28,7 +28,7 @@ var orderedPageParts = []string{
 	"/head>",
 	"<body",
 	"<header",
-	"<div class='navLeftBox'",
+	"<div class='navLeftBox",
 	"<div class='helpBox'",
 	"<div class='scrollingColumn'",
 	"<div class='proseColumn'",
