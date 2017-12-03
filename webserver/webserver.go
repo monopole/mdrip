@@ -170,7 +170,7 @@ func (ws *Server) reload(w http.ResponseWriter, r *http.Request) {
 	var t model.Tutorial
 	if len(value) > 0 {
 		// Load data from new source.
-		ds, err := base.NewDataSource([]string{value})
+		ds, err := base.NewDataSet([]string{value})
 		if err != nil {
 			http.Error(w,
 				fmt.Sprintf("Bad value %s", value), http.StatusBadRequest)
@@ -231,7 +231,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app := makeWebApp(ws.tutorial, sessId, r.Host, r.URL.Path)
+	app := ws.makeWebApp(sessId, r.Host, r.URL.Path)
 	ws.didFirstRender = true
 	if err := app.Render(w); err != nil {
 		write500(w, err)
@@ -239,16 +239,19 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func makeWebApp(tut model.Tutorial, sessId webapp.TypeSessId, host, path string) *webapp.WebApp {
+func (ws *Server) makeWebApp(sessId webapp.TypeSessId, host, path string) *webapp.WebApp {
 	v := newLessonFinder()
-	tut.Accept(v)
+	ws.tutorial.Accept(v)
 	var lessonPath []int
 	if len(path) > 0 && path[0] == '/' {
 		lessonPath = v.getLessonPath(path[1:])
 	} else {
 		lessonPath = v.getLessonPath(path)
 	}
-	return webapp.NewWebApp(sessId, host, tut, lessonPath, v.getCoursePaths())
+	return webapp.NewWebApp(
+		sessId, host,
+		ws.tutorial, ws.loader.DataSet().FirstArg(),
+		lessonPath, v.getCoursePaths())
 }
 
 func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
@@ -428,7 +431,7 @@ func (ws *Server) Serve(hostAndPort string) error {
 	r.HandleFunc("/favicon.ico", ws.favicon)
 	r.PathPrefix("/").HandlerFunc(ws.showControlPage)
 	var err error
-	fmt.Printf("Loading data from %s...\n", ws.loader.Source())
+	fmt.Printf("Loading from %s\n", ws.loader.DataSet())
 	ws.tutorial, err = ws.loader.Load()
 	if err != nil {
 		return err

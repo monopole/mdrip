@@ -2,47 +2,117 @@ package base
 
 import (
 	"errors"
+	"path/filepath"
+
 	"strings"
 )
 
 type DataSource struct {
-	args []string
+	raw      string
+	repoName string
+	relPath  string
+	absPath  string
 }
 
-func (d *DataSource) FirstArg() string {
-	return d.args[0]
+func (d *DataSource) IsGithub() bool {
+	return len(d.repoName) > 0
 }
 
-func (d *DataSource) N() int {
-	return len(d.args)
-}
-
-func (d *DataSource) AsPaths() []FilePath {
-	result := make([]FilePath, len(d.args))
-	for i, x := range d.args {
-		result[i] = FilePath(x)
+func (d *DataSource) Display() string {
+	if d.IsGithub() {
+		result := "gh:" + d.repoName
+		if len(d.relPath) > 0 {
+			return result + "/" + d.relPath
+		}
+		return result
 	}
-	return result
+	return d.raw
 }
 
-func (d *DataSource) String() string {
-	n := d.args[0]
-	if len(d.args) > 1 {
-		n += "..."
+func (d *DataSource) Href() string {
+	if d.IsGithub() {
+		result := "https://github.com/" + d.repoName
+		if len(d.relPath) > 0 {
+			return result + "/blob/master/" + d.relPath
+		}
+		return result
 	}
-	return n
+	return "file://" + d.absPath
 }
 
-func NewDataSource(fArgs []string) (*DataSource, error) {
-	result := []string{}
-	for _, n := range fArgs {
-		n := strings.TrimSpace(n)
-		if len(n) > 0 {
-			result = append(result, n)
+// Using https instead of ssh so no need for keys
+// (works only with public repos obviously).
+func (d *DataSource) GithubCloneArg() string {
+	return "https://github.com/" + d.repoName + ".git"
+}
+
+func (d *DataSource) RelPath() FilePath {
+	return FilePath(d.relPath)
+}
+
+func (d *DataSource) AbsPath() FilePath {
+	return FilePath(d.absPath)
+}
+
+func (d *DataSource) SetAbsPath(arg string) {
+	d.absPath = arg
+}
+
+func (d *DataSource) Raw() string {
+	return d.raw
+}
+
+func NewDataSource(arg string) (*DataSource, error) {
+	n := strings.TrimSpace(arg)
+	if len(n) < 1 {
+		return nil, errors.New(
+			"Need data source - file name, directory name, or github clone url.")
+	}
+	if smellsLikeGithubCloneArg(arg) {
+		repoName, path, err := extractGithubRepoName(arg)
+		if err != nil {
+			return nil, err
+		}
+		return &DataSource{arg, repoName, path, ""}, nil
+	}
+	path, err := filepath.Abs(arg)
+	if err != nil {
+		return nil, errors.New(
+			"Unable to resolve absolute path of " + arg)
+	}
+	return &DataSource{arg, "", arg, path}, nil
+}
+
+func smellsLikeGithubCloneArg(arg string) bool {
+	arg = strings.ToLower(arg)
+	return strings.HasPrefix(arg, "gh:") ||
+		strings.HasPrefix(arg, "github.com") ||
+		strings.HasPrefix(arg, "git@github.com:") ||
+		strings.Index(arg, "github.com/") > -1
+}
+
+// From strings like git@github.com:monopole/mdrip.git or
+// https://github.com/monopole/mdrip, extract github.com.
+func extractGithubRepoName(n string) (string, string, error) {
+	for _, p := range []string{
+		// Order matters here.
+		"gh:", "https://", "http://", "git@", "github.com:", "github.com/"} {
+		if strings.ToLower(n[:len(p)]) == p {
+			n = n[len(p):]
 		}
 	}
-	if len(result) < 1 {
-		return nil, errors.New("Must specify a data source - files, directory, or github clone url.")
+	if strings.HasSuffix(n, ".git") {
+		n = n[0 : len(n)-len(".git")]
 	}
-	return &DataSource{result}, nil
+	i := strings.Index(n, string(filepath.Separator))
+	if i < 1 {
+		return "", "", errors.New("No separator.")
+	}
+	j := strings.Index(n[i+1:], string(filepath.Separator))
+	if j < 0 {
+		// No path, so show entire repo.
+		return n, "", nil
+	}
+	j += i + 1
+	return n[:j], n[j+1:], nil
 }

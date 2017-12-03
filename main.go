@@ -21,9 +21,9 @@ func trueMain(c *config.Config) error {
 			glog.Fatal(tmux.Path, " not running")
 		}
 		// Treat the first arg as a host address argument.
-		t.Adapt(c.DataSource().FirstArg())
+		t.Adapt(c.DataSet().FirstArg().Raw())
 	case config.ModeDemo:
-		l := loader.NewLoader(c.DataSource())
+		l := loader.NewLoader(c.DataSet())
 		s, err := webserver.NewServer(l)
 		if err != nil {
 			return err
@@ -33,7 +33,7 @@ func trueMain(c *config.Config) error {
 			return err
 		}
 	case config.ModeTest:
-		t, err := loader.NewLoader(c.DataSource()).Load()
+		t, err := loader.NewLoader(c.DataSet()).Load()
 		if err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func trueMain(c *config.Config) error {
 			}
 		}
 	default:
-		t, err := loader.NewLoader(c.DataSource()).Load()
+		t, err := loader.NewLoader(c.DataSet()).Load()
 		if err != nil {
 			return err
 		}

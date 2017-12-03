@@ -1,11 +1,26 @@
 # mdrip
 
 [fenced code blocks]: https://help.github.com/articles/creating-and-highlighting-code-blocks/#fenced-code-blocks
+[block quote]: https://github.github.com/gfm/#block-quotes
 [travis-mdrip]: https://travis-ci.org/monopole/mdrip
 
-`mdrip` rips [fenced code blocks] from markdown files,
+`mdrip` turns a directory hierarchy of markdown into an ordered, book-like
+tutorial.
+
+It rips [fenced code blocks] from markdown files,
 making them available for execution in tests and
-demonstrations.
+demos.
+
+In test mode, `mdrip` runs particular code blocks and reports
+failures in execution.
+
+In demo mode, `mdrip` renders the markdown as
+a tutorial allowing the user to:
+
+* Navigate through a directory hierarchy via arrow keys.
+* Click on code block headers to immediately execute them in tmux.
+* Track progress with check marks.
+
 
 [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip)
 
@@ -18,11 +33,10 @@ Assuming [Go](https://golang.org/dl) installed just:
 go get github.com/monopole/mdrip
 ```
 
-or put it in a `/tmp` dir with
+or put it in your tmp dir
 ```
-tmp=$(mktemp -d)
-GOPATH=$tmp go get github.com/monopole/mdrip
-alias mdrip=$tmp/bin/mdrip
+GOBIN=$TMPDIR go install github.com/monopole/mdrip
+alias mdrip=$TMPDIR/mdrip
 ```
 
 ## Execution
@@ -44,7 +58,7 @@ What happens next depends on the `--mode` flag.
 
 ### demo: facilitate markdown-based demos
 
-> `mdrip --mode demo {filePath}`
+> `mdrip --mode demo {filepath or github URL}`
 
 This serves rendered markdown at
 `http://localhost:8000`.  Change the endpoint using
@@ -62,6 +76,20 @@ pasted.
 This one-click operation is surprisingly handy for
 demos wherein one has a tmux window next to a browser
 window.
+
+##### example:
+
+Render the content you are now reading locally:
+```
+GOBIN=$TMPDIR go install github.com/monopole/mdrip
+$TMPDIR/mdrip --mode demo gh:monopole/mdrip/README.md
+```
+
+Visit [localhost:8000](http://localhost:8000).
+If you have it, start tmux.  Click on command blocks
+in your browser to send them
+directly to your active tmux window.
+
 
 ### print: extract code to stdout
 
@@ -159,18 +187,6 @@ authenticated user).
 
 ## Example
 
-Install [mdrip](#Installation) to try this.
-
-> Aside: To use `mdrip` to demo itself, install it and [tmux].
-> Start tmux, and start an mdrip server:
->
-> &nbsp; &nbsp; `mdrip --mode demo gh:monopole/mdrip/README.md`
->
-> Switch to a tmux window with an available prompt, then
-> load `http://localhost:8000` in a browser.
-> In the browser, click on the command blocks below to send them
-> directly to your active tmux window.
-
 [Go tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
 [raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md
 
@@ -217,3 +233,18 @@ echo $?
 ```
 
 The return code should be zero.
+
+## Tips for writing markdown tutorials
+
+ * Place commands that the reader should copy/paste/execute in
+   [fenced code blocks].
+
+ * Eschew preceding commands with fake prompts (e.g. `$ ls`).
+   They just complicate copy/paste.
+
+ * Code-style text not intended for execution, e.g. example output
+   or dangerous commands, should be in a fenced code block indented via a
+   [block quote], e.g.
+   > ```
+   > rm -rf /
+   > ```

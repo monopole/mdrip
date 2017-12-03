@@ -2,14 +2,14 @@ package webapp
 
 import (
 	"bytes"
+	"github.com/monopole/mdrip/base"
 	"strings"
 	"testing"
 )
 
 type waTest struct {
-	name  string
-	input *WebApp
-	want  []string
+	name string
+	want []string
 }
 
 var orderedPageParts = []string{
@@ -36,15 +36,16 @@ var orderedPageParts = []string{
 }
 
 var waTests = []waTest{
-	{"emptyTutorial",
-		NewWebApp("", "", emptyLesson, []int{}, [][]int{{}}),
-		orderedPageParts},
+	{"emptyTutorial", orderedPageParts},
 }
 
 func TestWebAppBasicTemplateRendered(t *testing.T) {
+	ds, _ := base.NewDataSource("/tmp")
+	wa := NewWebApp("", "", emptyLesson, ds, []int{}, [][]int{{}})
 	for _, test := range waTests {
+
 		var b bytes.Buffer
-		test.input.Render(&b)
+		wa.Render(&b)
 		got := b.String()
 		prev := 0
 		for _, target := range test.want {

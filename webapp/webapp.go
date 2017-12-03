@@ -20,6 +20,7 @@ type WebApp struct {
 	sessId      TypeSessId
 	host        string
 	tut         model.Tutorial
+	ds          *base.DataSource
 	tmpl        *template.Template
 	lessonPath  []int
 	coursePaths [][]int
@@ -27,8 +28,8 @@ type WebApp struct {
 
 func NewWebApp(
 	sessId TypeSessId, host string,
-	tut model.Tutorial, lp []int, cp [][]int) *WebApp {
-	return &WebApp{sessId, host, tut, makeParsedTemplate(tut), lp, cp}
+	tut model.Tutorial, ds *base.DataSource, lp []int, cp [][]int) *WebApp {
+	return &WebApp{sessId, host, tut, ds, makeParsedTemplate(tut), lp, cp}
 }
 
 func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
@@ -41,10 +42,12 @@ func (wa *WebApp) Lessons() []*program.LessonPgm {
 	return v.Lessons()
 }
 
-// This should probably be some text passed to the ctor instead,
-// after pulling it from the command line.
 func (wa *WebApp) AppName() string {
-	return wa.tut.Name()
+	return wa.ds.Display()
+}
+
+func (wa *WebApp) AppLink() template.URL {
+	return template.URL(wa.ds.Href())
 }
 
 func (wa *WebApp) TrimName() string {
@@ -56,8 +59,8 @@ func (wa *WebApp) TrimName() string {
 }
 
 const (
-	delta         = 2
-	maxAppNameLen = len("gh:kubernetes/kubernetes.github.io")
+	// arbitrary
+	maxAppNameLen = len("gh:kubernetes/website/reference") + 10
 )
 
 // Return the last element or zero.
@@ -106,17 +109,18 @@ const (
 	greenA700       = "#64DD17"
 )
 
-func (wa *WebApp) TransitionSpeed() string          { return "0.25s" }
-func (wa *WebApp) LayBodyWideWidth() int            { return 1200 }
-func (wa *WebApp) LayBodyMediumWidth() int          { return 800 }
-func (wa *WebApp) LayMinHeaderWidth() int           { return 400 }
-func (wa *WebApp) LayNavBoxWidth() int              { return 210 }
-func (wa *WebApp) LayHeaderHeight() int             { return 120 }
-func (wa *WebApp) LayFooterHeight() int             { return 70 }
-func (wa *WebApp) LayNavTopBotPad() int             { return 7 }
-func (wa *WebApp) LayNavLeftPad() int               { return 20 }
-func (wa *WebApp) ColorBackground() string          { return whiteIsh }
-func (wa *WebApp) ColorHelpBackground() string      { return blue500 }
+func (wa *WebApp) TransitionSpeed() string { return "0.25s" }
+func (wa *WebApp) LayBodyWideWidth() int   { return 1200 }
+func (wa *WebApp) LayBodyMediumWidth() int { return 800 }
+func (wa *WebApp) LayMinHeaderWidth() int  { return 400 }
+func (wa *WebApp) LayNavBoxWidth() int     { return 210 }
+func (wa *WebApp) LayHeaderHeight() int    { return 120 }
+func (wa *WebApp) LayFooterHeight() int    { return 70 }
+func (wa *WebApp) LayNavTopBotPad() int    { return 7 }
+func (wa *WebApp) LayNavLeftPad() int      { return 20 }
+
+func (wa *WebApp) ColorBackground() string          { return "white" }
+func (wa *WebApp) ColorHelpBackground() string      { return whiteIsh }
 func (wa *WebApp) ColorHeader() string              { return blue700 }
 func (wa *WebApp) ColorCodeBlockText() string       { return greenA400 }
 func (wa *WebApp) ColorCodeBlockBackground() string { return "black" }
@@ -180,7 +184,7 @@ func makeAppTemplate(htmlNavActual string) string {
       </div>
     </div>
     <div class='headerColumn'>
-      <title> {{ .TrimName }} </title>
+      <a target='_blank' href='{{.AppLink}}'> <title> {{.TrimName}} </title></a>
       <div class='activeLessonName'> Droplet Formation Rates </div>
       ` + htmlLessonNavRow + `
     </div>
@@ -287,38 +291,66 @@ const htmlLessonNavRow = `
 `
 
 const htmlHelp = `
-<p>This is markdown content harvested from</p>
-<blockquote>
-<code> {{.AppName}} </code>
-</blockquote>
-<p>Clicking on a code block header copies the block to your clipboard.</p>
 <p>
-For one-click usage (no need to mouse/aim/paste - nice for demos):
+This content is a snapshot of markdown files from</p>
+<blockquote>
+<a target='_blank' href='{{.AppLink}}'> <code> {{.AppName}} </code></a>
+</blockquote>
+rendered to enhance usage as a command-line driven tutorial.
+</p>
+
+<ul>
+<li>Use arrow keys to navigate.</li>
+<li>Clicking on a command block header copies the block to your clipboard.
+<br>See below to automatically paste the block to <code>tmux</code>.</li>
+<li>Progress tracked with check marks.</li>
+</ul>
+
+<h3> Serve locally with tmux for one-click usage </h3>
+
+<p>
+For one-click usage (no need to mouse/aim/paste), run
+<a target="_blank"
+href="https://github.com/tmux/tmux/wiki">tmux</a>
+and simultaneously serve the content locally:
+<pre>
+  GOBIN=$TMPDIR go install github.com/monopole/mdrip
+  $TMPDIR/mdrip --port 8001 --mode demo {{.AppName}}
+</pre>
+Then clicking on a code block header pastes
+the command block to your active tmux session.
+</p>
+
+<p>
+This is a handy way to drive demos from markdown.
+</p>
+
+<h3> Remote server tmux </h3>
+<p> <em>A proof of concept
+for using tmux over a websocket to remote servers.
+Needs better session mgmt to work with load balanced traffic.
+The websocket is not needed with a local server. </em></p>
+<p>
+For one-click usage from a remote server:
 <ul>
 <li>
 Install <code><a target="_blank"
-href="https://github.com/tmux/tmux/wiki">tmux</a></code>
-(the terminal multiplexer).</li>
-<li>
-Install <code><a target="_blank"
-href="https://golang.org/doc/install">Go</a></code>
-(the language).</li>
-<li>Install <code><a target="_blank"
-href="https://github.com/monopole/mdrip">mdrip</a></code>
-(a <code>tmux</code> websocket adapter):
-<pre>
-  GOBIN=$TMPDIR go install github.com/monopole/mdrip
-</pre>
+href="https://github.com/tmux/tmux/wiki">tmux</a></code>,
+<code><a target="_blank"
+href="https://golang.org/doc/install">Go</a></code>,
+and <code><a target="_blank"
+href="https://github.com/monopole/mdrip">mdrip</a></code>.
 </li>
+<br>
 <li>Run tmux:
 <pre>
   tmux
 </pre>
 </li>
-<li>In some non-tmux shell, run this service:
+<li>In some non-tmux shell, run mdrip in <code>--mode tmux</code>:
 <pre>
   host=ws://{{.Host}}
-  $TMPDIR/mdrip \
+  mdrip \
       --alsologtostderr --v 0 \
       --stderrthreshold INFO \
       --mode tmux \
@@ -328,10 +360,11 @@ href="https://github.com/monopole/mdrip">mdrip</a></code>
 </ul>
 <p>
 Now, clicking a command block header sends the block
-from this page's server over a websocket to your local
-<code>mdrip</code>, which 'pastes' the block
-to your active <code>tmux</code> pane.<br>
-The service self-exits after a period of inactivity,
+from this page's server over a websocket to the local
+<code>mdrip</code>, which then 'pastes' the block
+to your active <code>tmux</code> pane.<p>
+<p>
+The <code>mdrip</code> service self-exits after a period of inactivity,
 and can be restarted with the same command.</p>
 `
 
@@ -390,6 +423,13 @@ header {
 }
 .navActual {
   padding-left: 1em;
+}
+
+a {
+  text-decoration: none;
+}
+a:hover, a:visited, a:link, a:active {
+  text-decoration: none;
 }
 
 .navCourseTitle {
@@ -492,6 +532,10 @@ title {
   align-items: center;
   min-height: 2em;
 }
+title:hover {
+  color: {{.ColorHover}};
+  font-weight: bold;
+}
 
 .activeLessonName {
   font-weight: bold;
@@ -514,6 +558,12 @@ title {
   right: {{.LayNavBoxWidth}}px;
   height: 0px;  /* initially hideHelp */
 	z-index: 3;
+
+	/* border: solid 1px #555; */
+	/* border-radius: 4px; */
+           /*   x   y blur spread color             x   y blur spread color */
+  /* box-shadow: 0px 2px  2px    1px rgba(0,0,0,.3), 2px 0px 2px 1px rgba(0,0,0,.3); */
+
   background-color: {{.ColorHelpBackground}};
   color: {{.ColorNavText}};
   transition: height {{.TransitionSpeed}};
@@ -618,18 +668,19 @@ title {
 .codeblockBody {
   white-space: pre;
   font-family: "Lucida Console", Monaco, monospace;
-  /* font-size: 0.9em; */
   color: {{.ColorCodeBlockText}};
-  background-color: {{.ColorCodeBlockBackground}};;
+  background-color: {{.ColorCodeBlockBackground}};
   margin-top: 5px;
   padding-left: 10px;
   overflow-x: auto;
-  max-width: calc({{.LayBodyMediumWidth}}px - 20px)
-
 	border: solid 1px #555;
 	border-radius: 4px;
            /*   x   y blur spread color             x   y blur spread color */
   box-shadow: 0px 2px  2px    1px rgba(0,0,0,.3), 2px 0px 2px 1px rgba(0,0,0,.3);
+
+  /* This is hard to get right with current structure. */
+  min-width: {{.LayMinHeaderWidth}};
+  max-width: calc(100% - 40px);
 }
 
 .proseblock {
@@ -854,10 +905,16 @@ var help = new function() {
   var hideIt = function() {
     box.height = '0px';
     box.overflow = 'hidden';
+    box.removeProperty('border');
+    box.removeProperty('border-radius');
+    box.removeProperty('box-shadow');
   }
   var showIt = function() {
     box.height = 'calc(100vh - ({{.LayFooterHeight}}px + {{.LayHeaderHeight}}px))';
     box.overflow = 'auto';
+    box.border =  'solid 1px #555';
+    box.borderRadius = '4px';
+    box.boxShadow = '0px 2px  2px    1px rgba(0,0,0,.3), 2px 0px 2px 1px rgba(0,0,0,.3)';
   }
   var isVisible = function() {
     return (box.height != '0px')

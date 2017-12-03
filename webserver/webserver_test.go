@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewWebServer(t *testing.T) {
-	ds, err := base.NewDataSource([]string{"hey"})
+	ds, err := base.NewDataSet([]string{"hey"})
 	if err != nil {
 		t.Errorf("trouble with datasource")
 		return

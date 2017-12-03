@@ -114,10 +114,9 @@ var (
 type Config struct {
 	label      base.Label
 	mode       ModeType
-	dataSource *base.DataSource
+	dataSource *base.DataSet
 }
 
-// A forgiving interpretation of mode argument.
 func determineMode() ModeType {
 	if len(*mode) == 0 {
 		return ModePrint
@@ -178,20 +177,20 @@ func (c *Config) Label() base.Label {
 	return c.label
 }
 
-func (c *Config) DataSource() *base.DataSource {
+func (c *Config) DataSet() *base.DataSet {
 	return c.dataSource
 }
 
 // nonsense for tests - need something better.
 func DefaultConfig() *Config {
-	ds, _ := base.NewDataSource([]string{"foo"})
+	ds, _ := base.NewDataSet([]string{"foo"})
 	return &Config{base.WildCardLabel, ModePrint, ds}
 }
 
 func GetConfig() (*Config, error) {
 	flag.Usage = Usage
 	flag.Parse()
-	dataSource, err := base.NewDataSource(flag.Args())
+	dataSource, err := base.NewDataSet(flag.Args())
 	if err != nil {
 		return nil, err
 	}

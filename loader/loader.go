@@ -2,13 +2,13 @@ package loader
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/lexer"
@@ -152,94 +152,52 @@ func reorder(x []model.Tutorial, ordering []string) []model.Tutorial {
 }
 
 type Loader struct {
-	ds *base.DataSource
+	ds *base.DataSet
 }
 
-func (l *Loader) Source() string {
-	return l.ds.String()
+func (l *Loader) DataSet() *base.DataSet {
+	return l.ds
 }
 
-func NewLoader(ds *base.DataSource) *Loader {
+func NewLoader(ds *base.DataSet) *Loader {
 	return &Loader{ds}
-}
-
-func smellsLikeGithubCloneArg(arg string) bool {
-	arg = strings.ToLower(arg)
-	return strings.HasPrefix(arg, "gh:") ||
-		strings.HasPrefix(arg, "github.com") ||
-		strings.HasPrefix(arg, "git@github.com:") ||
-		strings.Index(arg, "github.com/") > -1
-}
-
-// buildGithubCloneArg builds an arg for 'git clone' from a repo name.
-// Using https instead of ssh so no need for keys
-// (works only with public repos obviously).
-func buildGithubCloneArg(repoName string) string {
-	return "https://github.com/" + repoName + ".git"
-}
-
-// From strings like git@github.com:monopole/mdrip.git or
-// https://github.com/monopole/mdrip, extract github.com.
-func extractGithubRepoName(n string) (string, string, error) {
-	for _, p := range []string{
-		// Order matters here.
-		"gh:", "https://", "http://", "git@", "github.com:", "github.com/"} {
-		if strings.ToLower(n[:len(p)]) == p {
-			n = n[len(p):]
-		}
-	}
-	if strings.HasSuffix(n, ".git") {
-		n = n[0 : len(n)-len(".git")]
-	}
-	i := strings.Index(n, string(filepath.Separator))
-	if i < 1 {
-		return "", "", errors.New("No separator.")
-	}
-	j := strings.Index(n[i+1:], string(filepath.Separator))
-	if j < 0 {
-		// No path, so show entire repo.
-		return n, "", nil
-	}
-	j += i + 1
-	return n[:j], n[j+1:], nil
 }
 
 func (l *Loader) SmellsLikeGithub() bool {
 	if l.ds.N() != 1 {
 		return false
 	}
-	return smellsLikeGithubCloneArg(l.ds.FirstArg())
+	return l.ds.FirstArg().IsGithub()
 }
 
 func (l *Loader) Load() (model.Tutorial, error) {
 	if l.ds.N() == 1 {
-		if smellsLikeGithubCloneArg(l.ds.FirstArg()) {
+		if l.ds.FirstArg().IsGithub() {
 			return loadTutorialFromGitHub(l.ds.FirstArg())
 		}
-		p := base.FilePath(l.ds.FirstArg())
-		return loadTutorialFromPath(p.Base(), p)
+		return loadTutorialFromPath(l.ds.FirstArg())
 	}
-	name := fmt.Sprintf("(%d paths)", l.ds.N())
-	return loadTutorialFromPaths(name, l.ds.AsPaths())
+	// yuck.
+	return loadTutorialFromPaths(l.ds.FirstArg(), l.ds.AsPaths())
 }
 
-func loadTutorialFromPath(name string, path base.FilePath) (model.Tutorial, error) {
-	if isDesirableFile(path) {
-		return scanFile(path)
+func loadTutorialFromPath(source *base.DataSource) (model.Tutorial, error) {
+	if isDesirableFile(source.AbsPath()) {
+		return scanFile(source.AbsPath())
 	}
-	if !isDesirableDir(path) {
-		return nil, errors.New("nothing found at file path " + string(path))
+	if !isDesirableDir(source.AbsPath()) {
+		return nil, errors.New("nothing found at " + string(source.AbsPath()))
 	}
-	glog.Infof("Loading %s from path %s\n", name, path)
+	glog.Infof("Loading %s from path %s\n", source.Display(), source.AbsPath())
 
-	c, err := scanDir(path)
+	c, err := scanDir(source.AbsPath())
 	if err != nil {
-		return BadLoad(path), err
+		return BadLoad(source.AbsPath()), err
 	}
-	return model.NewTopCourse(name, path, c.Children()), nil
+	return model.NewTopCourse(source.Display(), source.AbsPath(), c.Children()), nil
 }
 
-func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, error) {
+func loadTutorialFromPaths(source *base.DataSource, paths []base.FilePath) (model.Tutorial, error) {
 	var items = []model.Tutorial{}
 	for _, f := range paths {
 		if isDesirableFile(f) {
@@ -260,35 +218,40 @@ func loadTutorialFromPaths(name string, paths []base.FilePath) (model.Tutorial, 
 	if len(items) == 0 {
 		return BadLoad(paths[0]), errors.New("nothing useful found in paths")
 	}
-	return model.NewTopCourse(name, base.FilePath(name), items), nil
+	return model.NewTopCourse(source.Display(), source.AbsPath(), items), nil
 }
 
-func loadTutorialFromGitHub(url string) (model.Tutorial, error) {
+func cleanUp(tmpDir string) {
+	os.RemoveAll(tmpDir)
+	fmt.Println("Deleted " + tmpDir)
+}
+
+func loadTutorialFromGitHub(source *base.DataSource) (model.Tutorial, error) {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
-		return BadLoad(base.FilePath(url)),
+		return BadLoad(base.FilePath(source.Raw())),
 			errors.Wrap(err, "maybe no git on path")
 	}
 	tmpDir, err := ioutil.TempDir("", "mdrip-git-")
 	if err != nil {
-		return BadLoad(base.FilePath(url)),
+		return BadLoad(base.FilePath(source.Raw())),
 			errors.Wrap(err, "unable to create tmp dir")
 	}
-	glog.Info("Using " + gitPath + " to clone to " + tmpDir)
-	defer os.RemoveAll(tmpDir)
-	repoName, path, err := extractGithubRepoName(url)
-	cmd := exec.Command(
-		gitPath, "clone", buildGithubCloneArg(repoName), tmpDir)
+	fmt.Printf("Cloning to %s ...\n", tmpDir)
+	defer cleanUp(tmpDir)
+	cmd := exec.Command(gitPath, "clone", source.GithubCloneArg(), tmpDir)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	err = cmd.Run()
 	if err != nil {
-		return BadLoad(base.FilePath(url)),
+		return BadLoad(base.FilePath(source.Raw())),
 			errors.Wrap(err, "git clone failure")
 	}
+	fmt.Println("Clone complete.")
 	fullPath := tmpDir
-	if len(path) > 0 {
-		fullPath = filepath.Join(fullPath, path)
+	if len(source.RelPath()) > 0 {
+		fullPath = filepath.Join(fullPath, string(source.RelPath()))
 	}
-	return loadTutorialFromPath("gh:"+repoName, base.FilePath(fullPath))
+	source.SetAbsPath(fullPath)
+	return loadTutorialFromPath(source)
 }
