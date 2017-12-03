@@ -85,7 +85,28 @@ func (wa *WebApp) CoursePaths() [][]int {
 	return wa.coursePaths
 }
 
-func (wa *WebApp) TransitionSpeed() string          { return "0.3s" }
+const (
+	blue700         = "#1976D2" // header
+	blue500         = "#2196F3" // hav
+	blue200         = "#90CAF9" // help
+	deepOrange500   = "#FF5722" // controls
+	deepOrange200   = "#FF8A65"
+	deepOrange700   = "#E64A19"
+	teal            = "#00838f"
+	hackerNewsBeige = "#f6f6ef"
+	k8sBlue         = "#326DE6"
+	grayIsh         = "#c9c9c9"
+	whiteIsh        = "#e3e3e3"
+	seaBlue         = "#9ad3de"
+	darkerBlue      = "#89bdd3"
+	hoverBlue       = "#06e"
+	terminalGreen   = "#33ff66"
+	greenA200       = "#B2FF59"
+	greenA400       = "#76FF03"
+	greenA700       = "#64DD17"
+)
+
+func (wa *WebApp) TransitionSpeed() string          { return "0.25s" }
 func (wa *WebApp) LayBodyWideWidth() int            { return 1200 }
 func (wa *WebApp) LayBodyMediumWidth() int          { return 800 }
 func (wa *WebApp) LayMinHeaderWidth() int           { return 400 }
@@ -94,16 +115,18 @@ func (wa *WebApp) LayHeaderHeight() int             { return 120 }
 func (wa *WebApp) LayFooterHeight() int             { return 70 }
 func (wa *WebApp) LayNavTopBotPad() int             { return 7 }
 func (wa *WebApp) LayNavLeftPad() int               { return 20 }
-func (wa *WebApp) ColorBackground() string          { return "#f6f6ef" }
-func (wa *WebApp) ColorTitle() string               { return "white" }
-func (wa *WebApp) ColorHeader() string              { return "#00838f" }
-func (wa *WebApp) ColorCodeBlockText() string       { return "#33ff66" }
+func (wa *WebApp) ColorBackground() string          { return whiteIsh }
+func (wa *WebApp) ColorHelpBackground() string      { return blue500 }
+func (wa *WebApp) ColorHeader() string              { return blue700 }
+func (wa *WebApp) ColorCodeBlockText() string       { return greenA400 }
 func (wa *WebApp) ColorCodeBlockBackground() string { return "black" }
-func (wa *WebApp) ColorNavBackground() string       { return "lightgray" }
+func (wa *WebApp) ColorNavBackground() string       { return blue200 }
 func (wa *WebApp) ColorNavText() string             { return "black" }
 func (wa *WebApp) ColorNavSelected() string         { return wa.ColorBackground() }
-func (wa *WebApp) ColorHover() string               { return "#06e" }
-func (wa *WebApp) ColorControls() string            { return wa.ColorHeader() }
+func (wa *WebApp) ColorHover() string               { return deepOrange500 }
+func (wa *WebApp) ColorCodeHover() string           { return deepOrange700 }
+func (wa *WebApp) ColorControls() string            { return greenA200 }
+func (wa *WebApp) ColorTitle() string               { return wa.ColorControls() }
 
 //func (wa *WebApp) ColorHeader() string
 
@@ -234,9 +257,9 @@ const (
     </span>
     <span class="codeBlockSpacer"> &nbsp; </span>
   </div>
-<pre class="codeblockBody">
+<div class="codeblockBody">
 {{ .Code }}
-</pre>
+</div>
 </div>
 {{end}}
 {{end}}
@@ -253,11 +276,11 @@ const htmlLessonNavRow = `
 <div class='lessonNavRow'>
   <div class='lessonPrevClickerRow' onclick='lessonMgr.goPrev()'>
     <div class='lessonPrevTitle'> quantum flux </div>
-    <div class='lessonPointer'> &lt; </div>
+    <div class='lessonPrevPointer'> &lt; </div>
   </div>
   <div class='helpButtonBox' onclick='help.toggle()'> ? </div>
   <div class='lessonNextClickerRow' onclick='lessonMgr.goNext()'>
-    <div class='lessonPointer'> &gt; </div>
+    <div class='lessonNextPointer'> &gt; </div>
     <div class='lessonNextTitle'> electromagnetic  </div>
   </div>
 </div>
@@ -335,7 +358,8 @@ header, .headerSpacer {
 header {
   position: fixed;
   top: 0;
-  background: linear-gradient(0deg, {{.ColorBackground}}, {{.ColorHeader}});
+  background: {{.ColorHeader}};
+  /* background: linear-gradient(0deg, {{.ColorBackground}}, {{.ColorHeader}}); */
   display: flex;
   justify-content: space-between;
   flex-direction: row;
@@ -422,7 +446,8 @@ header {
 }
 
 footer {
-  background: linear-gradient(0deg, {{.ColorHeader}}, {{.ColorBackground}});
+  background: {{.ColorHeader}};
+  /* background: linear-gradient(0deg, {{.ColorHeader}}, {{.ColorBackground}}); */
   height: {{.LayFooterHeight}}px;
 }
 
@@ -437,6 +462,9 @@ footer {
   cursor: pointer;
   color: {{.ColorControls}};
   font-weight: bold;
+}
+.helpButtonBox:hover {
+  color: {{.ColorHover}};
 }
 .navButtonBox {
   min-width: 6em;
@@ -455,7 +483,7 @@ footer {
 
 
 title {
-  font-size: larger;
+  font-size: 2em;
   font-weight: bold;
   color: {{.ColorTitle}};
   display: flex;
@@ -486,8 +514,8 @@ title {
   right: {{.LayNavBoxWidth}}px;
   height: 0px;  /* initially hideHelp */
 	z-index: 3;
-  background-color: {{.ColorHeader}};
-  color: {{.ColorTitle}};
+  background-color: {{.ColorHelpBackground}};
+  color: {{.ColorNavText}};
   transition: height {{.TransitionSpeed}};
   overflow: auto;
 }
@@ -513,6 +541,7 @@ title {
 
 .lessonPrevClickerRow, .lessonNextClickerRow {
   height: 100%;
+  color: {{.ColorControls}};
   cursor: pointer;
   display: flex;
   flex-basis: 45%;
@@ -520,16 +549,19 @@ title {
   flex-wrap: nowrap;
   align-items: center;
 }
+.lessonPrevClickerRow:hover, .lessonNextClickerRow:hover {
+  color: {{.ColorHover}};
+  font-weight: bold;
+}
 .lessonPrevClickerRow {
   justify-content: flex-end;
 }
 .lessonNextClickerRow {
 }
 
-.lessonPointer {
+.lessonPrevPointer, .lessonNextPointer {
   /* top right bottom left */
   padding: 0 1em 0 1em;
-  color: {{.ColorControls}};
   font-weight: bold;
   font-size: larger;
 }
@@ -539,10 +571,6 @@ title {
   width: 100%;
   cursor: pointer;
   display: inline-block;
-}
-.lessonPrevTitle:hover, .lessonNextTitle:hover {
-  color: {{.ColorHover}};
-  font-weight: bold;
 }
 .lessonPrevTitle {
   text-align: right;
@@ -569,7 +597,7 @@ title {
 }
 
 .codeBlockButton:hover {
-  color: {{.ColorHover}};
+  color: {{.ColorCodeHover}};
 }
 
 .codeBlockSpacer {
@@ -578,6 +606,7 @@ title {
 }
 
 .codeBox {
+  padding-top: 10px;
   padding-left: 20px;
 }
 
@@ -586,15 +615,21 @@ title {
   font-weight: bold;
 }
 
-pre.codeblockBody {
+.codeblockBody {
+  white-space: pre;
   font-family: "Lucida Console", Monaco, monospace;
-  font-size: 0.9em;
+  /* font-size: 0.9em; */
   color: {{.ColorCodeBlockText}};
   background-color: {{.ColorCodeBlockBackground}};;
-  padding-top: 10px;
+  margin-top: 5px;
   padding-left: 10px;
   overflow-x: auto;
   max-width: calc({{.LayBodyMediumWidth}}px - 20px)
+
+	border: solid 1px #555;
+	border-radius: 4px;
+           /*   x   y blur spread color             x   y blur spread color */
+  box-shadow: 0px 2px  2px    1px rgba(0,0,0,.3), 2px 0px 2px 1px rgba(0,0,0,.3);
 }
 
 .proseblock {
@@ -604,21 +639,29 @@ pre.codeblockBody {
   display: none;
   padding: 0 1em 0 1em;
   width: '100%';
+  padding-bottom: 1em;
 }
 
 .navBurger {
   display: inline-block;
   cursor: pointer;
 }
+
 .burgBar1, .burgBar2, .burgBar3 {
   width: 28px;
   height: 4px;
-  background-color: {{.ColorControls}};
   /* top rig bot lef */
   margin: 6px 0 6px 0px;
   transition: {{.TransitionSpeed}};
 	box-shadow: 0px 1px 1px 1px rgba(0,0,0,0.4);
+  border: solid 1px #555;
+	background-color: {{.ColorControls}};
+	border-radius:25px;
 }
+.burgBar1:hover, .burgBar2:hover, .burgBar3:hover {
+  background-color: {{.ColorHover}};
+}
+
 .burgIsAnX .burgBar1 {
   -webkit-transform: translate(-3px, 0px) rotate(-45deg);
   transform: translate(-4px, 0px) rotate(-45deg);
@@ -783,6 +826,10 @@ var nav = new function() {
     theBody = document.getElementById('body').style;
     theProseColumn = getElByClass('proseColumn').style;
 
+    if ({{.LessonCount}} < 2) {
+      theBurger.style.display = 'none';
+    }
+
     mqWide = window.matchMedia('(min-width: ' + bodyWideWidth + ')');
     mqMedium = window.matchMedia(
         '(min-width: ' + bodyMediumWidth
@@ -899,6 +946,8 @@ var lessonMgr = new function() {
   var theLessonName = null;
   var thePrevName = null;
   var theNextName = null;
+  var theLessonPrevPointer = null;
+  var theLessonNextPointer = null;
 
   var nextIndex = function(i) {
     return (i + 1) % coursePaths.length;
@@ -985,17 +1034,31 @@ var lessonMgr = new function() {
   }
 
   var updateHeader = function(index) {
-    e = getNavLesson(nextIndex(index));
-    path = e.getAttribute('data-path');
+    var path = '';
+    var ptr = '';
+    if (index < coursePaths.length - 1) {
+      var e = getNavLesson(nextIndex(index));
+      path = e.getAttribute('data-path');
+      ptr = '&gt;';
+    }
     theNextName[0].innerHTML = path;
     theNextName[1].innerHTML = path;
+    theLessonNextPointer[0].innerHTML = ptr;
+    theLessonNextPointer[1].innerHTML = ptr;
 
-    e = getNavLesson(prevIndex(index));
-    path = e.getAttribute('data-path');
+    path = '';
+    ptr = '';
+    if (index > 0) {
+      var e = getNavLesson(prevIndex(index));
+      path = e.getAttribute('data-path');
+      ptr = '&lt;';
+    }
     thePrevName[0].innerHTML = path;
     thePrevName[1].innerHTML = path;
+    theLessonPrevPointer[0].innerHTML = ptr;
+    theLessonPrevPointer[1].innerHTML = ptr;
 
-    e = getNavLesson(index);
+    var e = getNavLesson(index);
     e.className = 'navLessonTitleOn'
     updateUrl(e.getAttribute('data-path'))
   }
@@ -1038,18 +1101,14 @@ var lessonMgr = new function() {
     theLessonName = getElByClass('activeLessonName');
     thePrevName = document.getElementsByClassName('lessonPrevTitle');
     theNextName = document.getElementsByClassName('lessonNextTitle');
+    theLessonPrevPointer = document.getElementsByClassName('lessonPrevPointer');
+    theLessonNextPointer = document.getElementsByClassName('lessonNextPointer');
   }
 }
 
 function onLoad() {
   help.initialize();
-  nav.initialize({{.LessonCount}} > 1);
-  var coursePaths = [
-    [],
-    [0], [0], [0], [0],
-    [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1],
-    [], []
-  ];
+  nav.initialize(false /* {{.LessonCount}} > 1 */);
   lessonMgr.initialize({{.CoursePaths}});
   lessonMgr.assureActiveLesson({{.InitialLesson}});
   window.addEventListener('keydown', function (event) {
@@ -1057,6 +1116,12 @@ function onLoad() {
       return;
     }
     switch (event.key) {
+      case '?':
+        help.toggle();
+        break;
+      case 'ArrowLeft':
+        lessonMgr.goPrev();
+        break;
       case 'ArrowLeft':
         lessonMgr.goPrev();
         break;
