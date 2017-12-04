@@ -292,18 +292,16 @@ const htmlLessonNavRow = `
 
 const htmlHelp = `
 <p>
-This content is a snapshot of markdown files from</p>
+You are viewing a snapshot of markdown content from</p>
 <blockquote>
 <a target='_blank' href='{{.AppLink}}'> <code> {{.AppName}} </code></a>
 </blockquote>
-rendered to enhance usage as a command-line driven tutorial.
-</p>
 
 <ul>
 <li>Use arrow keys to navigate.</li>
-<li>Clicking on a command block header copies the block to your clipboard.
-<br>See below to automatically paste the block to <code>tmux</code>.</li>
-<li>Progress tracked with check marks.</li>
+<li>Click on command block headers to copy blocks to your clipboard.</li>
+<li>Note progress with check marks above blocks.</li>
+<li>Use <code>tmux</code> to get one-click execution (see below).</li>
 </ul>
 
 <h3> Serve locally with tmux for one-click usage </h3>

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"fmt"
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/lexer"
@@ -223,7 +222,7 @@ func loadTutorialFromPaths(source *base.DataSource, paths []base.FilePath) (mode
 
 func cleanUp(tmpDir string) {
 	os.RemoveAll(tmpDir)
-	fmt.Println("Deleted " + tmpDir)
+	glog.Infof("Deleted " + tmpDir)
 }
 
 func loadTutorialFromGitHub(source *base.DataSource) (model.Tutorial, error) {
@@ -237,7 +236,7 @@ func loadTutorialFromGitHub(source *base.DataSource) (model.Tutorial, error) {
 		return BadLoad(base.FilePath(source.Raw())),
 			errors.Wrap(err, "unable to create tmp dir")
 	}
-	fmt.Printf("Cloning to %s ...\n", tmpDir)
+	glog.Infof("Cloning to %s ...\n", tmpDir)
 	defer cleanUp(tmpDir)
 	cmd := exec.Command(gitPath, "clone", source.GithubCloneArg(), tmpDir)
 	var out bytes.Buffer
@@ -247,7 +246,7 @@ func loadTutorialFromGitHub(source *base.DataSource) (model.Tutorial, error) {
 		return BadLoad(base.FilePath(source.Raw())),
 			errors.Wrap(err, "git clone failure")
 	}
-	fmt.Println("Clone complete.")
+	glog.Info("Clone complete.")
 	fullPath := tmpDir
 	if len(source.RelPath()) > 0 {
 		fullPath = filepath.Join(fullPath, string(source.RelPath()))
