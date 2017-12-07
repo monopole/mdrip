@@ -33,9 +33,9 @@ func NewWebApp(
 }
 
 func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
-func (wa *WebApp) Host() string       { return wa.host }
 
-// func (wa *WebApp) Tutorial() model.Tutorial { return wa.tut }
+func (wa *WebApp) Host() string { return wa.host }
+
 func (wa *WebApp) Lessons() []*program.LessonPgm {
 	v := program.NewLessonPgmExtractor(base.WildCardLabel)
 	wa.tut.Accept(v)
@@ -298,28 +298,29 @@ You are viewing a snapshot of markdown content from</p>
 </blockquote>
 
 <ul>
-<li>Use arrow keys to navigate.</li>
+<li>Arrow keys navigate,
+    <code>'m'</code> toggles menu,
+    <code>'h'</code> toggles help.</li>
 <li>Click on command block headers to copy blocks to your clipboard.</li>
-<li>Note progress with check marks above blocks.</li>
-<li>Use <code>tmux</code> to get one-click execution (see below).</li>
+<li>Check marks track code block execution progress.</li>
+<li>Use <code>tmux</code> to get one-click execution.</li>
 </ul>
 
-<h3> Serve locally with tmux for one-click usage </h3>
+<h3> Serve locally with tmux for one-click code block execution</h3>
 
 <p>
-For one-click usage (no need to mouse/aim/paste), run
-<a target="_blank"
-href="https://github.com/tmux/tmux/wiki">tmux</a>
-and simultaneously serve the content locally:
+To avoid the need to mouse/aim/paste, serve the content locally:
 <pre>
   GOBIN=$TMPDIR go install github.com/monopole/mdrip
   $TMPDIR/mdrip --port 8001 --mode demo {{.AppName}}
 </pre>
-Then clicking on a code block header pastes
-the command block to your active tmux session.
-</p>
-
-<p>
+and run <a target="_blank"
+href="https://github.com/tmux/tmux/wiki">tmux</a>:
+<pre>
+  tmux
+</pre>
+Then clicking on a code block header in your browser pastes
+the command block to the active tmux session.
 This is a handy way to drive demos from markdown.
 </p>
 
@@ -327,20 +328,19 @@ This is a handy way to drive demos from markdown.
 <p> <em>A proof of concept
 for using tmux over a websocket to remote servers.
 Needs better session mgmt to work with load balanced traffic.
-The websocket is not needed with a local server. </em></p>
+The websocket described below not needed in the previous
+scenario using a local server. </em></p>
 <p>
 For one-click usage from a remote server:
 <ul>
 <li>
 Install <code><a target="_blank"
-href="https://github.com/tmux/tmux/wiki">tmux</a></code>,
-<code><a target="_blank"
-href="https://golang.org/doc/install">Go</a></code>,
-and <code><a target="_blank"
-href="https://github.com/monopole/mdrip">mdrip</a></code>.
+href="https://github.com/monopole/mdrip">mdrip</a></code>
+as described above.
 </li>
 <br>
-<li>Run tmux:
+<li>Run <a target="_blank"
+href="https://github.com/tmux/tmux/wiki">tmux</a>:
 <pre>
   tmux
 </pre>
@@ -1171,6 +1171,11 @@ function onLoad() {
       return;
     }
     switch (event.key) {
+      case 'M':
+      case 'm':
+        nav.toggle();
+        break;
+      case 'h':
       case '?':
         help.toggle();
         break;
