@@ -114,6 +114,7 @@ func (wa *WebApp) LayBodyWideWidth() int   { return 1200 }
 func (wa *WebApp) LayBodyMediumWidth() int { return 800 }
 func (wa *WebApp) LayMinHeaderWidth() int  { return 400 }
 func (wa *WebApp) LayNavBoxWidth() int     { return 210 }
+func (wa *WebApp) LayMinHeaderHeight() int { return 50 }
 func (wa *WebApp) LayHeaderHeight() int    { return 120 }
 func (wa *WebApp) LayFooterHeight() int    { return 70 }
 func (wa *WebApp) LayNavTopBotPad() int    { return 7 }
@@ -175,7 +176,7 @@ func makeAppTemplate(htmlNavActual string) string {
 </script>
 </head>
 <body id='body' onload='onLoad()'>
-  <header>
+  <header id='header'>
     <div class='navButtonBox' onclick='nav.toggle()'>
       <div class='navBurger'>
         <div class='burgBar1'></div>
@@ -184,7 +185,7 @@ func makeAppTemplate(htmlNavActual string) string {
       </div>
     </div>
     <div class='headerColumn'>
-      <a target='_blank' href='{{.AppLink}}'> <title> {{.TrimName}} </title></a>
+      <a target='_blank' href='{{.AppLink}}'> <title id='title'> {{.TrimName}} </title></a>
       <div class='activeLessonName'> Droplet Formation Rates </div>
       ` + htmlLessonNavRow + `
     </div>
@@ -285,7 +286,7 @@ const htmlLessonNavRow = `
   <div class='helpButtonBox' onclick='help.toggle()'> ? </div>
   <div class='lessonNextClickerRow' onclick='lessonMgr.goNext()'>
     <div class='lessonNextPointer'> &gt; </div>
-    <div class='lessonNextTitle'> electromagnetic  </div>
+    <div class='lessonNextTitle'> magnetic flux  </div>
   </div>
 </div>
 `
@@ -396,6 +397,7 @@ header {
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
+  transition: height {{.TransitionSpeed}};
   box-shadow: 0 2px 2px 2px rgba(0,0,0,.4);
 }
 
@@ -495,7 +497,7 @@ footer {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  min-height: 3em;
+  min-height: 2.8em;
   min-width: 2em;
   cursor: pointer;
   color: {{.ColorControls}};
@@ -528,7 +530,6 @@ title {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 2em;
 }
 title:hover {
   color: {{.ColorHover}};
@@ -995,6 +996,63 @@ var codeBlock = new function() {
   }
 }
 
+var header = new function() {
+  var theHeader = null;
+  var theActiveLessonName = null;
+  var theLessonNavRow = null;
+  var theTitle = null;
+
+  var hideIt = function() {
+    theHeader.height = '{{.LayMinHeaderHeight}}px';
+    theLessonNavRow.display = 'none';
+    theTitle.removeProperty('min-height');
+    theTitle.fontSize = '1em';
+    /*
+        Also have to change 'top' and 'height' in
+           navLeftBox, navRightBox, helpbox
+        the most elegant way is to exxpress the top and height
+        as js functions in these latter objects, and have that
+        function check the visibility of the header.
+        The both depend on the header, but the header does not
+        depend on them
+
+     */
+  }
+  var showIt = function() {
+    theHeader.height = '{{.LayHeaderHeight}}px';
+    theLessonNavRow.display = 'flex';
+    theTitle.minHeight = '2em';
+    theTitle.fontSize = '2em';
+  }
+  var isVisible = function() {
+    return (theHeader.height == '{{.LayHeaderHeight}}px');
+  }
+  this.h = function() {
+    return theHeader;
+  }
+  this.r = function() {
+    return theLessonNavRow;
+  }
+  this.v = function() {
+    return isVisible();
+  }
+  this.toggle = function() {
+    if (isVisible()) {
+      hideIt()
+    } else {
+      showIt()
+    }
+  }
+
+  this.initialize = function() {
+    theHeader = document.getElementById('header').style;
+    theTitle = document.getElementById('title').style;
+    theLessonNavRow = document.getElementsByClassName('lessonNavRow')[0].style;
+    showIt();
+  }
+}
+
+
 var lessonMgr = new function() {
   var activeIndex = -1;
   var coursePaths = null;
@@ -1163,6 +1221,7 @@ var lessonMgr = new function() {
 
 function onLoad() {
   help.initialize();
+  header.initialize();
   nav.initialize(false /* {{.LessonCount}} > 1 */);
   lessonMgr.initialize({{.CoursePaths}});
   lessonMgr.assureActiveLesson({{.InitialLesson}});
@@ -1171,20 +1230,27 @@ function onLoad() {
       return;
     }
     switch (event.key) {
-      case 'M':
       case 'm':
+        header.toggle();
+        break;
+      case 'n':
         nav.toggle();
         break;
-      case 'h':
+      case '/':
       case '?':
         help.toggle();
         break;
+      case 'j':
+        alert('impl PREV block');
+        break;
+      case 'k':
+        alert('impl NEXT block');
+        break;
+      case 'h':
       case 'ArrowLeft':
         lessonMgr.goPrev();
         break;
-      case 'ArrowLeft':
-        lessonMgr.goPrev();
-        break;
+      case 'l':
       case 'ArrowRight':
         lessonMgr.goNext();
         break;
