@@ -1,11 +1,15 @@
 steps:
 - name: 'gcr.io/cloud-builders/go'
   args: ['install', '-a', '-ldflags', "'-s'", '-installsuffix', 'cgo', '.']
-  env: [
-    'PROJECT_ROOT=github.com/monopole/mdrip',
-    'CGO_ENABLED=0',
-    'GOOS=linux'
-  ]
+  env:
+  - 'PROJECT_ROOT=github.com/monopole/mdrip'
+  - 'CGO_ENABLED=0'
+  - 'GOOS=linux'
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '--tag=gcr.io/$PROJECT_ID/mdrip', '.']
+- name: 'gcr.io/cloud-builders/kubectl'
+  args: ['--namespace', 'ns-snt02', 'delete', 'pods', '--all' ]
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=us-west1-a'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=notripe'
 images: ['gcr.io/$PROJECT_ID/mdrip']
