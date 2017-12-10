@@ -109,16 +109,16 @@ const (
 	greenA700       = "#64DD17"
 )
 
-func (wa *WebApp) TransitionSpeed() string { return "0.25s" }
-func (wa *WebApp) LayBodyWideWidth() int   { return 1200 }
-func (wa *WebApp) LayBodyMediumWidth() int { return 800 }
-func (wa *WebApp) LayMinHeaderWidth() int  { return 400 }
-func (wa *WebApp) LayNavBoxWidth() int     { return 210 }
-func (wa *WebApp) LayMinHeaderHeight() int { return 50 }
-func (wa *WebApp) LayHeaderHeight() int    { return 120 }
-func (wa *WebApp) LayFooterHeight() int    { return 70 }
-func (wa *WebApp) LayNavTopBotPad() int    { return 7 }
-func (wa *WebApp) LayNavLeftPad() int      { return 20 }
+func (wa *WebApp) TransitionSpeedMs() int        { return 250 }
+func (wa *WebApp) LayBodyWideWidth() int         { return 1200 }
+func (wa *WebApp) LayBodyMediumWidth() int       { return 800 }
+func (wa *WebApp) LayMinHeaderWidth() int        { return 400 }
+func (wa *WebApp) LayNavBoxWidth() int           { return 210 }
+func (wa *WebApp) LayHeaderHeight() int          { return 120 }
+func (wa *WebApp) LayFooterHeight() int          { return 50 }
+func (wa *WebApp) LayMinimizedHeaderHeight() int { return wa.LayFooterHeight() }
+func (wa *WebApp) LayNavTopBotPad() int          { return 7 }
+func (wa *WebApp) LayNavLeftPad() int            { return 20 }
 
 func (wa *WebApp) ColorBackground() string          { return "white" }
 func (wa *WebApp) ColorHelpBackground() string      { return whiteIsh }
@@ -175,9 +175,10 @@ func makeAppTemplate(htmlNavActual string) string {
 <script type="text/javascript">` + jsInHeader + `
 </script>
 </head>
-<body id='body' onload='onLoad()'>
+<body onload='onLoad()'>
+
   <header id='header'>
-    <div class='navButtonBox' onclick='nav.toggle()'>
+    <div class='navButtonBox' onclick='navController.toggle()'>
       <div class='navBurger'>
         <div class='burgBar1'></div>
         <div class='burgBar2'></div>
@@ -185,7 +186,9 @@ func makeAppTemplate(htmlNavActual string) string {
       </div>
     </div>
     <div class='headerColumn'>
-      <a target='_blank' href='{{.AppLink}}'> <title id='title'> {{.TrimName}} </title></a>
+      <a target='_blank' href='{{.AppLink}}'>
+        <title id='title'> {{.TrimName}} </title>
+      </a>
       <div class='activeLessonName'> Droplet Formation Rates </div>
       ` + htmlLessonNavRow + `
     </div>
@@ -197,6 +200,7 @@ func makeAppTemplate(htmlNavActual string) string {
       ` + htmlNavActual + `
     </nav>
   </div>
+
   <div class='helpBox'>
     <div class='helpActual'>
     ` + htmlHelp + `
@@ -210,7 +214,7 @@ func makeAppTemplate(htmlNavActual string) string {
   </div>
 
   <div class='scrollingColumn'>
-    <div class='headerSpacer'> HEADER SPACER </div>
+    <div class='headSpacer'> HEADER SPACER </div>
     <div class='proseRow'>
       <div class='navLeftSpacer'> &nbsp; </div>
       <div class='proseColumn'>
@@ -222,6 +226,7 @@ func makeAppTemplate(htmlNavActual string) string {
     ` + htmlLessonNavRow + `
     </footer>
   </div>
+
 </body>
 </html>
 {{end}}
@@ -257,7 +262,7 @@ const (
 {{if .Code}}
 <div class="codeBox">
   <div class="codeBlockControl">
-    <span class="codeBlockButton" onclick="codeBlock.run(event)">
+    <span class="codeBlockButton" onclick="codeBlockController.run(event)">
       {{.Name}}
     </span>
     <span class="codeBlockSpacer"> &nbsp; </span>
@@ -279,12 +284,12 @@ const (
 
 const htmlLessonNavRow = `
 <div class='lessonNavRow'>
-  <div class='lessonPrevClickerRow' onclick='lessonMgr.goPrev()'>
+  <div class='lessonPrevClickerRow' onclick='lessonController.goPrev()'>
     <div class='lessonPrevTitle'> quantum flux </div>
     <div class='lessonPrevPointer'> &lt; </div>
   </div>
-  <div class='helpButtonBox' onclick='help.toggle()'> ? </div>
-  <div class='lessonNextClickerRow' onclick='lessonMgr.goNext()'>
+  <div class='helpButtonBox' onclick='helpController.toggle()'> ? </div>
+  <div class='lessonNextClickerRow' onclick='lessonController.goNext()'>
     <div class='lessonNextPointer'> &gt; </div>
     <div class='lessonNextTitle'> magnetic flux  </div>
   </div>
@@ -293,17 +298,23 @@ const htmlLessonNavRow = `
 
 const htmlHelp = `
 <p>
-You are viewing a snapshot of markdown content from</p>
+This is a snapshot of markdown from
 <blockquote>
 <a target='_blank' href='{{.AppLink}}'> <code> {{.AppName}} </code></a>
 </blockquote>
-
+<h3>Usage</h3>
 <ul>
-<li>Arrow keys navigate,
-    <code>'m'</code> toggles menu,
-    <code>'h'</code> toggles help.</li>
-<li>Click on command block headers to copy blocks to your clipboard.</li>
-<li>Check marks track code block execution progress.</li>
+<li>keys
+  <ul>
+    <li>&larr;, &rarr;, h, j, k, l: navigate</li>
+    <li>?, /: help</li>
+    <li>-: header</li>
+    <li>n: nav sidebar</li>
+    <li>m: monkey</li>
+  </ul>
+</li>
+<li>Click code block headers to copy blocks to the clipboard.</li>
+<li>Check marks track block execution progress.</li>
 <li>Use <code>tmux</code> to get one-click execution.</li>
 </ul>
 
@@ -326,7 +337,7 @@ This is a handy way to drive demos from markdown.
 </p>
 
 <h3> Remote server tmux </h3>
-<p> <em>A proof of concept
+<p> <em>Proof of concept
 for using tmux over a websocket to remote servers.
 Needs better session mgmt to work with load balanced traffic.
 The websocket described below not needed in the previous
@@ -346,7 +357,7 @@ href="https://github.com/tmux/tmux/wiki">tmux</a>:
   tmux
 </pre>
 </li>
-<li>In some non-tmux shell, run mdrip in <code>--mode tmux</code>:
+<li>In some non-tmux shell, run mdrip in <em>tmux</em> mode:
 <pre>
   host=ws://{{.Host}}
   mdrip \
@@ -382,9 +393,10 @@ body {
   width: 100%;
 }
 
-header, .headerSpacer {
+header, .headSpacer {
   height: {{.LayHeaderHeight}}px;
   width: inherit;
+  transition: height {{.TransitionSpeedMs}}ms;
 }
 
 header {
@@ -397,7 +409,7 @@ header {
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
-  transition: height {{.TransitionSpeed}};
+  transition: height {{.TransitionSpeedMs}}ms;
   box-shadow: 0 2px 2px 2px rgba(0,0,0,.4);
 }
 
@@ -411,7 +423,7 @@ header {
   overflow: hidden;  /* initially hideNav */
   width: 0px;  /* initially hideNav */
   min-width: 0px;  /* initially hideNav */
-  transition: width {{.TransitionSpeed}}, min-width {{.TransitionSpeed}};
+  transition: width {{.TransitionSpeedMs}}ms, min-width {{.TransitionSpeedMs}}ms;
 }
 .navRightBoxShadow {
   /* shadow on bottom, top and left */
@@ -565,7 +577,7 @@ title:hover {
 
   background-color: {{.ColorHelpBackground}};
   color: {{.ColorNavText}};
-  transition: height {{.TransitionSpeed}};
+  transition: height {{.TransitionSpeedMs}}ms;
   overflow: auto;
 }
 
@@ -580,7 +592,7 @@ title:hover {
   overflow-x: hidden;
   overflow-y: auto;
   align-items: flex-start;
-  transition: width {{.TransitionSpeed}};
+  transition: width {{.TransitionSpeedMs}}ms;
 }
 
 .proseActual {
@@ -702,7 +714,7 @@ title:hover {
   height: 4px;
   /* top rig bot lef */
   margin: 6px 0 6px 0px;
-  transition: {{.TransitionSpeed}};
+  transition: {{.TransitionSpeedMs}}ms;
 	box-shadow: 0px 1px 1px 1px rgba(0,0,0,0.4);
   border: solid 1px #555;
 	background-color: {{.ColorControls}};
@@ -733,34 +745,107 @@ function getDataId(el) {
   return el.getAttribute("data-id");
 }
 
-function isVertScrollBarVisible() {
-  return document.body.scrollHeight > document.body.clientHeight;
+function coinFlip() {
+  return (Math.random() >= 0.5);
 }
 
-var nav = new function() {
-  var theHelpBox = null;
-  var theBurger = null;
-  var theLeftBox = null;
-  var theRightBox = null;
-  var theLeftSpacer = null;
-  var theRightSpacer = null;
-  var theBody = null;
-  var theProseColumn = null;
+// return int in range 0..(n-1)
+function randomInt(n) {
+  return Math.floor(Math.random() * n)
+}
+
+var bodyController = new function() {
+  var styleBody = null;
+
+  this.isVertScrollBarVisible = function() {
+    return document.body.scrollHeight > document.body.clientHeight;
+  }
+  this.vertScrollBarWidth = function() {
+    return this.isVertScrollBarVisible() ? '14px' : '0px';
+  }
+  this.getWideWidth = function() {
+    return '{{.LayBodyWideWidth}}px';
+  }
+  this.getMediumWidth = function() {
+    return '{{.LayBodyMediumWidth}}px';
+  }
+  this.enterModeWide = function() {
+    styleBody.width = this.getWideWidth();
+  }
+  this.enterModeMedium = function() {
+    this.enterModeNarrow();
+  }
+  this.enterModeNarrow = function() {
+    styleBody.width = '100%';
+  }
+  this.initialize = function() {
+    styleBody = document.body.style;
+  }
+}
+
+var headerController = new function() {
+  var styleHeader = null;
+  var styleHeadSpacer = null;
+  var styleLessonNavRow = null;
+  var styleTitle = null;
+
+  var setHeight = function(x) {
+    styleHeader.height = x;
+    styleHeadSpacer.height = x;
+  }
+  var hideIt = function() {
+    setHeight('{{.LayMinimizedHeaderHeight}}px');
+    styleLessonNavRow.display = 'none';
+    styleTitle.removeProperty('min-height');
+    styleTitle.fontSize = '1em';
+  }
+  var showIt = function() {
+    setHeight('{{.LayHeaderHeight}}px');
+    styleLessonNavRow.display = 'flex';
+    styleTitle.minHeight = '2em';
+    styleTitle.fontSize = '2em';
+  }
+  var isVisible = function() {
+    return (styleHeader.height == '{{.LayHeaderHeight}}px');
+  }
+  this.height = function() {
+    return styleHeader.height;
+  }
+  this.toggle = function() {
+    if (isVisible()) {
+      hideIt()
+    } else {
+      showIt()
+    }
+    navController.render();
+    helpController.render();
+  }
+  this.initialize = function() {
+    styleHeader = document.getElementById('header').style;
+    styleHeadSpacer = getElByClass('headSpacer').style;
+    styleTitle = document.getElementById('title').style;
+    styleLessonNavRow = document.getElementsByClassName('lessonNavRow')[0].style;
+  }
+  this.reset = function() {
+    showIt()
+  }
+}
+
+var navController = new function() {
+  var elBurger = null;
+  var elNavLeft = null;
+  var elNavRight = null;
+  var styleSpacerLeft = null;
+  var styleSpacerRight = null;
+  var styleProseColumn = null;
   var mqWide = null;
   var mqMedium = null;
-  var navBoxWidth = '{{.LayNavBoxWidth}}px'
-  var bodyWideWidth = '{{.LayBodyWideWidth}}px';
-  var bodyMediumWidth = '{{.LayBodyMediumWidth}}px';
 
-  var fudge = function() {
-    // approximate scroll bar width
-    return isVertScrollBarVisible() ? '14px' : '0px';
-  }
   var showBurger = function() {
-    theBurger.classList.add('burgIsAnX');
+    elBurger.classList.add('burgIsAnX');
   }
   var hideBurger = function() {
-    theBurger.classList.remove('burgIsAnX');
+    elBurger.classList.remove('burgIsAnX');
   }
   var hideABox = function(x) {
     x.width = '0px';
@@ -768,34 +853,42 @@ var nav = new function() {
     x.overflow = 'hidden';
   }
   var showABox = function(x) {
-    x.width = navBoxWidth;
-    x.minWidth = navBoxWidth;
+    x.width = '{{.LayNavBoxWidth}}px';
+    x.minWidth = '{{.LayNavBoxWidth}}px';
     x.overflow = 'auto';
   }
   var hideBoxes = function() {
-    theLeftBox.classList.remove('navLeftBoxShadow');
-    theRightBox.classList.remove('navRightBoxShadow');
-    hideABox(theLeftBox.style);
-    hideABox(theRightBox.style);
+    elNavLeft.classList.remove('navLeftBoxShadow');
+    elNavRight.classList.remove('navRightBoxShadow');
+    hideABox(elNavLeft.style);
+    hideABox(elNavRight.style);
+  }
+  var setTopAndHeight = function(b) {
+    // leave room for header drop-shadow
+    b.top = 'calc(' + headerController.height() + ' + 2px)';
+    b.height = 'calc(100vh - ({{.LayFooterHeight}}px + '
+        + headerController.height() + ' + 4px))';
   }
   var showBoxes = function() {
-    theLeftBox.classList.add('navLeftBoxShadow');
-    theRightBox.classList.add('navRightBoxShadow');
-    showABox(theLeftBox.style);
-    showABox(theRightBox.style);
+    setTopAndHeight(elNavLeft.style);
+    setTopAndHeight(elNavRight.style);
+    elNavLeft.classList.add('navLeftBoxShadow');
+    elNavRight.classList.add('navRightBoxShadow');
+    showABox(elNavLeft.style);
+    showABox(elNavRight.style);
   }
   var expandCenter = function() {
-    theLeftSpacer.display = 'none';
-    theRightSpacer.display = 'none';
-    theProseColumn.width = 'inherit'
+    styleSpacerLeft.display = 'none';
+    styleSpacerRight.display = 'none';
+    styleProseColumn.width = 'inherit'
   }
   var squeezeCenter = function() {
-    theLeftSpacer.display = 'inline-block';
-    theRightSpacer.display = 'inline-block';
-    theProseColumn.width = '100%';
+    styleSpacerLeft.display = 'inline-block';
+    styleSpacerRight.display = 'inline-block';
+    styleProseColumn.width = '100%';
   }
   var showNarrow = function() {
-    theRightBox.style.right = '0px'
+    elNavRight.style.right = '0px'
     showBoxes()
     showBurger()
   }
@@ -804,8 +897,9 @@ var nav = new function() {
     squeezeCenter()
   }
   var showWide = function() {
-    theRightBox.style.right =
-       'calc(100vw - (' + bodyWideWidth + ' + ' + fudge() + '))';
+    elNavRight.style.right =
+       'calc(100vw - (' + bodyController.getWideWidth()
+       + ' + ' + bodyController.vertScrollBarWidth() + '))';
     showBoxes()
     showBurger()
     squeezeCenter()
@@ -828,95 +922,37 @@ var nav = new function() {
     alert('hide nav not set')
   }
   var isVisible = function() {
-    return theBurger.classList.contains('burgIsAnX')
+    return elBurger.classList.contains('burgIsAnX')
+  }
+  var myRender = function() {
+    if (isVisible()) {
+      showIt()
+    } else {
+      hideIt()
+    }
+  }
+  this.render = function() {
+    myRender()
   }
   this.handleWidthChange = function(discard) {
     if (mqWide.matches) {
-      theBody.width = bodyWideWidth;
-      theHelpBox.left = navBoxWidth;
-      theHelpBox.right =
-        'calc(100vw - ' + bodyWideWidth + ' + '
-        + navBoxWidth + ' - ' + fudge() + ')';
+      bodyController.enterModeWide();
+      helpController.enterModeWide();
       showIt = showWide
       hideIt = hideWide
     } else if (mqMedium.matches) {
-      theBody.width = '100%';
-      theHelpBox.left = '0px';
-      theHelpBox.right = '0px';
+      bodyController.enterModeMedium();
+      helpController.enterModeMedium();
       showIt = showMedium
       hideIt = hideMedium
     } else {
-      theBody.width = '100%';
-      theHelpBox.left = '0px';
-      theHelpBox.right = '0px';
+      bodyController.enterModeNarrow();
+      helpController.enterModeNarrow();
       expandCenter();
       showIt = showNarrow
       hideIt = hideNarrow
     }
-    if (isVisible()) {
-      showIt()
-    } else {
-      hideIt()
-    }
-  }
-  this.toggle = function() {
-    if (isVisible()) {
-      hideIt()
-    } else {
-      showIt()
-    }
-  }
-  this.initialize = function(showNav) {
-    theBurger = getElByClass('navBurger');
-    theHelpBox = getElByClass('helpBox').style;
-    theLeftBox = getElByClass('navLeftBox');
-    theRightBox = getElByClass('navRightBox');
-    theLeftSpacer = getElByClass('navLeftSpacer').style;
-    theRightSpacer = getElByClass('navRightSpacer').style;
-    theBody = document.getElementById('body').style;
-    theProseColumn = getElByClass('proseColumn').style;
-
-    if ({{.LessonCount}} < 2) {
-      theBurger.style.display = 'none';
-    }
-
-    mqWide = window.matchMedia('(min-width: ' + bodyWideWidth + ')');
-    mqMedium = window.matchMedia(
-        '(min-width: ' + bodyMediumWidth
-        + ') and (max-width: ' + bodyWideWidth + ')');
-    mqWide.addListener(this.handleWidthChange);
-    mqMedium.addListener(this.handleWidthChange)
-    this.handleWidthChange('whatever');
-    if (showNav) {
-      if (!isVisible()) {
-        showIt()
-      }
-    } else {
-      if (isVisible()) {
-        hideIt()
-      }
-    }
-  }
-}
-
-var help = new function() {
-  var box = null
-  var hideIt = function() {
-    box.height = '0px';
-    box.overflow = 'hidden';
-    box.removeProperty('border');
-    box.removeProperty('border-radius');
-    box.removeProperty('box-shadow');
-  }
-  var showIt = function() {
-    box.height = 'calc(100vh - ({{.LayFooterHeight}}px + {{.LayHeaderHeight}}px))';
-    box.overflow = 'auto';
-    box.border =  'solid 1px #555';
-    box.borderRadius = '4px';
-    box.boxShadow = '0px 2px  2px    1px rgba(0,0,0,.3), 2px 0px 2px 1px rgba(0,0,0,.3)';
-  }
-  var isVisible = function() {
-    return (box.height != '0px')
+    myRender();
   }
   this.toggle = function() {
     if (isVisible()) {
@@ -926,12 +962,88 @@ var help = new function() {
     }
   }
   this.initialize = function() {
-    box = getElByClass('helpBox').style;
+    elBurger = getElByClass('navBurger');
+    elNavLeft = getElByClass('navLeftBox');
+    elNavRight = getElByClass('navRightBox');
+    styleSpacerLeft = getElByClass('navLeftSpacer').style;
+    styleSpacerRight = getElByClass('navRightSpacer').style;
+    styleProseColumn = getElByClass('proseColumn').style;
+    if ({{.LessonCount}} < 2) {
+      elBurger.style.display = 'none';
+    }
+    mqWide = window.matchMedia(
+        '(min-width: ' + bodyController.getWideWidth() + ')');
+    mqMedium = window.matchMedia(
+        '(min-width: ' + bodyController.getMediumWidth()
+        + ') and (max-width: ' + bodyController.getWideWidth() + ')');
+    mqWide.addListener(this.handleWidthChange);
+    mqMedium.addListener(this.handleWidthChange)
+    this.handleWidthChange('whatever');
+  }
+  this.reset = function() {
+    hideIt();
+  }
+}
+
+var helpController = new function() {
+  var style = null
+  var hideIt = function() {
+    style.top = headerController.height();
+    style.height = '0px';
+    style.overflow = 'hidden';
+    style.removeProperty('border');
+    style.removeProperty('border-radius');
+    style.removeProperty('box-shadow');
+  }
+  var showIt = function() {
+    style.top = headerController.height();
+    style.height = 'calc(100vh - ({{.LayFooterHeight}}px + '
+        + headerController.height() + '))';
+    style.overflow = 'auto';
+    style.border =  'solid 1px #555';
+    style.borderRadius = '4px';
+    style.boxShadow = '0px 2px 2px 1px rgba(0,0,0,.3), 2px 0px 2px 1px rgba(0,0,0,.3)';
+  }
+  var isVisible = function() {
+    return (style.height != '0px')
+  }
+  this.enterModeWide = function() {
+    style.left = '{{.LayNavBoxWidth}}px';
+    style.right =
+        'calc(100vw - ' + bodyController.getWideWidth() + ' + '
+        + '{{.LayNavBoxWidth}}px' + ' - '
+        + bodyController.vertScrollBarWidth() + ')';
+  }
+  this.enterModeMedium = function() {
+    this.enterModeNarrow();
+  }
+  this.enterModeNarrow = function() {
+    style.left = '0px';
+    style.right = '0px';
+  }
+  this.render = function() {
+    if (isVisible()) {
+      showIt()
+    } else {
+      hideIt()
+    }
+  }
+  this.toggle = function() {
+    if (isVisible()) {
+      hideIt()
+    } else {
+      showIt()
+    }
+  }
+  this.initialize = function() {
+    style = getElByClass('helpBox').style;
+  }
+  this.reset = function() {
     hideIt()
   }
 }
 
-var codeBlock = new function() {
+var codeBlockController = new function() {
   var requestRunning = false
 
   var addCheck = function(el) {
@@ -940,20 +1052,22 @@ var codeBlock = new function() {
     c.setAttribute('class', 'codeBlockCheckOff');
     el.appendChild(c);
   }
-
+  var hideIt = function(s) {
+    s.position = 'fixed';
+    s.top = 0;
+    s.left = 0;
+    s.width = '2em';
+    s.height = '2em';
+    s.padding = 0;
+    s.border = 'none';
+    s.outline = 'none';
+    s.boxShadow = 'none';
+    s.background = 'transparent';
+  }
   // https://stackoverflow.com/questions/400212
   var attemptCopyToBuffer = function(text) {
     var tA = document.createElement("textarea");
-    tA.style.position = 'fixed';
-    tA.style.top = 0;
-    tA.style.left = 0;
-    tA.style.width = '2em';
-    tA.style.height = '2em';
-    tA.style.padding = 0;
-    tA.style.border = 'none';
-    tA.style.outline = 'none';
-    tA.style.boxShadow = 'none';
-    tA.style.background = 'transparent';
+    hideIt(tA.style);
     tA.value = text;
     document.body.appendChild(tA);
     tA.select();
@@ -966,7 +1080,6 @@ var codeBlock = new function() {
     }
     document.body.removeChild(tA);
   }
-
   this.run = function(event) {
     if (!(event && event.target)) {
       alert('no event!');
@@ -991,76 +1104,27 @@ var codeBlock = new function() {
         requestRunning = false;
       }
     };
-    xhr.open('GET', '/_/runblock?fid=' + fileId + '&bid=' + blockId + '&sid={{.SessId}}', true);
+    xhr.open(
+        'GET',
+        '/_/runblock?fid=' + fileId
+            + '&bid=' + blockId
+            + '&sid={{.SessId}}',
+        true);
     xhr.send();
   }
-}
-
-var header = new function() {
-  var theHeader = null;
-  var theActiveLessonName = null;
-  var theLessonNavRow = null;
-  var theTitle = null;
-
-  var hideIt = function() {
-    theHeader.height = '{{.LayMinHeaderHeight}}px';
-    theLessonNavRow.display = 'none';
-    theTitle.removeProperty('min-height');
-    theTitle.fontSize = '1em';
-    /*
-        Also have to change 'top' and 'height' in
-           navLeftBox, navRightBox, helpbox
-        the most elegant way is to exxpress the top and height
-        as js functions in these latter objects, and have that
-        function check the visibility of the header.
-        The both depend on the header, but the header does not
-        depend on them
-
-     */
-  }
-  var showIt = function() {
-    theHeader.height = '{{.LayHeaderHeight}}px';
-    theLessonNavRow.display = 'flex';
-    theTitle.minHeight = '2em';
-    theTitle.fontSize = '2em';
-  }
-  var isVisible = function() {
-    return (theHeader.height == '{{.LayHeaderHeight}}px');
-  }
-  this.h = function() {
-    return theHeader;
-  }
-  this.r = function() {
-    return theLessonNavRow;
-  }
-  this.v = function() {
-    return isVisible();
-  }
-  this.toggle = function() {
-    if (isVisible()) {
-      hideIt()
-    } else {
-      showIt()
-    }
-  }
-
   this.initialize = function() {
-    theHeader = document.getElementById('header').style;
-    theTitle = document.getElementById('title').style;
-    theLessonNavRow = document.getElementsByClassName('lessonNavRow')[0].style;
-    showIt();
+    requestRunning = false;
   }
 }
 
-
-var lessonMgr = new function() {
+var lessonController = new function() {
   var activeIndex = -1;
   var coursePaths = null;
-  var theLessonName = null;
-  var thePrevName = null;
-  var theNextName = null;
-  var theLessonPrevPointer = null;
-  var theLessonNextPointer = null;
+  var elLessonName = null;
+  var elPrevName = null;
+  var elNextName = null;
+  var elLessonPrevPointer = null;
+  var elLessonNextPointer = null;
 
   var nextIndex = function(i) {
     return (i + 1) % coursePaths.length;
@@ -1084,10 +1148,10 @@ var lessonMgr = new function() {
     if (activeIndex == -1) {
       return
     }
-    theLessonName.innerHTML = ''
+    elLessonName.innerHTML = ''
     for (i = 0; i < 2; i++) {
-      thePrevName[i].innerHTML = '';
-      theNextName[i].innerHTML = '';
+      elPrevName[i].innerHTML = '';
+      elNextName[i].innerHTML = '';
     }
     getBodyLesson(activeIndex).style.display = 'none'
     getNavLesson(activeIndex).className = 'navLessonTitleOff'
@@ -1119,15 +1183,16 @@ var lessonMgr = new function() {
       assureActiveCourse(courses[i]);
     }
   }
-
   var dToggle = function(e) {
     e.style.display = (e.style.display == 'block') ? 'none' : 'block'
   }
-
   this.toggleNC = function(index) {
     dToggle(getNavCourse(index));
   }
-
+  // For monkeyController
+  this.toggle = function() {
+    this.assureActiveLesson(randomInt(coursePaths.length));
+  }
   var smoothScroll = function() {
     var currentScroll =
         document.documentElement.scrollTop || document.body.scrollTop;
@@ -1136,51 +1201,48 @@ var lessonMgr = new function() {
       window.scrollTo(0,currentScroll - (currentScroll/5));
     }
   }
-
   var updateUrl = function(path) {
-    theLessonName.innerHTML = path
+    elLessonName.innerHTML = '/' + path
     if (history.pushState) {
       window.history.pushState("not using data yet", "someTitle", "/" + path);
     } else {
       document.location.href = path;
     }
   }
-
   var updateHeader = function(index) {
     var path = '';
     var ptr = '';
     if (index < coursePaths.length - 1) {
       var e = getNavLesson(nextIndex(index));
-      path = e.getAttribute('data-path');
+      path = '/' + e.getAttribute('data-path');
       ptr = '&gt;';
     }
-    theNextName[0].innerHTML = path;
-    theNextName[1].innerHTML = path;
-    theLessonNextPointer[0].innerHTML = ptr;
-    theLessonNextPointer[1].innerHTML = ptr;
+    elNextName[0].innerHTML = path;
+    elNextName[1].innerHTML = path;
+    elLessonNextPointer[0].innerHTML = ptr;
+    elLessonNextPointer[1].innerHTML = ptr;
 
     path = '';
     ptr = '';
     if (index > 0) {
       var e = getNavLesson(prevIndex(index));
-      path = e.getAttribute('data-path');
+      path = '/' + e.getAttribute('data-path');
       ptr = '&lt;';
     }
-    thePrevName[0].innerHTML = path;
-    thePrevName[1].innerHTML = path;
-    theLessonPrevPointer[0].innerHTML = ptr;
-    theLessonPrevPointer[1].innerHTML = ptr;
+    elPrevName[0].innerHTML = path;
+    elPrevName[1].innerHTML = path;
+    elLessonPrevPointer[0].innerHTML = ptr;
+    elLessonPrevPointer[1].innerHTML = ptr;
 
     var e = getNavLesson(index);
     e.className = 'navLessonTitleOn'
     updateUrl(e.getAttribute('data-path'))
   }
-
   this.assureActiveLesson = function(index) {
     if (activeIndex == index) {
       return
     }
-    var prevState = isVertScrollBarVisible();
+    var prevState = bodyController.isVertScrollBarVisible();
     if (activeIndex > -1) {
       assureNoActiveLesson()
       assureNoActiveCourse()
@@ -1194,51 +1256,87 @@ var lessonMgr = new function() {
     e.style.display = 'block'
     updateHeader(index);
     smoothScroll()
-    if (prevState != isVertScrollBarVisible()) {
-      nav.handleWidthChange('whatever');
+    if (prevState != bodyController.isVertScrollBarVisible()) {
+      navController.handleWidthChange('whatever');
     }
     activeIndex = index;
   }
-
   this.goNext = function() {
     this.assureActiveLesson(nextIndex(activeIndex))
   }
-
   this.goPrev = function() {
     this.assureActiveLesson(prevIndex(activeIndex))
   }
-
   this.initialize = function(cp) {
     coursePaths = cp;
     activeIndex = -1;
-    theLessonName = getElByClass('activeLessonName');
-    thePrevName = document.getElementsByClassName('lessonPrevTitle');
-    theNextName = document.getElementsByClassName('lessonNextTitle');
-    theLessonPrevPointer = document.getElementsByClassName('lessonPrevPointer');
-    theLessonNextPointer = document.getElementsByClassName('lessonNextPointer');
+    elLessonName = getElByClass('activeLessonName');
+    elPrevName = document.getElementsByClassName('lessonPrevTitle');
+    elNextName = document.getElementsByClassName('lessonNextTitle');
+    elLessonPrevPointer = document.getElementsByClassName('lessonPrevPointer');
+    elLessonNextPointer = document.getElementsByClassName('lessonNextPointer');
+  }
+  this.reset = function() {
+    this.assureActiveLesson({{.InitialLesson}});
+  }
+}
+
+var monkeyController = new function() {
+  var items = null;
+  var on = false;
+  var interval = null;
+  var itemReset = function(item, i) {
+    item.reset();
+  }
+  var run = function() {
+    items[randomInt(items.length)].toggle();
+  }
+  this.toggle = function() {
+    if (on) {
+      window.clearInterval(interval);
+      interval = null;
+      this.reset();
+      on = false;
+      return;
+    }
+    interval = window.setInterval(run, {{.TransitionSpeedMs}} + 50);
+    on = true;
+  }
+  this.initialize = function(x) {
+    items = x;
+    on = false;
+  }
+  this.reset = function() {
+    items.forEach(itemReset);
   }
 }
 
 function onLoad() {
-  help.initialize();
-  header.initialize();
-  nav.initialize(false /* {{.LessonCount}} > 1 */);
-  lessonMgr.initialize({{.CoursePaths}});
-  lessonMgr.assureActiveLesson({{.InitialLesson}});
+  headerController.initialize();
+  bodyController.initialize();
+  helpController.initialize();
+  navController.initialize();
+  lessonController.initialize({{.CoursePaths}});
+  codeBlockController.initialize();
+  monkeyController.initialize(
+      new Array(
+          headerController, helpController,
+          navController, lessonController));
+  monkeyController.reset();
   window.addEventListener('keydown', function (event) {
     if (event.defaultPrevented) {
       return;
     }
     switch (event.key) {
-      case 'm':
-        header.toggle();
+      case '-':
+        headerController.toggle();
         break;
       case 'n':
-        nav.toggle();
+        navController.toggle();
         break;
       case '/':
       case '?':
-        help.toggle();
+        helpController.toggle();
         break;
       case 'j':
         alert('impl PREV block');
@@ -1248,11 +1346,14 @@ function onLoad() {
         break;
       case 'h':
       case 'ArrowLeft':
-        lessonMgr.goPrev();
+        lessonController.goPrev();
         break;
       case 'l':
       case 'ArrowRight':
-        lessonMgr.goNext();
+        lessonController.goNext();
+        break;
+      case 'm':
+        monkeyController.toggle();
         break;
       default:
     }
