@@ -187,7 +187,7 @@ func makeAppTemplate(htmlNavActual string) string {
     </div>
     <div class='headerColumn'>
       <a target='_blank' href='{{.AppLink}}'>
-        <title id='title'> KIWI {{.TrimName}} </title>
+        <title id='title'> {{.TrimName}} </title>
       </a>
       <div class='activeLessonName'> Droplet Formation Rates </div>
       ` + htmlLessonNavRow + `
