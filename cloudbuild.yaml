@@ -7,6 +7,8 @@ steps:
   - 'GOOS=linux'
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '--tag=gcr.io/$PROJECT_ID/mdrip', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/mdrip']
 - name: 'gcr.io/cloud-builders/kubectl'
   args: ['--namespace', 'ns-snt02', 'delete', 'pods', '--all' ]
   env:
