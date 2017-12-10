@@ -1,0 +1,11 @@
+steps:
+- name: 'gcr.io/cloud-builders/go'
+  args: ['install', '-a', '-ldflags', "'-s'", '-installsuffix', 'cgo', 'github.com/monopole/mdrip']
+  env: [
+    'PROJECT_ROOT=github.com/monopole/mdrip',
+    'CGO_ENABLED=0',
+    'GOOS=linux'
+  ]
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '--tag=gcr.io/$PROJECT_ID/mdrip', '.']
+images: ['gcr.io/$PROJECT_ID/mdrip']
