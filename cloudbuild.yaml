@@ -1,6 +1,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/go'
-  args: ['install', '-a', '-ldflags', "'-s'", '-installsuffix', 'cgo', 'github.com/monopole/mdrip']
+  args: ['install', '-a', '-ldflags', "'-s'", '-installsuffix', 'cgo', '.']
   env: [
     'PROJECT_ROOT=github.com/monopole/mdrip',
     'CGO_ENABLED=0',

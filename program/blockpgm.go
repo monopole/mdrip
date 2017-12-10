@@ -37,7 +37,7 @@ func NewBlockPgmFromBlockTut(b *model.BlockTut) *BlockPgm {
 
 func (x *BlockPgm) Name() string { return x.name }
 func (x *BlockPgm) HtmlProse() template.HTML {
-	return template.HTML(string(blackfriday.MarkdownCommon(x.Prose())))
+	return template.HTML(string(blackfriday.Run(x.Prose())))
 }
 
 func (x *BlockPgm) Print(
