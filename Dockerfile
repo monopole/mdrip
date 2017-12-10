@@ -6,8 +6,8 @@ COPY gopath/bin/mdrip /mdrip
 EXPOSE 8080
 CMD ["/mdrip",\
     "--alsologtostderr",\
-		"--v=0",\
-		"--stderrthreshold=INFO",\
-		"--port=8080",\
-		"--mode=demo",\
-		"gh:monopole/snt"]
+    "--v=0",\
+    "--stderrthreshold=INFO",\
+    "--port=8080",\
+    "--mode=demo",\
+    "gh:monopole/snt"]
