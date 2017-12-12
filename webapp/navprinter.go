@@ -49,7 +49,7 @@ func (v *NavPrinter) VisitLessonTut(x *model.LessonTut) {
 	v.P("<div class='%s'>", v.navItemStyle())
 	v.Down()
 	v.P("<div id='NL%d' class='navLessonTitleOff'", v.lessonCounter)
-	v.P("    onclick='lessonMgr.assureActiveLesson(%d)'", v.lessonCounter)
+	v.P("    onclick='lessonController.assureActiveLesson(%d)'", v.lessonCounter)
 	v.P("    data-path='%s'>", v.path())
 	// Could loop over children here - decided not to.
 	v.Down()
@@ -66,7 +66,8 @@ func (v *NavPrinter) VisitCourse(x *model.Course) {
 	v.addName(x)
 	v.P("<div class='%s'>", v.navItemStyle())
 	v.Down()
-	v.P("<div class='navCourseTitle' onclick='lessonMgr.toggleNC(%d)'>", v.courseCounter)
+	v.P("<div class='navCourseTitle' onclick='lessonController.ncToggle(%d)'>",
+		v.courseCounter)
 	v.Down()
 	v.P("%s", x.Name())
 	v.Up()

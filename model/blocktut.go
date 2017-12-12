@@ -9,7 +9,7 @@ type BlockTut struct {
 	BlockParsed
 }
 
-const AnonBlockName = "clickToRun"
+const AnonBlockName = "clickToCopy"
 
 func NewBlockTut(b *BlockParsed) *BlockTut {
 	return &BlockTut{*b}

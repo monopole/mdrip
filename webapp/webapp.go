@@ -725,14 +725,13 @@ title:hover {
 }
 
 .burgIsAnX .burgBar1 {
-  -webkit-transform: translate(-3px, 0px) rotate(-45deg);
-  transform: translate(-4px, 0px) rotate(-45deg);
+  transform: translate(-6px, 1px) rotate(-40deg);
 }
 .burgIsAnX .burgBar2 {
+  transform: translate(4px, 0px);
 }
 .burgIsAnX .burgBar3 {
-  -webkit-transform: translate(-3px, 0px) rotate(45deg);
-  transform: translate(-4px, 0px) rotate(45deg);
+  transform: translate(-6px, -1px) rotate(40deg);
 }
 `
 
@@ -1186,7 +1185,7 @@ var lessonController = new function() {
   var dToggle = function(e) {
     e.style.display = (e.style.display == 'block') ? 'none' : 'block'
   }
-  this.toggleNC = function(index) {
+  this.ncToggle = function(index) {
     dToggle(getNavCourse(index));
   }
   // For monkeyController

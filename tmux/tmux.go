@@ -32,10 +32,19 @@ func IsProgramInstalled(programName string) bool {
 
 func (t Tmux) IsUp() bool {
 	if _, err := exec.LookPath(t.path); err != nil {
+		glog.Info("Unable to find tmux")
 		return false
 	}
 	cmd := exec.Command(t.path, "info")
-	if _, err := cmd.CombinedOutput(); err != nil {
+	if o, err := cmd.CombinedOutput(); err != nil {
+		glog.Info("Unable to run tmux: ", err)
+		glog.Info("info output: ", string(o))
+		// This isn't right.  See
+		// https://github.com/tmuxinator/tmuxinator/issues/536
+		x := string(o)
+		if x[0:len(x)-1] == "no current client" {
+			return true
+		}
 		return false
 	}
 	return true
@@ -44,7 +53,9 @@ func (t Tmux) IsUp() bool {
 func closeSocket(c *websocket.Conn, done chan struct{}) {
 	defer c.Close()
 	// Send a close frame, wait for the other side to close the connection.
-	err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err := c.WriteMessage(
+		websocket.CloseMessage,
+		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		glog.Error("write close:", err)
 		return
@@ -161,6 +172,7 @@ func (t Tmux) start() error {
 	cmd := exec.Command(t.path, "new", "-s", SessionName, "-d")
 	out, err := cmd.Output()
 	glog.Info("Starting ", out)
+	glog.Info("Err: ", err)
 	return err
 }
 

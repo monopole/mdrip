@@ -31,7 +31,7 @@ func TestStartAndStopTmuxSession(t *testing.T) {
 		t.Errorf("unable to start session: %s", err)
 	}
 	if !x.IsUp() {
-		t.Errorf("tmux should appear as running: %s", err)
+		t.Errorf("tmux should appear as running")
 	}
 	out, err = x.listSessions()
 	if err != nil {
