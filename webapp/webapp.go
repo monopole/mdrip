@@ -249,7 +249,7 @@ const (
 	tmplBodyLesson = `
 {{define "` + tmplNameLesson + `"}}
 {{range $i, $c := .Blocks}}
-  <div class="commandBlockBody" data-id="{{$i}}">
+  <div class="commandBlockBody">
   {{ template "` + tmplNameBlockPgm + `" $c }}
   </div>
 {{end}}
@@ -258,16 +258,17 @@ const (
 	tmplNameBlockPgm = "blockPgm"
 	tmplBodyBlockPgm = `
 {{define "` + tmplNameBlockPgm + `"}}
-<div class="proseblock"> {{.HtmlProse}} </div>
+<div class='proseblock'> {{.HtmlProse}} </div>
 {{if .Code}}
-<div class="codeBox">
-  <div class="codeBlockControl">
-    <span class="codeBlockButton" onclick="codeBlockController.run(event)">
+<div class='codeBox' data-id='{{.Id}}'>
+  <div class='codeBlockControl'>
+    <span class='codePrompt'> &nbsp;&gt;&nbsp; </span>
+    <span class='codeBlockButton' onclick='codeBlockController.setAndRun({{.Id}})'>
       {{.Name}}
     </span>
-    <span class="codeBlockSpacer"> &nbsp; </span>
+    <span class='codeBlockSpacer'> &nbsp; </span>
   </div>
-<div class="codeblockBody">
+<div class='codeblockBody'>
 {{ .Code }}
 </div>
 </div>
@@ -298,30 +299,26 @@ const htmlLessonNavRow = `
 
 const htmlHelp = `
 <p>
-This is a snapshot of markdown from
-<blockquote>
+Markdown snapshot from
 <a target='_blank' href='{{.AppLink}}'> <code> {{.AppName}} </code></a>
-</blockquote>
-<h3>Usage</h3>
+
+<h3>Keys</h3>
 <ul>
-<li>keys
-  <ul>
-    <li>&larr;, &rarr;, h, j, k, l: navigate</li>
-    <li>?, /: help</li>
-    <li>-: header</li>
-    <li>n: nav sidebar</li>
-    <li>m: monkey</li>
-  </ul>
-</li>
-<li>Click code block headers to copy blocks to the clipboard.</li>
-<li>Check marks track block execution progress.</li>
-<li>Use <code>tmux</code> to get one-click execution.</li>
+  <li>&larr;, &rarr;, h, l: prev/next lesson </li>
+  <li>j, k: activate prev/next code block </li>
+  <li>&crarr;: copy activated block (or mouse click)</li>
+  <li>?, /: help</li>
+  <li>-: header</li>
+  <li>n: nav sidebar</li>
+  <li>m: monkey</li>
 </ul>
 
-<h3> Serve locally with tmux for one-click code block execution</h3>
+Check marks track block execution progress.
+
+<h3> Serve locally with tmux for no-mouse code block execution</h3>
 
 <p>
-To avoid the need to mouse/aim/paste, serve the content locally:
+Serve the content locally:
 <pre>
   GOBIN=$TMPDIR go install github.com/monopole/mdrip
   $TMPDIR/mdrip --port 8001 --mode demo {{.AppName}}
@@ -331,9 +328,9 @@ href="https://github.com/tmux/tmux/wiki">tmux</a>:
 <pre>
   tmux
 </pre>
-Then clicking on a code block header in your browser pastes
-the command block to the active tmux session.
-This is a handy way to drive demos from markdown.
+Then whatever action copies a code block (hitting &crarr; or mouse click)
+also pastes the block to the active tmux session for
+immediate execution.
 </p>
 
 <h3> Remote server tmux </h3>
@@ -348,31 +345,24 @@ For one-click usage from a remote server:
 <li>
 Install <code><a target="_blank"
 href="https://github.com/monopole/mdrip">mdrip</a></code>
-as described above.
+as described above, and run <a target="_blank"
+href="https://github.com/tmux/tmux/wiki">tmux</a>.
 </li>
-<br>
-<li>Run <a target="_blank"
-href="https://github.com/tmux/tmux/wiki">tmux</a>:
+<li>In some non-tmux shell, run mdrip in <em>tmux</em> mode with a session arg:
 <pre>
-  tmux
-</pre>
-</li>
-<li>In some non-tmux shell, run mdrip in <em>tmux</em> mode:
-<pre>
-  host=ws://{{.Host}}
   mdrip \
-      --alsologtostderr --v 0 \
-      --stderrthreshold INFO \
-      --mode tmux \
-      ${host}/_/ws?id={{.SessId}}
+    --alsologtostderr --v 0 \
+    --stderrthreshold INFO \
+    --mode tmux \
+    ws://{{.Host}}/_/ws?id={{.SessId}}
 </pre>
 </li>
 </ul>
 <p>
-Now, clicking a command block header sends the block
+Now, a copy action sends the block
 from this page's server over a websocket to the local
-<code>mdrip</code>, which then 'pastes' the block
-to your active <code>tmux</code> pane.<p>
+<code>mdrip</code>, which then pastes the block
+to the active <code>tmux</code> pane.<p>
 <p>
 The <code>mdrip</code> service self-exits after a period of inactivity,
 and can be restarted with the same command.</p>
@@ -650,6 +640,11 @@ title:hover {
   background-repeat: no-repeat;
   background-size: contain;
   background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAWCAMAAADto6y6AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAgY0hSTQAAeiYAAICEAAD6AAAAgOgAAHUwAADqYAAAOpgAABdwnLpRPAAAAQtQTFRFAAAAAH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//AH//////BQzC2AAAAFd0Uk5TAAADLy4QZVEHKp8FAUnHbeJ3BAh68IYGC4f4nQyM/LkYCYnXf/rvAm/2/oFY7rcTPuHkOCEky3YjlW4Pqbww0MVTfUZA96p061Xs3mz1e4P70R2aHJYf2KM0AgAAAAFiS0dEWO21xI4AAAAJcEhZcwAAEysAABMrAbkohUIAAADTSURBVCjPbdDZUsJAEAXQXAgJIUDCogHBkbhFEIgCsqmo4MImgij9/39iUT4Qkp63OV0zfbsliTkIhWWOEVHUKOdaTNER9HgiaYQY1xUzlWY8kz04tBjP5Y8KRc6PxUmJcftUnMkIFGCdX1yqjDtX5cp1MChQrVHd3Xn8/y1wc0uNpuejZmt7Ae7aJDreBt1e3wVw/0D06HobYPD0/GI7Q0G10V4i4NV8e/8YE/V8KwImUxJEM82fFM78k4gW3MhfS1p9B3ckobgWBpiChJ/fjc//AJIfFr4X0swAAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE2LTA3LTMwVDE0OjI3OjUxLTA3OjAwUzMirAAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNi0wNy0zMFQxNDoyNzo0NC0wNzowMLz8tSkAAAAZdEVYdFNvZnR3YXJlAHd3dy5pbmtzY2FwZS5vcmeb7jwaAAAAFXRFWHRUaXRsZQBibHVlIENoZWNrIG1hcmsiA8jIAAAAAElFTkSuQmCC);
+}
+
+.codePrompt {
+  background-color: {{.ColorCodeHover}};
+  display: none;
 }
 
 .codeBlockButton {
@@ -1043,8 +1038,9 @@ var helpController = new function() {
 }
 
 var codeBlockController = new function() {
-  var requestRunning = false
-
+  var blocks = null;
+  var requestRunning = false;
+  var cbIndex = -1;
   var addCheck = function(el) {
     var t = 'span';
     var c = document.createElement(t);
@@ -1079,40 +1075,109 @@ var codeBlockController = new function() {
     }
     document.body.removeChild(tA);
   }
-  this.run = function(event) {
-    if (!(event && event.target)) {
-      alert('no event!');
+  this.goPrev = function() {
+    if (cbIndex < 1) {
+      // Do nothing, not even modulo wrap.
+      // Behave like an editor.
+      return;
+    }
+    this.deActivateCurrent();
+    cbIndex--;
+    activateCurrent();
+  }
+  this.goNext = function() {
+    if (cbIndex >= blocks.length - 1) {
+      // Do nothing, not even modulo wrap.
+      return;
+    }
+    this.deActivateCurrent();
+    cbIndex++;
+    activateCurrent();
+  }
+  var controlBar = function() {
+    return blocks[cbIndex].firstElementChild;
+  }
+  var prompt = function() {
+    return controlBar().firstElementChild;
+  }
+  var goodIndex = function(i) {
+    return i >= 0 && i < blocks.length
+  }
+  this.deActivateCurrent = function() {
+    if (!goodIndex(cbIndex)) {
+      return;
+    }
+    prompt().style.display = 'none';
+  }
+  var activateCurrent = function() {
+    if (!goodIndex(cbIndex)) {
+      return;
+    }
+    prompt().style.display = 'inline-block';
+    blocks[cbIndex].scrollIntoView(
+      {behavior: 'smooth', block: 'center', inline: 'nearest'});
+  }
+  this.currentBlock = function() {
+    if (goodIndex(cbIndex)) {
+      return blocks[cbIndex]
+    }
+  }
+  this.initLesson = function(elLesson) {
+    cbIndex = -1;
+    blocks = elLesson.querySelectorAll('[data-id]');
+    for (i = 0; i < blocks.length; i++) {
+       var b = blocks[i];
+       var id = parseInt(b.getAttribute('data-id'));
+       if (i != id) {
+         console.log("Counting problem")
+       }
+    }
+  }
+  this.setAndRun = function(id) {
+    if (!goodIndex(id)) {
+      alert('bad id: ' + id);
       return
+    }
+    if (cbIndex != id) {
+      deActivateCurrent()
+    }
+    cbIndex = id;
+    activateCurrent();
+    this.runCurrent();
+  }
+  this.runCurrent = function() {
+    if (!goodIndex(cbIndex)) {
+      console.log("cannot run block " + cbIndex);
+      return;
     }
     if (requestRunning) {
       alert('busy!');
-      return
+      return;
     }
     requestRunning = true;
-    var b = event.target;
-    var codeBox = b.parentNode.parentNode;
+    var codeBox = blocks[cbIndex];
     // Fragile, but brief!
     var codeBody = codeBox.childNodes[3].firstChild;
     attemptCopyToBuffer(codeBody.textContent)
-    var blockId = getDataId(codeBox.parentNode);
     var fileId = getDataId(codeBox.parentNode.parentNode);
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
       if (xhr.readyState == XMLHttpRequest.DONE) {
-        addCheck(b.parentNode)
+        addCheck(codeBox.childNodes[1])
         requestRunning = false;
       }
     };
     xhr.open(
         'GET',
         '/_/runblock?fid=' + fileId
-            + '&bid=' + blockId
+            + '&bid=' + cbIndex
             + '&sid={{.SessId}}',
         true);
     xhr.send();
   }
   this.initialize = function() {
     requestRunning = false;
+    cbIndex = -1;
   }
 }
 
@@ -1247,13 +1312,14 @@ var lessonController = new function() {
       assureNoActiveCourse()
     }
     assureActivePath(index)
-    var e = getBodyLesson(index)
-    if (e == null) {
+    var elLesson = getBodyLesson(index)
+    if (elLesson == null) {
       console.log("missing lesson " + index);
       return;
     }
-    e.style.display = 'block'
+    elLesson.style.display = 'block'
     updateHeader(index);
+    codeBlockController.initLesson(elLesson);
     smoothScroll()
     if (prevState != bodyController.isVertScrollBarVisible()) {
       navController.handleWidthChange('whatever');
@@ -1261,9 +1327,11 @@ var lessonController = new function() {
     activeIndex = index;
   }
   this.goNext = function() {
+    codeBlockController.deActivateCurrent();
     this.assureActiveLesson(nextIndex(activeIndex))
   }
   this.goPrev = function() {
+    codeBlockController.deActivateCurrent();
     this.assureActiveLesson(prevIndex(activeIndex))
   }
   this.initialize = function(cp) {
@@ -1327,6 +1395,10 @@ function onLoad() {
       return;
     }
     switch (event.key) {
+      case 'Enter':
+      case 'r':
+        codeBlockController.runCurrent();
+        break;
       case '-':
         headerController.toggle();
         break;
@@ -1337,11 +1409,11 @@ function onLoad() {
       case '?':
         helpController.toggle();
         break;
-      case 'j':
-        alert('impl PREV block');
-        break;
       case 'k':
-        alert('impl NEXT block');
+        codeBlockController.goPrev();
+        break;
+      case 'j':
+        codeBlockController.goNext();
         break;
       case 'h':
       case 'ArrowLeft':

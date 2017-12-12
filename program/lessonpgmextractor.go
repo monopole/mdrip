@@ -38,6 +38,15 @@ func (v *LessonPgmExtractor) VisitLessonTut(l *model.LessonTut) {
 	if len(v.blockAccum) < 1 {
 		return
 	}
+	id := -1
+	for _, b := range v.blockAccum {
+		if len(b.Code()) > 0 {
+			id++
+			b.id = id
+		} else {
+			b.id = -1
+		}
+	}
 	v.lessons = append(v.lessons, NewLessonPgm(l.Path(), v.blockAccum))
 }
 

@@ -16,6 +16,7 @@ type BlockPgm struct {
 	name string
 	// Should a sleep be added?
 	shouldAddSleep bool
+	id             int
 	base.BlockBase
 }
 
@@ -24,17 +25,18 @@ func NewEmptyBlockPgm() *BlockPgm {
 }
 
 func NewBlockPgm(code string) *BlockPgm {
-	return &BlockPgm{"noNameBlock", false,
+	return &BlockPgm{"noNameBlock", false, -1,
 		base.NewBlockBase(base.NoProse(), base.OpaqueCode(code))}
 }
 
 func NewBlockPgmFromBlockTut(b *model.BlockTut) *BlockPgm {
 	return &BlockPgm{
 		b.Name(),
-		b.HasLabel(base.SleepLabel),
+		b.HasLabel(base.SleepLabel), -1,
 		base.NewBlockBase(b.Prose(), b.Code())}
 }
 
+func (x *BlockPgm) Id() int      { return x.id }
 func (x *BlockPgm) Name() string { return x.name }
 func (x *BlockPgm) HtmlProse() template.HTML {
 	return template.HTML(string(blackfriday.Run(x.Prose())))
