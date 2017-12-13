@@ -1133,16 +1133,29 @@ var codeBlockController = new function() {
        }
     }
   }
-  this.setAndRun = function(id) {
+  // For monkeyController
+  this.toggle = function() {
+    this.setCurrent(randomInt(blocks.length));
+  }
+  this.reset = function() {
+    this.deActivateCurrent()
+  }
+  this.setCurrent = function(id) {
     if (!goodIndex(id)) {
-      alert('bad id: ' + id);
-      return
+      return false;
     }
     if (cbIndex != id) {
-      deActivateCurrent()
+      this.deActivateCurrent()
     }
     cbIndex = id;
     activateCurrent();
+    return true;
+  }
+  this.setAndRun = function(id) {
+    if (!this.setCurrent(id)) {
+      alert('bad id: ' + id);
+      return
+    }
     this.runCurrent();
   }
   this.runCurrent = function() {
@@ -1308,6 +1321,7 @@ var lessonController = new function() {
     }
     var prevState = bodyController.isVertScrollBarVisible();
     if (activeIndex > -1) {
+      codeBlockController.deActivateCurrent();
       assureNoActiveLesson()
       assureNoActiveCourse()
     }
@@ -1388,7 +1402,7 @@ function onLoad() {
   monkeyController.initialize(
       new Array(
           headerController, helpController,
-          navController, lessonController));
+          codeBlockController, navController, lessonController));
   monkeyController.reset();
   window.addEventListener('keydown', function (event) {
     if (event.defaultPrevented) {

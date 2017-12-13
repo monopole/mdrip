@@ -4,16 +4,14 @@
 [travis-mdrip]: https://travis-ci.org/monopole/mdrip
 [tmux]: https://github.com/tmux/tmux/wiki
 
-`mdrip` turns a directory hierarchy of markdown into a navigable, executable, testable tutorial.
+`mdrip` turns a directory hierarchy of markdown files into a testable, tutorial web app.
 
-* Directory structure becomes hierarchical navigation.
-* Navigate through all content with arrow keys.
+* Navigate with keys (mouse usage optional).
 * Track progress with check marks.
-* Click on code block headers to immediately execute them in [tmux].
+* Immediately execute code blocks in [tmux] without copy/paste.
 
 Or just use `mdrip` to place markdown-based tutorials under CI/CD testing,
 to avoid disappointing users.
-
 
 
 [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip)
@@ -44,8 +42,8 @@ The `filePath` argument can be
 
 * a single local file,
 * a local directory,
-* a github URL in the style `gh:{handle}/{repoName}`,
-* or a particular file or a directory in the repo, e.g. `gh:{handle}/{repoName}/foo/bar`.
+* a github URL in the style `gh:{user}/{repoName}`,
+* or a particular file or a directory in the repo, e.g. `gh:{user}/{repoName}/foo/bar`.
 
 What happens next depends on the `--mode` flag.
 
@@ -57,14 +55,14 @@ This serves rendered markdown at
 `http://localhost:8000`.  Change the endpoint using
 `--port` and `--hostname`.
 
-Clicking on a code block in your browser will
-copy its contents to your clipboard, and if
-you happen to have a local instance of [tmux]
-running, the `mdrip` server sends the code
-block directly to the currently active tmux
-pane for immediate execution.
+Clicking on a code block in your browser (or navigating
+to it using keys only) will copy its contents to
+your clipboard.  Hit '?' in the browser to see key controls.
 
-This one-click operation is handy for demos.
+If you have a local instance of [tmux]
+running, the `mdrip` server sends the code
+block directly to active tmux
+pane for immediate execution.
 
 ##### Example:
 
@@ -251,8 +249,7 @@ the execution path determined by that label.
  * Place commands that the reader should copy/paste/execute in
    [fenced code blocks].
 
- * Eschew preceding commands with fake prompts (e.g. `$`).
-   They are redundant, and complicate copy/paste.
+ * Eschew preceding commands with redundant prompts (e.g. `$`).
 
  * Code-style text not intended for immediate execution, e.g. alternative
    commands or example output, should be in a fenced code block indented via a
