@@ -299,8 +299,8 @@ const htmlLessonNavRow = `
 
 const htmlHelp = `
 <p>
-Markdown snapshot from
-<a target='_blank' href='{{.AppLink}}'> <code> {{.AppName}} </code></a>
+Snapshot of markdown from
+<a target='_blank' href='{{.AppLink}}'> <code> {{.AppName}} </code></a>.
 
 <h3>Keys</h3>
 <p>
@@ -310,16 +310,16 @@ Markdown snapshot from
      <td> ? &nbsp; / </td>
   </tr>
   <tr>
-    <td class='kind'> (previous, next) lesson </td>
-    <td> &larr;, &rarr; &nbsp; a, d &nbsp; h, l </td>
-  </tr>
-  <tr>
     <td class='kind'> activate (previous, next) code block </td>
     <td> w, s &nbsp; j, k </td>
   </tr>
   <tr>
      <td class='kind'> copy/execute activated block </td>
      <td> &crarr; </td>
+  </tr>
+  <tr>
+    <td class='kind'> (previous, next) lesson </td>
+    <td> a, d &nbsp; h, l &nbsp; &larr;, &rarr; </td>
   </tr>
   <tr>
     <td class='kind'> minimize header </td>
@@ -336,12 +336,12 @@ Markdown snapshot from
 </table>
 </p>
 
-Check marks track copy/execute progress.
-
 <h3> Serve locally with tmux for no-mouse code block execution</h3>
 
 <p>
-Serve the content locally:
+Serve the content locally with
+<code><a target="_blank"
+href="https://github.com/monopole/mdrip">mdrip</a></code>:
 <pre>
   GOBIN=$TMPDIR go install github.com/monopole/mdrip
   $TMPDIR/mdrip --port 8001 --mode demo {{.AppName}}
@@ -351,7 +351,9 @@ href="https://github.com/tmux/tmux/wiki">tmux</a>:
 <pre>
   tmux
 </pre>
-Then whatever action copies a code block (&crarr; or mouse click)
+Then, at <a target="_blank"
+href="http://localhost:8001">localhost:8001</a>,
+whatever action copies a code block (&crarr; or mouse click)
 also pastes the block to the active tmux session for
 immediate execution.
 </p>
@@ -359,7 +361,8 @@ immediate execution.
 <h3> Remote server tmux </h3>
 <p> <em>Proof of concept
 for using tmux over a websocket to remote servers.
-mNeeds better session mgmt to work with load balanced traffic.
+Currently lacks the session mgmt necessary
+to reliably work with LB traffic.
 The websocket described below not needed in the previous
 scenario using a local server. </em></p>
 <p>
