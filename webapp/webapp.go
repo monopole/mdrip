@@ -1104,21 +1104,20 @@ var codeBlockController = new function() {
     document.body.removeChild(tA);
   }
   this.goPrev = function() {
-    if (cbIndex < 1) {
-      // Do nothing, not even modulo wrap.
-      // Behave like an editor.
+    this.deActivateCurrent();
+    if (cbIndex < 0) {
+      // Already -1
       return;
     }
-    this.deActivateCurrent();
     cbIndex--;
     activateCurrent();
   }
   this.goNext = function() {
-    if (cbIndex >= blocks.length - 1) {
+    this.deActivateCurrent();
+    if (cbIndex >= blocks.length) {
       // Do nothing, not even modulo wrap.
       return;
     }
-    this.deActivateCurrent();
     cbIndex++;
     activateCurrent();
   }
@@ -1440,6 +1439,7 @@ function onLoad() {
       case 'Enter':
       case 'r':
         codeBlockController.runCurrent();
+        codeBlockController.goNext();
         break;
       case '-':
         headerController.toggle();
