@@ -303,17 +303,40 @@ Markdown snapshot from
 <a target='_blank' href='{{.AppLink}}'> <code> {{.AppName}} </code></a>
 
 <h3>Keys</h3>
-<ul>
-  <li>&larr;, &rarr;, h, l: prev/next lesson </li>
-  <li>j, k: activate prev/next code block </li>
-  <li>&crarr;: copy activated block (or mouse click)</li>
-  <li>?, /: help</li>
-  <li>-: header</li>
-  <li>n: nav sidebar</li>
-  <li>m: monkey</li>
-</ul>
+<p>
+<table>
+  <tr>
+     <td class='kind'> help </td>
+     <td> ? &nbsp; / </td>
+  </tr>
+  <tr>
+    <td class='kind'> (previous, next) lesson </td>
+    <td> &larr;, &rarr; &nbsp; a, d &nbsp; h, l </td>
+  </tr>
+  <tr>
+    <td class='kind'> activate (previous, next) code block </td>
+    <td> w, s &nbsp; j, k </td>
+  </tr>
+  <tr>
+     <td class='kind'> copy/execute activated block </td>
+     <td> &crarr; </td>
+  </tr>
+  <tr>
+    <td class='kind'> minimize header </td>
+    <td> - </td>
+  </tr>
+  <tr>
+    <td class='kind'> nav sidebar </td>
+    <td> n </td>
+  </tr>
+  <tr>
+    <td class='kind'> monkey </td>
+    <td> ! </td>
+  </tr>
+</table>
+</p>
 
-Check marks track block execution progress.
+Check marks track copy/execute progress.
 
 <h3> Serve locally with tmux for no-mouse code block execution</h3>
 
@@ -328,7 +351,7 @@ href="https://github.com/tmux/tmux/wiki">tmux</a>:
 <pre>
   tmux
 </pre>
-Then whatever action copies a code block (hitting &crarr; or mouse click)
+Then whatever action copies a code block (&crarr; or mouse click)
 also pastes the block to the active tmux session for
 immediate execution.
 </p>
@@ -336,7 +359,7 @@ immediate execution.
 <h3> Remote server tmux </h3>
 <p> <em>Proof of concept
 for using tmux over a websocket to remote servers.
-Needs better session mgmt to work with load balanced traffic.
+mNeeds better session mgmt to work with load balanced traffic.
 The websocket described below not needed in the previous
 scenario using a local server. </em></p>
 <p>
@@ -381,6 +404,11 @@ body {
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   width: 100%;
+}
+
+td.kind {
+  text-align: right;
+  padding-right: 2em;
 }
 
 header, .headSpacer {
@@ -1423,21 +1451,25 @@ function onLoad() {
       case '?':
         helpController.toggle();
         break;
+      case 'w':
       case 'k':
         codeBlockController.goPrev();
         break;
       case 'j':
+      case 's':
         codeBlockController.goNext();
         break;
+      case 'a':
       case 'h':
       case 'ArrowLeft':
         lessonController.goPrev();
         break;
+      case 'd':
       case 'l':
       case 'ArrowRight':
         lessonController.goNext();
         break;
-      case 'm':
+      case '!':
         monkeyController.toggle();
         break;
       default:
