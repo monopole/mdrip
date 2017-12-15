@@ -195,7 +195,7 @@ func makeAppTemplate(htmlNavActual string) string {
     <div class='navButtonBox'> &nbsp; </div>
   </header>
 
-  <div class='navLeftBox navLeftBoxShadow'>
+  <div class='navLeftBox navLeftBoxShadow' tabindex='-1'>
     <nav class='navActual'>
       ` + htmlNavActual + `
     </nav>
@@ -300,7 +300,7 @@ const htmlLessonNavRow = `
 const htmlHelp = `
 <p>
 Snapshot of markdown from
-<a target='_blank' href='{{.AppLink}}'> <code> {{.AppName}} </code></a>.
+<a target='_blank' href='{{.AppLink}}'><code>{{.AppName}}</code></a>.
 
 <h3>Keys</h3>
 <p>
@@ -336,7 +336,7 @@ Snapshot of markdown from
 </table>
 </p>
 
-<h3> Serve locally with tmux for no-mouse code block execution</h3>
+<h3> Serve locally with tmux for no-mouse execution</h3>
 
 <p>
 Serve the content locally with
@@ -354,7 +354,7 @@ href="https://github.com/tmux/tmux/wiki">tmux</a>:
 Then, at <a target="_blank"
 href="http://localhost:8001">localhost:8001</a>,
 whatever action copies a code block (&crarr; or mouse click)
-also pastes the block to the active tmux session for
+also pastes the block to the active tmux pane for
 immediate execution.
 </p>
 
@@ -589,13 +589,7 @@ title:hover {
   left: {{.LayNavBoxWidth}}px;
   right: {{.LayNavBoxWidth}}px;
   height: 0px;  /* initially hideHelp */
-	z-index: 3;
-
-	/* border: solid 1px #555; */
-	/* border-radius: 4px; */
-           /*   x   y blur spread color             x   y blur spread color */
-  /* box-shadow: 0px 2px  2px    1px rgba(0,0,0,.3), 2px 0px 2px 1px rgba(0,0,0,.3); */
-
+  z-index: 3;
   background-color: {{.ColorHelpBackground}};
   color: {{.ColorNavText}};
   transition: height {{.TransitionSpeedMs}}ms;
@@ -986,9 +980,29 @@ var navController = new function() {
       showIt()
     }
   }
+  var keyHandler = function(event) {
+    switch (event.key) {
+      case 'w':
+      case 'k':
+      case 'ArrowUp':
+        event.preventDefault();
+        lessonController.goPrev();
+        break;
+      case 'j':
+      case 's':
+      case 'ArrowDown':
+        event.preventDefault();
+        lessonController.goNext();
+        break;
+      default:
+    }
+  }
   this.initialize = function() {
     elBurger = getElByClass('navBurger');
     elNavLeft = getElByClass('navLeftBox');
+    elNavLeft.addEventListener('keydown', keyHandler, false);
+    elNavLeft.onmouseover = function() { elNavLeft.focus(); }
+    elNavLeft.onmouseout = function() { elNavLeft.blur(); }
     elNavRight = getElByClass('navRightBox');
     styleSpacerLeft = getElByClass('navLeftSpacer').style;
     styleSpacerRight = getElByClass('navRightSpacer').style;
@@ -1477,6 +1491,6 @@ function onLoad() {
         break;
       default:
     }
-  }, true);
+  }, false);
 }
 `
