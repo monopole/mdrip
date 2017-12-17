@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"bytes"
-	"strings"
 
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
@@ -22,6 +21,8 @@ type WebApp struct {
 	tut         model.Tutorial
 	ds          *base.DataSource
 	tmpl        *template.Template
+	rawLessons  []*program.LessonPgm
+	title       string
 	lessonPath  []int
 	coursePaths [][]int
 }
@@ -29,7 +30,15 @@ type WebApp struct {
 func NewWebApp(
 	sessId TypeSessId, host string,
 	tut model.Tutorial, ds *base.DataSource, lp []int, cp [][]int) *WebApp {
-	return &WebApp{sessId, host, tut, ds, makeParsedTemplate(tut), lp, cp}
+	v := program.NewLessonPgmExtractor(base.WildCardLabel)
+	tut.Accept(v)
+	title := v.FirstTitle()
+	if len(title) > maxTitleLength {
+		title = title[maxTitleLength-3:] + "..."
+	}
+	return &WebApp{
+		sessId, host, tut, ds, makeParsedTemplate(tut),
+		v.Lessons(), title, lp, cp}
 }
 
 func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
@@ -37,30 +46,24 @@ func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
 func (wa *WebApp) Host() string { return wa.host }
 
 func (wa *WebApp) Lessons() []*program.LessonPgm {
-	v := program.NewLessonPgmExtractor(base.WildCardLabel)
-	wa.tut.Accept(v)
-	return v.Lessons()
+	return wa.rawLessons
 }
 
-func (wa *WebApp) AppName() string {
+func (wa *WebApp) DataSourceName() string {
 	return wa.ds.Display()
 }
 
-func (wa *WebApp) AppLink() template.URL {
+func (wa *WebApp) DataSourceLink() template.URL {
 	return template.URL(wa.ds.Href())
 }
 
-func (wa *WebApp) TrimName() string {
-	result := strings.TrimSpace(wa.AppName())
-	if len(result) > maxAppNameLen {
-		return result[maxAppNameLen-3:] + "..."
-	}
-	return result
+func (wa *WebApp) DocTitle() string {
+	return wa.title
 }
 
 const (
 	// arbitrary
-	maxAppNameLen = len("gh:kubernetes/website/reference") + 10
+	maxTitleLength = len("gh:kubernetes/website/reference") + 10
 )
 
 // Return the last element or zero.
@@ -133,8 +136,6 @@ func (wa *WebApp) ColorCodeHover() string           { return deepOrange700 }
 func (wa *WebApp) ColorControls() string            { return greenA200 }
 func (wa *WebApp) ColorTitle() string               { return wa.ColorControls() }
 
-//func (wa *WebApp) ColorHeader() string
-
 func (wa *WebApp) LessonCount() int {
 	c := model.NewTutorialLessonCounter()
 	wa.tut.Accept(c)
@@ -186,8 +187,8 @@ func makeAppTemplate(htmlNavActual string) string {
       </div>
     </div>
     <div class='headerColumn'>
-      <a target='_blank' href='{{.AppLink}}'>
-        <title id='title'> {{.TrimName}} </title>
+      <a target='_blank' href='{{.DataSourceLink}}'>
+        <title id='title'> {{.DocTitle}} </title>
       </a>
       <div class='activeLessonName'> Droplet Formation Rates </div>
       ` + htmlLessonNavRow + `
@@ -245,7 +246,7 @@ const (
 {{end}}
 {{end}}
 `
-	tmplNameLesson = "lessonlist"
+	tmplNameLesson = "oneLesson"
 	tmplBodyLesson = `
 {{define "` + tmplNameLesson + `"}}
 {{range $i, $c := .Blocks}}
@@ -300,7 +301,7 @@ const htmlLessonNavRow = `
 const htmlHelp = `
 <p>
 Snapshot of markdown from
-<a target='_blank' href='{{.AppLink}}'><code>{{.AppName}}</code></a>.
+<a target='_blank' href='{{.DataSourceLink}}'><code>{{.DataSourceName}}</code></a>.
 
 <h3>Keys</h3>
 <p>
@@ -344,7 +345,7 @@ Serve the content locally with
 href="https://github.com/monopole/mdrip">mdrip</a></code>:
 <pre>
   GOBIN=$TMPDIR go install github.com/monopole/mdrip
-  $TMPDIR/mdrip --port 8001 --mode demo {{.AppName}}
+  $TMPDIR/mdrip --port 8001 --mode demo {{.DataSourceName}}
 </pre>
 and run <a target="_blank"
 href="https://github.com/tmux/tmux/wiki">tmux</a>:

@@ -25,6 +25,10 @@ func (x *BlockTut) firstNiceLabel() base.Label {
 }
 
 func (x *BlockTut) Accept(v TutVisitor) { v.VisitBlockTut(x) }
+func (x *BlockTut) Title() string {
+	return x.Name()
+}
+
 func (x *BlockTut) Name() string {
 	l := x.firstNiceLabel()
 	if l == base.AnonLabel {

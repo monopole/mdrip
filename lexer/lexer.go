@@ -1,7 +1,4 @@
 // Inspired by golang.org/src/pkg/text/template/parse/lex.go
-//
-// Cannot use struct embedding to reuse, since all the good parts are
-// private.
 
 package lexer
 
@@ -21,9 +18,15 @@ type itemType int
 // Things that the lexer emits.
 const (
 	itemError      itemType = iota
-	itemProse               // Prose between command blocks.
 	itemBlockLabel          // Label for a command block
 	itemCodeBlock           // All lines between codeFence marks
+	itemHeader1             // Header1
+	itemHeader2             // Header2
+	itemHeader3             // Header3
+	itemHeader4             // Header4
+	itemHeader5             // Header5
+	itemHeader6             // Header6
+	itemProse               // Anything other than the above.
 	itemEOF
 )
 
@@ -31,12 +34,24 @@ func textType(t itemType) string {
 	switch t {
 	case itemError:
 		return "ERROR"
-	case itemProse:
-		return "PROSE"
 	case itemBlockLabel:
 		return "LABEL"
 	case itemCodeBlock:
 		return "BLOCK"
+	case itemHeader1:
+		return "H1"
+	case itemHeader2:
+		return "H2"
+	case itemHeader3:
+		return "H3"
+	case itemHeader4:
+		return "H4"
+	case itemHeader5:
+		return "H5"
+	case itemHeader6:
+		return "H6"
+	case itemProse:
+		return "PROSE"
 	case itemEOF:
 		return "EOF"
 	default:
@@ -44,12 +59,12 @@ func textType(t itemType) string {
 	}
 }
 
-type item struct {
-	typ itemType // Type of this item.
-	val string   // The value of this item.
+type lexedItem struct {
+	typ itemType // Type of this lexedItem.
+	val string   // The value of this lexedItem.
 }
 
-func (i item) String() string {
+func (i lexedItem) String() string {
 	switch {
 	case i.typ == itemEOF:
 		return "EOF"
@@ -59,6 +74,18 @@ func (i item) String() string {
 		return string(labelMarker) + i.val
 	case i.typ == itemCodeBlock:
 		return "--------\n" + i.val + "--------\n"
+	case i.typ == itemHeader1:
+		return "# " + i.val
+	case i.typ == itemHeader2:
+		return "## " + i.val
+	case i.typ == itemHeader3:
+		return "### " + i.val
+	case i.typ == itemHeader4:
+		return "#### " + i.val
+	case i.typ == itemHeader5:
+		return "##### " + i.val
+	case i.typ == itemHeader6:
+		return "###### " + i.val
 	case len(i.val) > 40-3:
 		return fmt.Sprintf("%.40s...", i.val)
 	}
@@ -70,12 +97,12 @@ const eof = -1
 type stateFn func(*lexer) stateFn
 
 type lexer struct {
-	input   string    // string being scanned
-	state   stateFn   // the next lexing function to enter
-	current position  // current position in 'input'
-	start   position  // start of this item
-	width   position  // width of last rune read
-	items   chan item // channel of scanned items
+	input   string         // string being scanned
+	state   stateFn        // the next lexing function to enter
+	current position       // current position in 'input'
+	start   position       // start of this lexedItem
+	width   position       // width of last rune read
+	items   chan lexedItem // channel of scanned items
 }
 
 // next returns the next rune in the input.
@@ -101,7 +128,7 @@ func (l *lexer) backup() {
 }
 
 func (l *lexer) emit(t itemType) {
-	l.items <- item{t, l.input[l.start:l.current]}
+	l.items <- lexedItem{t, l.input[l.start:l.current]}
 	l.start = l.current
 }
 
@@ -136,12 +163,12 @@ func (l *lexer) acceptRun(valid string) {
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- item{itemError, fmt.Sprintf(format, args...)}
+	l.items <- lexedItem{itemError, fmt.Sprintf(format, args...)}
 	return nil
 }
 
-// nextItem returns the next item from the input.
-func (l *lexer) nextItem() item {
+// nextItem returns the next lexedItem from the input.
+func (l *lexer) nextItem() lexedItem {
 	item := <-l.items
 	return item
 }
@@ -150,7 +177,7 @@ func (l *lexer) nextItem() item {
 func newLex(input string) *lexer {
 	l := &lexer{
 		input: input,
-		items: make(chan item),
+		items: make(chan lexedItem),
 	}
 	go l.run()
 	return l
@@ -163,33 +190,40 @@ func (l *lexer) run() {
 }
 
 func isSpace(r rune) bool {
-	return r == ' ' || r == '\t'
+	return r == blank || r == '\t'
 }
 
 func isEndOfLine(r rune) bool {
-	return r == '\r' || r == '\n'
+	return r == carriageReturn || r == newLine
 }
 
 const (
-	labelMarker  = '@'
-	commentOpen  = "<!--"
-	commentClose = "-->"
-	codeFence    = "```"
-	blockQuote   = ">"
-	// All punctuation except for
+	labelMarker      = '@'
+	headerMarker     = '#'
+	commentOpen      = "<!--"
+	commentClose     = "-->"
+	codeTick         = "`"
+	codeFence        = codeTick + codeTick + codeTick
+	blockQuoteIndent = ">"
+	carriageReturn   = '\r'
+	newLine          = '\n'
+	blank            = ' '
+	tabChar          = '\t'
+	underScore       = "_"
 	// < html comment start
-	// > block quote start
-	// ` code block start
-	// \r carriage return
-	// \n new line
-	mdPunct           = ",.?!-@#$%^&*()_=+|~{}[];:/ \t'\"\\"
-	lettersAndNumbers = "012345789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	msSpecialChar        = "<" + string(headerMarker) + blockQuoteIndent + codeTick
+	whiteSpace           = string(blank) + string(tabChar)
+	miscChar             = ",.?!-$%^&*()=+|~{}[];:/'\"\\" + whiteSpace + string(labelMarker) + underScore
+	lettersAndNumbers    = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	acceptableProse      = miscChar + string(headerMarker) + lettersAndNumbers
+	acceptableBlockQuote = miscChar + msSpecialChar + lettersAndNumbers
+	acceptableLabel      = underScore + lettersAndNumbers
 )
 
 func isBlockQuoteStart(remainder string) bool {
-	return strings.HasPrefix(remainder, blockQuote) ||
-		strings.HasPrefix(remainder, " "+blockQuote) ||
-		strings.HasPrefix(remainder, "  "+blockQuote)
+	return strings.HasPrefix(remainder, blockQuoteIndent) ||
+		strings.HasPrefix(remainder, " "+blockQuoteIndent) ||
+		strings.HasPrefix(remainder, "  "+blockQuoteIndent)
 }
 
 // Roughly this reads line by line and changes behavior.
@@ -209,8 +243,14 @@ func lexText(l *lexer) stateFn {
 			}
 			return lexCodeBlock
 		}
+		if strings.HasPrefix(remainder, string(headerMarker)) {
+			if l.current > l.start {
+				l.emit(itemProse)
+			}
+			return lexHeader
+		}
 		if isBlockQuoteStart(remainder) {
-			l.acceptRun(mdPunct + "><`" + lettersAndNumbers)
+			l.acceptRun(acceptableBlockQuote)
 			return lexBlockQuote
 		}
 		if l.next() == eof {
@@ -221,7 +261,7 @@ func lexText(l *lexer) stateFn {
 			l.emit(itemEOF)
 			return nil
 		}
-		l.acceptRun(mdPunct + lettersAndNumbers)
+		l.acceptRun(acceptableProse)
 	}
 }
 
@@ -240,7 +280,42 @@ func lexBlockQuote(l *lexer) stateFn {
 			l.emit(itemEOF)
 			return nil
 		}
-		l.acceptRun(mdPunct + "><`" + lettersAndNumbers)
+		l.acceptRun(acceptableBlockQuote)
+	}
+}
+
+// Lex a header.
+func lexHeader(l *lexer) stateFn {
+	weight := 0
+	for {
+		switch r := l.next(); {
+		case isSpace(r):
+			l.ignore()
+		case r == headerMarker:
+			weight++
+			l.ignore()
+		default:
+			l.acceptRun(acceptableProse)
+			switch weight {
+			case 1:
+				l.emit(itemHeader1)
+			case 2:
+				l.emit(itemHeader2)
+			case 3:
+				l.emit(itemHeader3)
+			case 4:
+				l.emit(itemHeader4)
+			case 5:
+				l.emit(itemHeader5)
+			default:
+				l.emit(itemHeader6)
+			}
+			r = l.next()
+			if isEndOfLine(r) {
+				l.ignore()
+			}
+			return lexText
+		}
 	}
 }
 
@@ -285,7 +360,7 @@ func lexBlockLabels(l *lexer) stateFn {
 			l.ignore()
 		case r == labelMarker:
 			l.ignore()
-			l.acceptRun("_" + lettersAndNumbers)
+			l.acceptRun(acceptableLabel)
 			if l.width == 0 {
 				return l.errorf("empty block label")
 			}
@@ -297,10 +372,10 @@ func lexBlockLabels(l *lexer) stateFn {
 			}
 			l.current += position(len(commentClose))
 			l.ignore()
-			l.acceptRun(" \t")
+			l.acceptRun(whiteSpace)
 			l.ignore()
 			r := l.next()
-			if r != '\n' && r != '\r' {
+			if !isEndOfLine(r) {
 				return l.errorf("Expected command block marker at start of line.")
 			}
 			l.ignore()
@@ -336,9 +411,35 @@ func lexCodeBlock(l *lexer) stateFn {
 	}
 }
 
+func isHeader(x itemType) bool {
+	return x == itemHeader1 ||
+		x == itemHeader2 ||
+		x == itemHeader3 ||
+		x == itemHeader4 ||
+		x == itemHeader5 ||
+		x == itemHeader6
+}
+
+func headerWeight(x itemType) int {
+	switch x {
+	case itemHeader1:
+		return 1
+	case itemHeader2:
+		return 2
+	case itemHeader3:
+		return 3
+	case itemHeader4:
+		return 4
+	case itemHeader5:
+		return 5
+	default:
+		return 6
+	}
+}
+
 // Parse lexes the incoming string into a list of model.BlockParsed.
-func Parse(s string) (result []*model.BlockParsed) {
-	result = []*model.BlockParsed{}
+func Parse(s string) *model.MdContent {
+	result := model.NewMdContent()
 	prose := ""
 	labels := []base.Label{}
 	l := newLex(s)
@@ -350,16 +451,21 @@ func Parse(s string) (result []*model.BlockParsed) {
 			if len(prose) > 0 {
 				// Hack to grab the last bit of prose.
 				// The data structure returned by Parse needs redesign.
-				result = append(result, model.NewBlockParsed(labels, base.MdProse(prose), base.NoCode()))
+				result.AddBlockParsed(
+					model.NewBlockParsed(
+						base.NoLabels(), base.MdProse(prose), base.NoCode()))
 			}
-			return
+			return result
 		case item.typ == itemBlockLabel:
 			labels = append(labels, base.Label(item.val))
 		case item.typ == itemProse:
-			prose = item.val
+			prose += item.val
+			result.AddProse(item.val)
+		case isHeader(item.typ):
+			prose += "#######"[:headerWeight(item.typ)] + " " + item.val + "\n"
+			result.AddHeader(item.val, headerWeight(item.typ))
 		case item.typ == itemCodeBlock:
-			result = append(
-				result,
+			result.AddBlockParsed(
 				model.NewBlockParsed(labels, base.MdProse(prose), base.OpaqueCode(item.val)))
 			labels = []base.Label{}
 			prose = ""

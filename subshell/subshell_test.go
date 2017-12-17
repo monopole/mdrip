@@ -18,7 +18,7 @@ func makeBlock(code string) *program.BlockPgm {
 }
 
 func newTutorial(b []*model.BlockTut) model.Tutorial {
-	return model.NewLessonTut("iamafilename", b)
+	return model.NewLessonTutForTests("iamafilename", b)
 }
 
 func emptyTutorial() model.Tutorial {

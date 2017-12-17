@@ -8,24 +8,33 @@ import (
 // It must have a name, and may have blocks.
 // An entirely empty file might appear with no blocks.
 type LessonTut struct {
-	path   base.FilePath
-	blocks []*BlockTut
+	path      base.FilePath
+	mdContent *MdContent
+	blocks    []*BlockTut
 }
 
-func NewLessonTut(p base.FilePath, blocks []*BlockTut) *LessonTut {
-	return &LessonTut{p, blocks}
+func NewLessonTutForTests(p base.FilePath, blocks []*BlockTut) *LessonTut {
+	return &LessonTut{p, NewMdContent(), blocks}
 }
 
-func NewLessonTutFromBlockParsed(p base.FilePath, blocks []*BlockParsed) *LessonTut {
-	result := make([]*BlockTut, len(blocks))
-	for i, b := range blocks {
+func NewLessonTutFromMdContent(p base.FilePath, md *MdContent) *LessonTut {
+	result := make([]*BlockTut, len(md.Blocks))
+	for i, b := range md.Blocks {
 		result[i] = NewBlockTut(b)
 	}
-	return NewLessonTut(p, result)
+	return &LessonTut{p, md, result}
 }
 
 func (l *LessonTut) Accept(v TutVisitor) { v.VisitLessonTut(l) }
-func (l *LessonTut) Name() string        { return l.path.Base() }
+func (l *LessonTut) Title() string {
+	if l.mdContent.HasTitle() {
+		return l.mdContent.GetTitle()
+	}
+	return l.Name()
+}
+func (l *LessonTut) Name() string {
+	return l.path.Base()
+}
 func (l *LessonTut) Path() base.FilePath { return l.path }
 func (l *LessonTut) Children() []Tutorial {
 	result := []Tutorial{}

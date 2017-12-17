@@ -114,19 +114,19 @@ func scanFile(n base.FilePath) (model.Tutorial, error) {
 	if err != nil {
 		return BadLoad(n), err
 	}
-	parsed := lexer.Parse(contents)
-	if len(parsed) < 1 {
+	md := lexer.Parse(contents)
+	if len(md.Blocks) < 1 {
 		return BadLoad(n), errors.New("no content in " + string(n))
 	}
-	return model.NewLessonTutFromBlockParsed(n, parsed), nil
+	return model.NewLessonTutFromMdContent(n, md), nil
 }
 
 // A tutorial complaining about its data source.
 func BadLoad(n base.FilePath) model.Tutorial {
-	blockParsed := model.NewProseOnlyBlock(base.MdProse(
-		"## Unable to load data from _" + string(n) + "_\n"))
-	blocks := []*model.BlockParsed{blockParsed}
-	return model.NewLessonTutFromBlockParsed(n, blocks)
+	result := model.NewMdContent()
+	result.AddBlockParsed(model.NewProseOnlyBlock(base.MdProse(
+		"## Unable to load data from _" + string(n) + "_\n")))
+	return model.NewLessonTutFromMdContent(n, result)
 }
 
 func shiftToTop(x []model.Tutorial, top string) []model.Tutorial {

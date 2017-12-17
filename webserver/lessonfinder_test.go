@@ -25,7 +25,7 @@ type pfTest2 struct {
 }
 
 func makeLesson(n string) *model.LessonTut {
-	return model.NewLessonTut(base.FilePath(n), []*model.BlockTut{})
+	return model.NewLessonTutForTests(base.FilePath(n), []*model.BlockTut{})
 }
 
 func makeCourse(n string, t ...model.Tutorial) *model.Course {

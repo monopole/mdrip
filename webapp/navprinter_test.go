@@ -14,7 +14,7 @@ type npTest struct {
 	want  string
 }
 
-var emptyLesson = model.NewLessonTut(
+var emptyLesson = model.NewLessonTutForTests(
 	base.FilePath(""),
 	[]*model.BlockTut{})
 

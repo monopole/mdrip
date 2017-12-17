@@ -12,7 +12,7 @@ type tpTest struct {
 	want  string
 }
 
-var emptyLesson = NewLessonTut(
+var emptyLesson = NewLessonTutForTests(
 	base.FilePath(""),
 	[]*BlockTut{})
 

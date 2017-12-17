@@ -6,6 +6,7 @@ import (
 
 type Tutorial interface {
 	Accept(v TutVisitor)
+	Title() string
 	Name() string
 	Path() base.FilePath
 	Children() []Tutorial
@@ -41,6 +42,7 @@ type Course struct {
 
 func NewCourse(p base.FilePath, c []Tutorial) *Course { return &Course{p.Base(), p, c} }
 func (c *Course) Accept(v TutVisitor)                 { v.VisitCourse(c) }
+func (c *Course) Title() string                        { return c.Name() }
 func (c *Course) Name() string                        { return c.name }
 func (c *Course) Path() base.FilePath                 { return c.path }
 func (c *Course) Children() []Tutorial                { return c.children }

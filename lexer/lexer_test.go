@@ -6,9 +6,9 @@ import (
 )
 
 type lexTest struct {
-	name  string // Name of the sub-test.
-	input string // Input string to be lexed.
-	want  []item // Expected items produced by lexer.
+	name  string      // Name of the sub-test.
+	input string      // Input string to be lexed.
+	want  []lexedItem // Expected items produced by lexer.
 }
 
 const (
@@ -21,29 +21,42 @@ const (
 )
 
 var (
-	tEOF = item{itemEOF, ""}
+	tEOF = lexedItem{itemEOF, ""}
 )
 
 var lexTests = []lexTest{
-	{"empty", "", []item{tEOF}},
-	{"spaces", " \t\n", []item{{itemProse, " \t\n"}, tEOF}},
-	{"text", "blah blah",
-		[]item{{itemProse, "blah blah"}, tEOF}},
-	{"comment1", "<!-- -->", []item{tEOF}},
-	{"comment2", "a <!-- --> b", []item{{itemProse, "a "}, {itemProse, " b"}, tEOF}},
-	{"block1", "fred <!-- @1 -->\n" +
-		"```\n" + block1 + "```\n bbb",
-		[]item{
+	{"empty",
+		"",
+		[]lexedItem{tEOF}},
+	{"spaces",
+		" \t\n",
+		[]lexedItem{{itemProse, " \t\n"}, tEOF}},
+	{"text",
+		"blah blah",
+		[]lexedItem{{itemProse, "blah blah"}, tEOF}},
+	{"header1",
+		"#cheese",
+		[]lexedItem{{itemHeader1, "cheese"}, tEOF}},
+	{"comment1",
+		"<!-- -->",
+		[]lexedItem{tEOF}},
+	{"comment2",
+		"a <!-- --> b",
+		[]lexedItem{{itemProse, "a "}, {itemProse, " b"}, tEOF}},
+	{"block1",
+		"fred <!-- @1 -->\n" + "```\n" + block1 + "```\n bbb",
+		[]lexedItem{
 			{itemProse, "fred "},
 			{itemBlockLabel, "1"},
 			{itemCodeBlock, block1},
 			{itemProse, "\n bbb"},
 			tEOF}},
-	{"block2", "aa <!-- @1 @2-->\n" +
-		"```\n" + block1 + "```\n bb cc\n" +
-		"dd <!-- @3 @4-->\n" +
-		"```\n" + block2 + "```\n ee ff\n",
-		[]item{
+	{"block2",
+		"aa <!-- @1 @2-->\n" +
+			"```\n" + block1 + "```\n bb cc\n" +
+			"dd <!-- @3 @4-->\n" +
+			"```\n" + block2 + "```\n ee ff\n",
+		[]lexedItem{
 			{itemProse, "aa "},
 			{itemBlockLabel, "1"},
 			{itemBlockLabel, "2"},
@@ -54,31 +67,66 @@ var lexTests = []lexTest{
 			{itemCodeBlock, block2},
 			{itemProse, "\n ee ff\n"},
 			tEOF}},
-	{"blockWithLangName", "Hello <!-- @1 -->\n" +
-		"```java\nvoid main whatever\n```",
-		[]item{
+	{"blockWithLangName",
+		"Hello <!-- @1 -->\n" +
+			"```java\nvoid main whatever\n```",
+		[]lexedItem{
 			{itemProse, "Hello "},
 			{itemBlockLabel, "1"},
 			{itemCodeBlock, "void main whatever\n"},
 			tEOF}},
-	{"blockNoLabel", "fred\n" +
-		"```\n" + block1 + "```\n bbb",
-		[]item{
+	{"blockNoLabel",
+		"fred\n" +
+			"```\n" + block1 + "```\n bbb",
+		[]lexedItem{
 			{itemProse, "fred\n"},
 			{itemCodeBlock, block1},
 			{itemProse, "\n bbb"},
 			tEOF}},
 	{"blockQuote",
-		"fred\n" +
-			indentedCode +
-			"bbb",
-		[]item{
+		"fred\n" + indentedCode + "bbb",
+		[]lexedItem{
 			{itemProse, "fred\n" + indentedCode + "bbb"},
+			tEOF}},
+	{"header1",
+		"#cheese",
+		[]lexedItem{{itemHeader1, "cheese"}, tEOF}},
+	{"header2",
+		"##     carrot celery",
+		[]lexedItem{{itemHeader2, "carrot celery"}, tEOF}},
+	{"header6IsMostest",
+		"######## #x",
+		[]lexedItem{{itemHeader6, "x"}, tEOF}},
+	{"notHeaderIfNotAtStart",
+		"  ## x",
+		[]lexedItem{{itemProse, "  ## x"}, tEOF}},
+	{"notHeaderIfNotAtStart",
+		"  hey\n### x\nbob",
+		[]lexedItem{
+			{itemProse, "  hey\n"},
+			{itemHeader3, "x"},
+			{itemProse, "bob"},
+			tEOF}},
+	{"headerHeader",
+		"  hey\n### x3\n#### x4\n# x1\nbob",
+		[]lexedItem{
+			{itemProse, "  hey\n"},
+			{itemHeader3, "x3"},
+			{itemHeader4, "x4"},
+			{itemHeader1, "x1"},
+			{itemProse, "bob"},
+			tEOF}},
+	{"headerInHeader",
+		"  hey\n### x3 ###\n#### x4",
+		[]lexedItem{
+			{itemProse, "  hey\n"},
+			{itemHeader3, "x3 ###"},
+			{itemHeader4, "x4"},
 			tEOF}},
 }
 
 // collect gathers the emitted items into a slice.
-func collect(t *lexTest) (items []item) {
+func collect(t *lexTest) (items []lexedItem) {
 	l := newLex(t.input)
 	for {
 		item := l.nextItem()
@@ -90,7 +138,7 @@ func collect(t *lexTest) (items []item) {
 	return
 }
 
-func equal(i1, i2 []item) bool {
+func equal(i1, i2 []lexedItem) bool {
 	if len(i1) != len(i2) {
 		return false
 	}

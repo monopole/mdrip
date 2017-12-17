@@ -44,7 +44,11 @@ var ltTests = []ltTest{
 
 func TestLessonTut(t *testing.T) {
 	for _, test := range ltTests {
-		got := NewLessonTutFromBlockParsed(base.FilePath(test.fName), test.parsedBlocks)
+		md := NewMdContent()
+		for _, x := range test.parsedBlocks {
+			md.AddBlockParsed(x)
+		}
+		got := NewLessonTutFromMdContent(base.FilePath(test.fName), md)
 		if got.Path() != base.FilePath(test.expectedPath) {
 			t.Errorf("%s:\npath got\n\"%s\"\nwant\n\"%s\"\n", test.tName, got.Path(), test.expectedPath)
 		}

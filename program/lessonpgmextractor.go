@@ -12,16 +12,21 @@ import (
 // the given label, it is completely dropped.
 type LessonPgmExtractor struct {
 	label      base.Label
+	firstTitle string
 	lessons    []*LessonPgm
 	blockAccum []*BlockPgm
 }
 
 func NewLessonPgmExtractor(label base.Label) *LessonPgmExtractor {
-	return &LessonPgmExtractor{label, []*LessonPgm{}, []*BlockPgm{}}
+	return &LessonPgmExtractor{label, "", []*LessonPgm{}, []*BlockPgm{}}
 }
 
 func (v *LessonPgmExtractor) Lessons() []*LessonPgm {
 	return v.lessons
+}
+
+func (v *LessonPgmExtractor) FirstTitle() string {
+	return v.firstTitle
 }
 
 func (v *LessonPgmExtractor) VisitBlockTut(b *model.BlockTut) {
@@ -31,6 +36,9 @@ func (v *LessonPgmExtractor) VisitBlockTut(b *model.BlockTut) {
 }
 
 func (v *LessonPgmExtractor) VisitLessonTut(l *model.LessonTut) {
+	if len(v.firstTitle) == 0 {
+		v.firstTitle = l.Title()
+	}
 	v.blockAccum = []*BlockPgm{}
 	for _, x := range l.Children() {
 		x.Accept(v)
