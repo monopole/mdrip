@@ -46,10 +46,10 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunRes
 	for _, lesson := range s.program.Lessons() {
 		numBlocks := len(lesson.Blocks())
 		for i, block := range lesson.Blocks() {
-			glog.Info("Running %s (%d/%d) from %s\n",
+			glog.Infof("Running %s (%d/%d) from %s\n",
 				block.Name(), i+1, numBlocks, lesson.Path())
 			if glog.V(2) {
-				glog.Info("userBehavior: sending \"%s\"", block.Code())
+				glog.Infof("userBehavior: sending\n%s", block.Code())
 			}
 
 			result := <-chAccOut
@@ -65,7 +65,7 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunRes
 					//   " : early termination; stdout has closed."
 				} else {
 					if glog.V(2) {
-						glog.Info("userBehavior: stdout Result: %s", result.Output())
+						glog.Infof("userBehavior: stdout Result: %s", result.Output())
 					}
 					errResult.SetOutput(result.Output()).SetMessage(result.Output())
 				}
@@ -75,7 +75,7 @@ func (s *Subshell) userBehavior(stdOut, stdErr io.ReadCloser) (errResult *RunRes
 			}
 		}
 	}
-	glog.Info("All done, no errors triggered.\n")
+	glog.Info("All done, no errors triggered.")
 	return
 }
 
@@ -91,7 +91,7 @@ func fillErrResult(chAccErr <-chan *BlockOutput, errResult *RunResult) {
 	}
 	errResult.SetProblem(errors.New(result.Output())).SetMessage(result.Output())
 	if glog.V(2) {
-		glog.Info("userBehavior: stderr Result: %s", result.Output())
+		glog.Infof("userBehavior: stderr Result: %s", result.Output())
 	}
 }
 
@@ -125,7 +125,7 @@ func (s *Subshell) Run() (result *RunResult) {
 		}
 	}
 	if glog.V(2) {
-		glog.Info("RunInSubShell: running commands from %s", tmpFile.Name())
+		glog.Infof("RunInSubShell: running commands from %s", tmpFile.Name())
 	}
 	defer func() {
 		util.Check("delete temp file", os.Remove(tmpFile.Name()))
@@ -149,12 +149,12 @@ func (s *Subshell) Run() (result *RunResult) {
 
 	pid := shell.Process.Pid
 	if glog.V(2) {
-		glog.Info("RunInSubShell: pid = %d", pid)
+		glog.Infof("RunInSubShell: pid = %d", pid)
 	}
 	pgid, err := util.GetProcesssGroupId(pid)
 	if err == nil {
 		if glog.V(2) {
-			glog.Info("RunInSubShell:  pgid = %d", pgid)
+			glog.Infof("RunInSubShell:  pgid = %d", pgid)
 		}
 	}
 
@@ -209,7 +209,7 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 				accum.WriteString("\n" + line + "\n")
 				accum.WriteString("A subprocess might still be running.\n")
 				if glog.V(2) {
-					glog.Info("accumulateOutput %s: Timeout return.", prefix)
+					glog.Infof("accumulateOutput %s: Timeout return.", prefix)
 				}
 				out <- NewFailureOutput(accum.String())
 				return
@@ -217,39 +217,39 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 			if strings.HasPrefix(line, scanner.MsgError) {
 				accum.WriteString(line + "\n")
 				if glog.V(2) {
-					glog.Info("accumulateOutput %s: Error return.", prefix)
+					glog.Infof("accumulateOutput %s: Error return.", prefix)
 				}
 				out <- NewFailureOutput(accum.String())
 				return
 			}
 			if strings.HasPrefix(line, scanner.MsgHappy) {
 				if glog.V(2) {
-					glog.Info("accumulateOutput %s: %s", prefix, line)
+					glog.Infof("accumulateOutput %s: %s", prefix, line)
 				}
 				out <- NewSuccessOutput(accum.String())
 				accum.Reset()
 			} else {
 				if glog.V(2) {
-					glog.Info("accumulateOutput %s: Accumulating [%s]", prefix, line)
+					glog.Infof("accumulateOutput %s: Accumulating [%s]", prefix, line)
 				}
 				accum.WriteString(line + "\n")
 			}
 		}
 
 		if glog.V(2) {
-			glog.Info("accumulateOutput %s: <--- This channel has closed.", prefix)
+			glog.Infof("accumulateOutput %s: <--- This channel has closed.", prefix)
 		}
 		trailing := strings.TrimSpace(accum.String())
 		if len(trailing) > 0 {
 			if glog.V(2) {
-				glog.Info(
+				glog.Infof(
 					"accumulateOutput %s: Erroneous (missing-happy) output [%s]",
 					prefix, accum.String())
 			}
 			out <- NewFailureOutput(accum.String())
 		} else {
 			if glog.V(2) {
-				glog.Info("accumulateOutput %s: Nothing trailing.", prefix)
+				glog.Infof("accumulateOutput %s: Nothing trailing.", prefix)
 			}
 		}
 	}()

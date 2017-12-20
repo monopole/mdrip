@@ -23,58 +23,64 @@ Modes:
 
  --mode print  (the default)
 
-   Print extracted code to stdout. Use
+   Print extracted code blocks to stdout.
+
+   Use
+
       eval "$(mdrip file.md)"
-   to run in current terminal, impacting your environment. Use
+
+   to run in current terminal, impacting your environment.
+
+   Use
+
       mdrip file.md | source /dev/stdin
+
    to run in an ephemeral shell that exits with extracted code status.
 
  --mode test
 
-   Use this flag for markdown-based feature tests.
+   To assure that the code blocks in markdown files continue to work,
+   a test suite should assert that the following exits with status 0:
 
-   To assure that the code blocks in a markdown file continue to work,
-   some test suite can assert that this command exits with status 0:
+     mdrip --mode test --label foo /path/to/markdown
 
-     mdrip --mode test /path/to/tutorial
+   This extracts code blocks with the label '@foo' from markdown files
+   in and below the given directory, and runs them in an mdrip subshell,
+   leaving the executing shell unchanged.
 
-   This extracts code blocks from markdown on that path, and runs them
-   in an mdrip subshell, leaving the executing shell unchanged.
-   mdrip captures the stdout and stderr of the subprocess, and reports
-   output from failing blocks, facilitating error diagnosis.
+   The stdout and stderr of the subprocess are captured, and used to
+   report output from failing blocks, facilitating error diagnosis.
 
-   Normally, mdrip exits with non-zero status only when used
-   incorrectly, e.g. file not found, bad flags, etc.  In in test mode,
-   mdrip exits with the status of any failing code block.
+   In any other mode, mdrip exits with non-zero status only when used
+   incorrectly, e.g. file not found, bad flags, etc.
+   In --mode test, mdrip exits with the status of any failing code block.
 
  --mode demo
 
-   Starts a web server at http://localhost:8000 to offer a rendered
-   version of the markdown facilitating execution of command blocks.
+   Starts a web server (see --port and --hostname flag) to offer a
+   rendered version of the markdown facilitating execution of
+   command blocks.
 
-   Clicked command blocks are automatically copied to the user's clipboard
-   and, if tmux is running, "pasted" to the active tmux window.
-   See also flags --hostname and --port.
+   Key or mouse events copy code blocks to the user's clipboard
+   and, if tmux is running, "paste" them to the active tmux window.
 
  --mode tmux
 
    Only useful if both a local tmux instance is running, and an mdrip
-   is running remotely (not locally) in '--mode demo'.
+   is running remotely in '--mode demo'.
 
    In this mode the first argument to mdrip, normally treated as a
    markdown filename, is treated as a URL.  mdrip attempts to open a
-   websocket to that URL.  Discover the URL from mdrip's demo mode help
-   button.
+   websocket to that URL.  Discover the URL to use from the help panel
+   of the mdrip running in --mode demo.
 
-   Meanwhile, when a web user clicks on a code block served by mdrip
-   (in --mode demo) an attempt is made to find a websocket associated
-   with the user's web session.
+   When a user clicks on a code block served by mdrip (in --mode demo)
+   an attempt is made to find a websocket associated with the user's
+   web session.
 
    If a socket is found, the code block is sent to the socket.  Upon
    receipt, mdrip (in --mode tmux) sends the block to local tmux as if
    the user had typed it.
-
-   This results in 'one click' behavior that's surprisingly handy.
 `
 )
 
@@ -104,7 +110,7 @@ var (
 	port = flag.Int("port", 8000,
 		`In --mode demo, expose HTTP at the given port.`)
 
-	blockTimeOut = flag.Duration("blockTimeOut", 7*time.Second,
+	blockTimeOut = flag.Duration("blockTimeOut", 1 * time.Minute,
 		`In --mode test, the max amount of time to wait for a command block to exit.`)
 
 	ignoreTestFailure = flag.Bool("ignoreTestFailure", false,

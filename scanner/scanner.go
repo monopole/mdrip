@@ -31,33 +31,34 @@ func BuffScanner(wait time.Duration, label string, stream io.ReadCloser) <-chan 
 			defer close(chBuffLine)
 			scanner := bufio.NewScanner(stream)
 			if glog.V(2) {
-				glog.Info("xScanner: %s - starting up", label)
+				glog.Infof("stream: %s - starting up", label)
 			}
+
 			for scanner.Scan() {
 				if glog.V(2) {
-					glog.Info("xScanner: %s - calling Text", label)
+					glog.Infof("stream: %s - calling Text", label)
 				}
 				line := scanner.Text()
 				if glog.V(2) {
-					glog.Info("xScanner: %s - got \"%s\"", label, line)
+					glog.Infof("stream: %s - got \"%s\"", label, line)
 				}
 				chBuffLine <- line
 				if glog.V(2) {
-					glog.Info("xScanner: %s - handed \"%s\" to channel", label, line)
+					glog.Infof("stream: %s - handed \"%s\" to channel", label, line)
 				}
 			}
-
 			if glog.V(2) {
-				glog.Info("xScanner: %s - exitted Scan loop", label)
+				glog.Infof("stream: %s - exited Scan loop", label)
 			}
+
 			if err := scanner.Err(); err != nil {
 				if glog.V(2) {
-					glog.Info("xScanner: %s - error : %s", label, err.Error())
+					glog.Infof("stream: %s - error : %s", label, err.Error())
 				}
 				chBuffLine <- MsgError + " : " + err.Error()
 			}
 			if glog.V(2) {
-				glog.Info("xScanner: %s - completely done", label)
+				glog.Infof("stream: %s - completely done", label)
 			}
 		}()
 		return chBuffLine
@@ -69,21 +70,21 @@ func BuffScanner(wait time.Duration, label string, stream io.ReadCloser) <-chan 
 		defer close(chLine)
 		for {
 			if glog.V(2) {
-				glog.Info("buffScanner: %s - top of loop", label)
+				glog.Infof("buffScanner: %s - top of loop", label)
 			}
 			select {
 			case line, ok := <-chBuffLine:
 				if ok {
 					if glog.V(2) {
-						glog.Info("buffScanner: %s - got line, sending on", label)
+						glog.Infof("buffScanner: %s - got line, sending on", label)
 					}
 					chLine <- line
 					if glog.V(2) {
-						glog.Info("buffScanner: %s - sent line", label)
+						glog.Infof("buffScanner: %s - sent line", label)
 					}
 				} else {
 					if glog.V(2) {
-						glog.Info("buffScanner: %s - done reading the stream", label)
+						glog.Infof("buffScanner: %s - done reading the stream", label)
 					}
 					chBuffLine = nil
 					return
@@ -91,7 +92,7 @@ func BuffScanner(wait time.Duration, label string, stream io.ReadCloser) <-chan 
 			case <-time.After(wait):
 				chLine <- MsgTimeout
 				if glog.V(2) {
-					glog.Info("buffScanner: %s - timed out", label)
+					glog.Infof("buffScanner: %s - timed out", label)
 				}
 				return
 			}
