@@ -705,12 +705,10 @@ title:hover {
   margin-top: 5px;
   padding-left: 10px;
   overflow-x: auto;
-	border: solid 1px #555;
-	border-radius: 4px;
-           /*   x   y blur spread color             x   y blur spread color */
-  box-shadow: 0px 2px  2px    1px rgba(0,0,0,.3), 2px 0px 2px 1px rgba(0,0,0,.3);
-
-  /* This is hard to get right with current structure. */
+  border: solid 1px #555;
+  border-radius: 4px;
+  /*            x   y blur spread color             x   y blur spread color */
+  box-shadow: 0px 2px  1px    0px rgba(0,0,0,.3), 2px 0px 1px 0px rgba(0,0,0,.3);
   min-width: {{.LayMinHeaderWidth}};
   max-width: calc(100% - 40px);
 }
@@ -1248,6 +1246,9 @@ var lessonController = new function() {
   var elLessonPrevPointer = null;
   var elLessonNextPointer = null;
 
+  var goodIndex = function(i) {
+    return i > -1 && i < coursePaths.length
+  }
   var nextIndex = function(i) {
     return (i + 1) % coursePaths.length;
   }
@@ -1267,7 +1268,7 @@ var lessonController = new function() {
     return document.getElementById('NC' + i.toString())
   }
   var assureNoActiveLesson = function() {
-    if (activeIndex == -1) {
+    if (!goodIndex(activeIndex)) {
       return
     }
     elLessonName.innerHTML = ''
@@ -1296,7 +1297,7 @@ var lessonController = new function() {
     el.style.display = 'block'
   }
   var assureActivePath = function(lesson) {
-    if (lesson < 0 || lesson > coursePaths.length) {
+    if (!goodIndex(lesson)) {
       console.log("lesson out of lessonsPaths range " + lesson.toString())
       return
     }
@@ -1364,8 +1365,11 @@ var lessonController = new function() {
     if (activeIndex == index) {
       return
     }
+    if (!goodIndex(index)) {
+      return
+    }
     var prevState = bodyController.isVertScrollBarVisible();
-    if (activeIndex > -1) {
+    if (goodIndex(activeIndex)) {
       codeBlockController.deActivateCurrent();
       assureNoActiveLesson()
       assureNoActiveCourse()
@@ -1386,12 +1390,18 @@ var lessonController = new function() {
     activeIndex = index;
   }
   this.goNext = function() {
-    codeBlockController.deActivateCurrent();
-    this.assureActiveLesson(nextIndex(activeIndex))
+    if (activeIndex >= coursePaths.length) {
+      // Do nothing, not even modulo wrap.
+      return;
+    }
+    this.assureActiveLesson(activeIndex + 1)
   }
   this.goPrev = function() {
-    codeBlockController.deActivateCurrent();
-    this.assureActiveLesson(prevIndex(activeIndex))
+    if (activeIndex < 0) {
+      // Already -1
+      return;
+    }
+    this.assureActiveLesson(activeIndex - 1)
   }
   this.initialize = function(cp) {
     coursePaths = cp;
