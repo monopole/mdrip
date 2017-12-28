@@ -54,10 +54,9 @@ type RunResult struct {
 	message  string            // Detailed error message, if any.
 }
 
-func NewRunResult() *RunResult {
-	blockOutput := NewFailureOutput("")
+func NewRunResult(bo *BlockOutput) *RunResult {
 	return &RunResult{
-		*blockOutput, "", -1,
+		*bo, "", -1,
 		program.NewEmptyBlockPgm(),
 		nil, ""}
 }

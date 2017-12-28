@@ -28,23 +28,28 @@ func emptyTutorial() model.Tutorial {
 func TestRunnerWithNothing(t *testing.T) {
 	if NewSubshell(
 		timeout,
-		program.NewProgramFromTutorial(base.WildCardLabel, emptyTutorial())).Run().Problem() != nil {
+		program.NewProgramFromTutorial(
+			base.WildCardLabel, emptyTutorial())).Run().Problem() != nil {
 		t.Fail()
 	}
 }
 
-func doIt(blocks []*program.BlockPgm) *RunResult {
-	lesson := program.NewLessonPgm(base.FilePath("foo"), blocks)
+func doIt(lines []string) *RunResult {
+	var pgm []*program.BlockPgm
+	for _, l := range lines {
+		pgm = append(pgm, makeBlock(l))
+	}
+	lesson := program.NewLessonPgm(base.FilePath("foo"), pgm)
 	p := program.NewProgram([]*program.LessonPgm{lesson})
 	return NewSubshell(timeout, p).Run()
 }
 
 func TestRunnerWithGoodStuff(t *testing.T) {
-	blocks := []*program.BlockPgm{
-		makeBlock("echo kale\ndate\n"),
-		makeBlock("echo beans\necho apple\n"),
-		makeBlock("echo hasta\necho la vista\n")}
-	result := doIt(blocks)
+	result := doIt([]string{
+		"echo kale\ndate\n",
+		"echo beans\necho apple\n",
+		"echo hasta\necho la vista\n",
+	})
 	if result.Problem() != nil {
 		t.Fail()
 	}
@@ -63,47 +68,48 @@ func checkFail(t *testing.T, got, want *RunResult) {
 }
 
 func TestStartWithABadCommand(t *testing.T) {
-	want := NoCommandsRunResult(
-		NewFailureOutput("dunno"),
-		"fileNameTestStartWithABadCommand",
-		0,
-		"line 1: notagoodcommand: command not found")
-
-	blocks := []*program.BlockPgm{
-		makeBlock("notagoodcommand\ndate\n"),
-		makeBlock("echo beans\necho cheese\n")}
-	checkFail(t, doIt(blocks), want)
+	checkFail(
+		t,
+		doIt([]string{
+			"notagoodcommand\ndate\n",
+			"echo beans\necho cheese\n",
+		}),
+		NoCommandsRunResult(
+			NewFailureOutput("dunno"),
+			"fileNameTestStartWithABadCommand",
+			0,
+			"line 1: notagoodcommand: command not found"))
 }
 
 func TestBadCommandInTheMiddle(t *testing.T) {
-	want := NoCommandsRunResult(
-		NewFailureOutput("dunno"),
-		"fileNameTestBadCommandInTheMiddle",
-		2,
-		"line 9: lochNessMonster: command not found")
-
-	blocks := []*program.BlockPgm{
-		makeBlock("echo tofu\ndate\n"),
-		makeBlock("echo beans\necho kale\n"),
-		makeBlock("lochNessMonster\n"),
-		makeBlock("echo hasta\necho la vista\n")}
-
-	checkFail(t, doIt(blocks), want)
+	checkFail(
+		t,
+		doIt([]string{
+			"echo tofu\ndate\n",
+			"echo beans\necho kale\n",
+			"lochNessMonster\n",
+			"echo hasta\necho la vista\n",
+		}),
+		NoCommandsRunResult(
+			NewFailureOutput("dunno"),
+			"fileNameTestBadCommandInTheMiddle",
+			2,
+			"line 11: lochNessMonster: command not found"))
 }
 
 func TestTimeOut(t *testing.T) {
-	want := NoCommandsRunResult(
-		NewFailureOutput("dunno"),
-		"fileNameTestTimeOut",
-		0,
-		scanner.MsgTimeout)
-
 	// Insert this sleep in a command block.
 	// Arrange to sleep for two seconds longer than the timeout.
 	sleep := timeout + (2 * time.Second)
-
-	blocks := []*program.BlockPgm{
-		makeBlock("date\nsleep " + sleep.String() + "\necho kale"),
-		makeBlock("echo beans\necho cheese\n")}
-	checkFail(t, doIt(blocks), want)
+	checkFail(
+		t,
+		doIt([]string{
+			"date\nsleep " + sleep.String() + "\necho kale",
+			"echo beans\necho cheese\n",
+		}),
+		NoCommandsRunResult(
+			NewFailureOutput("dunno"),
+			"fileNameTestTimeOut",
+			0,
+			scanner.MsgTimeout))
 }
