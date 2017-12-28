@@ -200,6 +200,9 @@ func shortWait(shell *exec.Cmd) (err error) {
 			err = errors.New("shell timed out")
 		} // else pass along the error from Kill.
 	case err = <-done:
+		if err != nil {
+			glog.Infof("Run:  Shell failed with error %v.", err)
+		}
 	}
 return
 }

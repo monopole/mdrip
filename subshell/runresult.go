@@ -74,14 +74,14 @@ func (x *RunResult) Completed() bool {
 
 func (x *RunResult) StdOut() string {
 	if x.stdOut == nil {
-		return "no stdout"
+		return "[stdout empty]"
 	}
 	return x.stdOut.output
 }
 
 func (x *RunResult) StdErr() string {
 	if x.stdErr == nil {
-		return "no stderr"
+		return "[stderr empty]"
 	}
 	return x.stdErr.output
 }
@@ -123,8 +123,8 @@ func (x *RunResult) Print(selectedLabel base.Label) {
 	fmt.Fprintf(os.Stderr, delim)
 	x.block.Print(os.Stderr, "Error", x.index+1, selectedLabel, x.fileName)
 	fmt.Fprintf(os.Stderr, delim)
-	printCapturedOutput("stdOut", delim, x.stdOut.output)
-	printCapturedOutput("stdEut", delim, x.stdErr.output)
+	printCapturedOutput("stdOut", delim, x.StdOut())
+	printCapturedOutput("stdErr", delim, x.StdErr())
 }
 
 func printCapturedOutput(name, delim, output string) {
