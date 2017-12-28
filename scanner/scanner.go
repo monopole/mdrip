@@ -13,7 +13,7 @@ const MsgHappy = "MDRIP_HAPPY_Completed_command_block"
 const MsgError = "MDRIP_ERROR_Problem_while_executing_command_block"
 const MsgTimeout = "MDRIP_TIMEOUT_Command_block_did_not_finish_in_allotted_time"
 
-// convertStreamToLineChannel returns a string channel to which it writes lines.
+// convertStreamToLineChannel returns a string channel to which it writes _lines_.
 // The lines are pulled from an IO stream.
 //
 // Basically, this function just converts the problem of reading lines of text
@@ -52,16 +52,12 @@ func convertStreamToLineChannel(label string, stream io.ReadCloser) <-chan strin
 
 // BuffScanner returns a channel to which it will write lines of text.
 //
-// The text is harvested from an io stream, which will be read until
-// the io stream hits EOF or otherwise closes - at which point the
-// returned channel is closed.
-//
-// If the io stream blocks for longer than the given wait time,
-// BuffScanner will send a special line of text to the channel
-// and close it.
+// The text is harvested from an io stream. If the io stream blocks for longer
+// than the given wait time, BuffScanner will send a special line of text to
+// the channel and close it.
 func BuffScanner(wait time.Duration, label string, stream io.ReadCloser) <-chan string {
-	chOut := make(chan string, 1)
 	chIn := convertStreamToLineChannel(label, stream)
+	chOut := make(chan string, 1)
 	go func() {
 		defer close(chOut)
 		for {

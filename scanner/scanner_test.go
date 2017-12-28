@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const arbitraryLabel = "heybuddy"
+
 type stalledReader struct {
 	bytes.Buffer
 }
@@ -19,7 +21,7 @@ func (stalledReader) Read(p []byte) (n int, err error) {
 func (stalledReader) Close() error { return nil }
 
 func TestStalledReader(t *testing.T) {
-	chOut := BuffScanner(1*time.Second, "heythere", stalledReader{})
+	chOut := BuffScanner(1*time.Second, arbitraryLabel, stalledReader{})
 
 	line, ok := <-chOut
 	if !ok {
@@ -47,7 +49,7 @@ func (bustedReader) Read(p []byte) (n int, err error) {
 func (bustedReader) Close() error { return nil }
 
 func TestBustedReader(t *testing.T) {
-	chOut := BuffScanner(1*time.Second, "heythere", bustedReader{})
+	chOut := BuffScanner(1*time.Second, arbitraryLabel, bustedReader{})
 
 	line, ok := <-chOut
 	if !ok {
@@ -71,7 +73,7 @@ type simpleReader struct {
 func (simpleReader) Close() error { return nil }
 
 func TestSimpleReader(t *testing.T) {
-	chOut := BuffScanner(1*time.Second, "heythere",
+	chOut := BuffScanner(1*time.Second, arbitraryLabel,
 		simpleReader{bytes.NewBufferString("beans and\nrice")})
 
 	line, ok := <-chOut
@@ -101,24 +103,23 @@ func TestSimpleReader(t *testing.T) {
 // An example main.
 func main() {
 	{
-		foo := simpleReader{bytes.NewBufferString("beans and\nrice")}
-		chOut := BuffScanner(1*time.Second, "heythere", foo)
+		chOut := BuffScanner(
+			1*time.Second, arbitraryLabel,
+			simpleReader{bytes.NewBufferString("beans and\nrice")})
 		for line := range chOut {
 			fmt.Println(line)
 		}
 		fmt.Println("-----------------------")
 	}
 	{
-		foo := stalledReader{}
-		chOut := BuffScanner(1*time.Second, "heythere", foo)
+		chOut := BuffScanner(1*time.Second, arbitraryLabel, stalledReader{})
 		for line := range chOut {
 			fmt.Println(line)
 		}
 		fmt.Println("-----------------------")
 	}
 	{
-		foo := bustedReader{}
-		chOut := BuffScanner(1*time.Second, "heythere", foo)
+		chOut := BuffScanner(1*time.Second, arbitraryLabel, bustedReader{})
 		for line := range chOut {
 			fmt.Println(line)
 		}

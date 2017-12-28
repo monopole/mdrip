@@ -21,84 +21,87 @@ const (
 // executing a command block (or as much as could be executed before
 // it failed).
 //
-// Output can appear on stderr without neccessarily being associated
+// Output can appear on stderr without necessarily being associated
 // with shell failure, so it's collected even in successful runs.
 type BlockOutput struct {
-	success status
-	output  string
+	completed status
+	output    string
 }
 
-func (x BlockOutput) Succeeded() bool {
-	return x.success == yep
+func (x BlockOutput) Completed() bool {
+	return x.completed == yep
 }
 
 func (x BlockOutput) Output() string {
 	return x.output
 }
 
-func NewFailureOutput(output string) *BlockOutput {
+func NewIncompleteOutput(output string) *BlockOutput {
 	return &BlockOutput{nope, output}
 }
 
-func NewSuccessOutput(output string) *BlockOutput {
+func NewCompleteOutput(output string) *BlockOutput {
 	return &BlockOutput{yep, output}
 }
 
 // RunResult pairs BlockOutput with meta data about shell execution.
 type RunResult struct {
-	BlockOutput
+	stdOut   *BlockOutput      // stdout from block execution
+	stdErr   *BlockOutput      // stdErr from block execution
 	fileName base.FilePath     // File in which the error occurred.
-	index    int               // Command block index.
-	block    *program.BlockPgm // Content of actual command block.
-	problem  error             // Error, if any.
-	message  string            // Detailed error message, if any.
+	index    int               // Index of command block with error.
+	block    *program.BlockPgm // The command block with the error.
+	anErr    error             // Shell error, if any.
 }
 
-func NewRunResult(bo *BlockOutput) *RunResult {
+func NewRunResult(out, err *BlockOutput) *RunResult {
 	return &RunResult{
-		*bo, "", -1,
+		out, err, "", -1,
 		program.NewEmptyBlockPgm(),
-		nil, ""}
+		nil}
 }
 
-// For tests.
-func NoCommandsRunResult(
-	blockOutput *BlockOutput, path base.FilePath, index int, message string) *RunResult {
-	return &RunResult{
-		*blockOutput, path, index,
-		program.NewEmptyBlockPgm(),
-		nil, message}
+// One of those "This should never happen" things.
+func (x *RunResult) HasProgrammerError() bool {
+	return (x.stdOut == nil && x.stdErr != nil) || (x.stdOut != nil && x.stdErr == nil)
+}
+
+// Output on stderr doesn't mean there was a failure
+func (x *RunResult) Completed() bool {
+	return (x.stdOut == nil || x.stdOut.Completed()) &&
+		(x.stdErr == nil || x.stdErr.Completed())
+}
+
+func (x *RunResult) StdOut() string {
+	if x.stdOut == nil {
+		return "no stdout"
+	}
+	return x.stdOut.output
+}
+
+func (x *RunResult) StdErr() string {
+	if x.stdErr == nil {
+		return "no stderr"
+	}
+	return x.stdErr.output
+}
+
+func (x *RunResult) SetFileName(n base.FilePath) *RunResult {
+	x.fileName = n
+	return x
 }
 
 func (x *RunResult) FileName() base.FilePath {
 	return x.fileName
 }
 
-func (x *RunResult) Problem() error {
-	return x.problem
-}
-
-func (x *RunResult) SetProblem(e error) *RunResult {
-	x.problem = e
+func (x *RunResult) SetError(e error) *RunResult {
+	x.anErr = e
 	return x
 }
 
-func (x *RunResult) Message() string {
-	return x.message
-}
-
-func (x *RunResult) SetMessage(m string) *RunResult {
-	x.message = m
-	return x
-}
-
-func (x *RunResult) SetOutput(m string) *RunResult {
-	x.output = m
-	return x
-}
-
-func (x *RunResult) Index() int {
-	return x.index
+func (x *RunResult) Error() error {
+	return x.anErr
 }
 
 func (x *RunResult) SetIndex(i int) *RunResult {
@@ -106,13 +109,12 @@ func (x *RunResult) SetIndex(i int) *RunResult {
 	return x
 }
 
-func (x *RunResult) SetBlock(b *program.BlockPgm) *RunResult {
-	x.block = b
-	return x
+func (x *RunResult) Index() int {
+	return x.index
 }
 
-func (x *RunResult) SetFileName(n base.FilePath) *RunResult {
-	x.fileName = n
+func (x *RunResult) SetBlock(b *program.BlockPgm) *RunResult {
+	x.block = b
 	return x
 }
 
@@ -121,10 +123,8 @@ func (x *RunResult) Print(selectedLabel base.Label) {
 	fmt.Fprintf(os.Stderr, delim)
 	x.block.Print(os.Stderr, "Error", x.index+1, selectedLabel, x.fileName)
 	fmt.Fprintf(os.Stderr, delim)
-	printCapturedOutput("Stdout", delim, x.output)
-	if len(x.message) > 0 {
-		printCapturedOutput("Stderr", delim, x.message)
-	}
+	printCapturedOutput("stdOut", delim, x.stdOut.output)
+	printCapturedOutput("stdEut", delim, x.stdErr.output)
 }
 
 func printCapturedOutput(name, delim, output string) {

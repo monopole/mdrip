@@ -6,32 +6,22 @@ import (
 	"time"
 
 	"github.com/monopole/mdrip/base"
-	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/scanner"
 )
 
-const timeout = 2 * time.Second
+// To run this test with logging:
+// cd github.com/monopole/mdrip
+// go test . --alsologtostderr --vmodule subshell=2 --stderrthreshold INFO
+
+const (
+	timeout = 1 * time.Second
+	// Arrange for a sleep that is bit longer than the timeout.
+	sleep = timeout + (1 * time.Second)
+)
 
 func makeBlock(code string) *program.BlockPgm {
 	return program.NewBlockPgm(code)
-}
-
-func newTutorial(b []*model.BlockTut) model.Tutorial {
-	return model.NewLessonTutForTests("iamafilename", b)
-}
-
-func emptyTutorial() model.Tutorial {
-	return newTutorial([]*model.BlockTut{})
-}
-
-func TestRunnerWithNothing(t *testing.T) {
-	if NewSubshell(
-		timeout,
-		program.NewProgramFromTutorial(
-			base.WildCardLabel, emptyTutorial())).Run().Problem() != nil {
-		t.Fail()
-	}
 }
 
 func doIt(lines []string) *RunResult {
@@ -39,9 +29,16 @@ func doIt(lines []string) *RunResult {
 	for _, l := range lines {
 		pgm = append(pgm, makeBlock(l))
 	}
-	lesson := program.NewLessonPgm(base.FilePath("foo"), pgm)
+	lesson := program.NewLessonPgm(base.FilePath("arbitraryPath"), pgm)
 	p := program.NewProgram([]*program.LessonPgm{lesson})
 	return NewSubshell(timeout, p).Run()
+}
+
+func TestRunnerWithNothing(t *testing.T) {
+	result := doIt([]string{})
+	if result.Error() != nil {
+		t.Errorf("Expected no error, got %v", result.Error())
+	}
 }
 
 func TestRunnerWithGoodStuff(t *testing.T) {
@@ -50,35 +47,35 @@ func TestRunnerWithGoodStuff(t *testing.T) {
 		"echo beans\necho apple\n",
 		"echo hasta\necho la vista\n",
 	})
-	if result.Problem() != nil {
+	if result.Error() != nil {
+		t.Fail()
+	}
+	if !result.Completed() {
 		t.Fail()
 	}
 }
 
-func checkFail(t *testing.T, got, want *RunResult) {
-	if got.Problem() == nil {
-		t.Fail()
+func checkFail(t *testing.T, got *RunResult, wantIndex int, wantErr string) {
+	if got.Error() == nil {
+		t.Errorf("Expected an error, but no error")
 	}
-	if got.Index() != want.Index() {
-		t.Errorf("%s got\n\t%v\nwant\n\t%v", "file", got.Index(), want.Index())
+	if got.Index() != wantIndex {
+		t.Errorf("got index %v, want index %v", got.Index(), wantIndex)
 	}
-	if !strings.Contains(got.Message(), want.Message()) {
-		t.Errorf("%s got\n\t\"%v\"\nwant\n\t%v", "message", got.Message(), want.Message())
+	if !strings.Contains(got.StdErr(), wantErr) {
+		t.Errorf("got stderr\n\t\"%v\"\nwant stderr\n\t%v", got.StdErr(), wantErr)
 	}
 }
 
-func TestStartWithABadCommand(t *testing.T) {
+func TestBadCommandAtStart(t *testing.T) {
 	checkFail(
 		t,
 		doIt([]string{
-			"notagoodcommand\ndate\n",
+			"lochNessMonster\ndate\n",
 			"echo beans\necho cheese\n",
 		}),
-		NoCommandsRunResult(
-			NewFailureOutput("dunno"),
-			"fileNameTestStartWithABadCommand",
-			0,
-			"line 1: notagoodcommand: command not found"))
+		0,
+		"line 4: lochNessMonster: command not found")
 }
 
 func TestBadCommandInTheMiddle(t *testing.T) {
@@ -90,26 +87,54 @@ func TestBadCommandInTheMiddle(t *testing.T) {
 			"lochNessMonster\n",
 			"echo hasta\necho la vista\n",
 		}),
-		NoCommandsRunResult(
-			NewFailureOutput("dunno"),
-			"fileNameTestBadCommandInTheMiddle",
-			2,
-			"line 11: lochNessMonster: command not found"))
+		2,
+		"line 14: lochNessMonster: command not found")
 }
 
-func TestTimeOut(t *testing.T) {
-	// Insert this sleep in a command block.
-	// Arrange to sleep for two seconds longer than the timeout.
-	sleep := timeout + (2 * time.Second)
+func TestBadCommandAtEnd(t *testing.T) {
+	checkFail(
+		t,
+		doIt([]string{
+			"echo tofu\ndate\n",
+			"echo beans\necho kale\n",
+			"echo hasta\necho la vista\n",
+			"echo hey\nlochNessMonster\n",
+		}),
+		3,
+		"line 20: lochNessMonster: command not found")
+}
+
+func TestTimeOutAtStart(t *testing.T) {
 	checkFail(
 		t,
 		doIt([]string{
 			"date\nsleep " + sleep.String() + "\necho kale",
 			"echo beans\necho cheese\n",
 		}),
-		NoCommandsRunResult(
-			NewFailureOutput("dunno"),
-			"fileNameTestTimeOut",
-			0,
-			scanner.MsgTimeout))
+		0,
+		scanner.MsgTimeout)
+}
+
+func TestTimeOutInTheMiddle(t *testing.T) {
+	checkFail(
+		t,
+		doIt([]string{
+			"echo beans\necho cheese\n",
+			"date\nsleep " + sleep.String() + "\necho kale",
+			"echo tofu\ndate\n",
+		}),
+		1,
+		scanner.MsgTimeout)
+}
+
+func TestTimeOutAtTheEnd(t *testing.T) {
+	checkFail(
+		t,
+		doIt([]string{
+			"echo beans\necho cheese\n",
+			"echo tofu\ndate\n",
+			"date\nsleep " + sleep.String() + "\n",
+		}),
+		2,
+		scanner.MsgTimeout)
 }

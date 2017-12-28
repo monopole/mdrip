@@ -39,10 +39,10 @@ func trueMain(c *config.Config) error {
 		}
 		p := program.NewProgramFromTutorial(c.Label(), t)
 		s := subshell.NewSubshell(c.BlockTimeOut(), p)
-		if r := s.Run(); r.Problem() != nil {
+		if r := s.Run(); r.Error() != nil {
 			r.Print(c.Label())
 			if !c.IgnoreTestFailure() {
-				glog.Fatal(r.Problem())
+				glog.Fatal(r.Error())
 			}
 		}
 	default:
