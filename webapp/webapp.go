@@ -122,71 +122,71 @@ const (
 )
 
 // ColorBackground is just that.
-func (wa *WebApp) ColorBackground() string          { return "white" }
+func (wa *WebApp) ColorBackground() string { return "white" }
 
 // ColorHelpBackground is just that.
-func (wa *WebApp) ColorHelpBackground() string      { return whiteIsh }
+func (wa *WebApp) ColorHelpBackground() string { return whiteIsh }
 
 // ColorHeader is just that.
-func (wa *WebApp) ColorHeader() string              { return blue700 }
+func (wa *WebApp) ColorHeader() string { return blue700 }
 
 // ColorCodeBlockText is just that.
-func (wa *WebApp) ColorCodeBlockText() string       { return greenA400 }
+func (wa *WebApp) ColorCodeBlockText() string { return greenA400 }
 
 // ColorCodeBlockBackground is just that.
 func (wa *WebApp) ColorCodeBlockBackground() string { return "black" }
 
 // ColorNavBackground is just that.
-func (wa *WebApp) ColorNavBackground() string       { return blue200 }
+func (wa *WebApp) ColorNavBackground() string { return blue200 }
 
 // ColorNavText is just that.
-func (wa *WebApp) ColorNavText() string             { return "black" }
+func (wa *WebApp) ColorNavText() string { return "black" }
 
 // ColorNavSelected is just that.
-func (wa *WebApp) ColorNavSelected() string         { return wa.ColorBackground() }
+func (wa *WebApp) ColorNavSelected() string { return wa.ColorBackground() }
 
 // ColorHover is just that.
-func (wa *WebApp) ColorHover() string               { return deepOrange500 }
+func (wa *WebApp) ColorHover() string { return deepOrange500 }
 
 // ColorCodeHover is just that.
-func (wa *WebApp) ColorCodeHover() string           { return deepOrange700 }
+func (wa *WebApp) ColorCodeHover() string { return deepOrange700 }
 
 // ColorControls is just that.
-func (wa *WebApp) ColorControls() string            { return greenA200 }
+func (wa *WebApp) ColorControls() string { return greenA200 }
 
 // ColorTitle is just that.
-func (wa *WebApp) ColorTitle() string               { return wa.ColorControls() }
+func (wa *WebApp) ColorTitle() string { return wa.ColorControls() }
 
 // TransitionSpeedMs is speed of css transitions in milliseconds.
 func (wa *WebApp) TransitionSpeedMs() int { return 250 }
 
 // LayBodyWideWidth is the min body width of "wide" mode.
-func (wa *WebApp) LayBodyWideWidth() int         { return 1200 }
+func (wa *WebApp) LayBodyWideWidth() int { return 1200 }
 
 // LayBodyMediumWidth is the min body width of medium mode.
 // Small mode (presumably phones) is anything thinner.
-func (wa *WebApp) LayBodyMediumWidth() int       { return 800 }
+func (wa *WebApp) LayBodyMediumWidth() int { return 800 }
 
 // LayMinHeaderWidth is just that.
-func (wa *WebApp) LayMinHeaderWidth() int        { return 400 }
+func (wa *WebApp) LayMinHeaderWidth() int { return 400 }
 
 // LayNavBoxWidth is just that.
-func (wa *WebApp) LayNavBoxWidth() int           { return 210 }
+func (wa *WebApp) LayNavBoxWidth() int { return 210 }
 
 // LayHeaderHeight is just that.
-func (wa *WebApp) LayHeaderHeight() int          { return 120 }
+func (wa *WebApp) LayHeaderHeight() int { return 120 }
 
 // LayFooterHeight is just that.
-func (wa *WebApp) LayFooterHeight() int          { return 50 }
+func (wa *WebApp) LayFooterHeight() int { return 50 }
 
 // LayMinimizedHeaderHeight is just that.
 func (wa *WebApp) LayMinimizedHeaderHeight() int { return wa.LayFooterHeight() }
 
 // LayNavTopBotPad is just that.
-func (wa *WebApp) LayNavTopBotPad() int          { return 7 }
+func (wa *WebApp) LayNavTopBotPad() int { return 7 }
 
 // LayNavLeftPad is just that.
-func (wa *WebApp) LayNavLeftPad() int            { return 20 }
+func (wa *WebApp) LayNavLeftPad() int { return 20 }
 
 // LessonCount is just that.
 func (wa *WebApp) LessonCount() int {

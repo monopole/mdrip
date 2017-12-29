@@ -32,7 +32,7 @@ func TestStalledReader(t *testing.T) {
 		t.Errorf("got \n\t%v\nwant\n\t%v", line, want)
 	}
 
-	line, ok = <-chOut
+	_, ok = <-chOut
 	if ok {
 		t.Fail()
 	}
@@ -60,7 +60,7 @@ func TestBustedReader(t *testing.T) {
 		t.Errorf("got \n\t%v\nwant\n\t%v", line, want)
 	}
 
-	line, ok = <-chOut
+	_, ok = <-chOut
 	if ok {
 		t.Fail()
 	}
@@ -94,7 +94,7 @@ func TestSimpleReader(t *testing.T) {
 		t.Errorf("got \n\t%v\nwant\n\t%v", line, want)
 	}
 
-	line, ok = <-chOut
+	_, ok = <-chOut
 	if ok {
 		t.Fail()
 	}

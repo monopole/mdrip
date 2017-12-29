@@ -262,7 +262,7 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 		write500(w, err)
 		return
 	}
-	err = session.Save(r, w)
+	session.Save(r, w)
 	ws.tutorial.Accept(model.NewTutorialTxtPrinter(w))
 	p := program.NewProgramFromTutorial(base.WildCardLabel, ws.tutorial)
 	fmt.Fprintf(w, "\n\nfile count %d\n\n", len(p.Lessons()))
