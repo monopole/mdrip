@@ -16,14 +16,18 @@ type Program struct {
 	lessons []*LessonPgm
 }
 
+// Lessons found in the program - a lesson corresponds to a file.
 func (p *Program) Lessons() []*LessonPgm { return p.lessons }
-func (p *Program) Label() base.Label     { return p.label }
 
+// Label used to extract the Program.
+func (p *Program) Label() base.Label { return p.label }
+
+// NewProgram returns a program with the given lessons.
 func NewProgram(lessons []*LessonPgm) *Program {
 	return &Program{base.WildCardLabel, lessons}
 }
 
-// Build program from blocks extracted from a tutorial.
+// NewProgramFromTutorial builds a program from blocks extracted from a tutorial.
 func NewProgramFromTutorial(l base.Label, t model.Tutorial) *Program {
 	v := NewLessonPgmExtractor(l)
 	t.Accept(v)

@@ -11,12 +11,13 @@ import (
 	"github.com/monopole/mdrip/program"
 )
 
-type TypeSessId string
+// TypeSessID is type representing a session ID.
+type TypeSessID string
 
 // WebApp presents a tutorial to a web browser.
 // Not a complex app, so eschewing react, angular2, polymer, etc.
 type WebApp struct {
-	sessId      TypeSessId
+	sessID      TypeSessID
 	host        string
 	tut         model.Tutorial
 	ds          *base.DataSource
@@ -27,8 +28,9 @@ type WebApp struct {
 	coursePaths [][]int
 }
 
+// NewWebApp makes a new web app.
 func NewWebApp(
-	sessId TypeSessId, host string,
+	sessID TypeSessID, host string,
 	tut model.Tutorial, ds *base.DataSource, lp []int, cp [][]int) *WebApp {
 	v := program.NewLessonPgmExtractor(base.WildCardLabel)
 	tut.Accept(v)
@@ -37,26 +39,32 @@ func NewWebApp(
 		title = title[maxTitleLength-3:] + "..."
 	}
 	return &WebApp{
-		sessId, host, tut, ds, makeParsedTemplate(tut),
+		sessID, host, tut, ds, makeParsedTemplate(tut),
 		v.Lessons(), title, lp, cp}
 }
 
-func (wa *WebApp) SessId() TypeSessId { return wa.sessId }
+// SessID is the id of the session returned
+func (wa *WebApp) SessID() TypeSessID { return wa.sessID }
 
+// Host is the webapp's host.
 func (wa *WebApp) Host() string { return wa.host }
 
+// Lessons is the list of lessons known to the webapp.
 func (wa *WebApp) Lessons() []*program.LessonPgm {
 	return wa.rawLessons
 }
 
+// DataSourceName is the source of the data.
 func (wa *WebApp) DataSourceName() string {
 	return wa.ds.Display()
 }
 
+// DataSourceLink lets the user find the original data.
 func (wa *WebApp) DataSourceLink() template.URL {
 	return template.URL(wa.ds.Href())
 }
 
+// DocTitle is the name of the document or web page.
 func (wa *WebApp) DocTitle() string {
 	return wa.title
 }
@@ -66,7 +74,7 @@ const (
 	maxTitleLength = len("gh:kubernetes/website/reference") + 10
 )
 
-// Return the last element or zero.
+// InitialLesson is where the user should start - the last element or zero.
 func (wa *WebApp) InitialLesson() int {
 	if len(wa.lessonPath) == 0 {
 		return 0
@@ -83,19 +91,20 @@ func (wa *WebApp) xCoursePath() []int {
 	return wa.lessonPath[:len(wa.lessonPath)-1]
 }
 
-// Emit a javascript 2D array
-// with length equal to the number of lessons.
-// each entry should contain an array of course indices
-// that should be active when the lesson is actice.
+// CoursePaths emits a javascript 2D array holding lesson paths.
+// The length equals the number of lessons.
+// Each entry should contain an array of course indices
+// that should be active when the lesson is active.
 func (wa *WebApp) CoursePaths() [][]int {
 	return wa.coursePaths
 }
 
+// Named color specifications to use on the web page.
 const (
-	blue700         = "#1976D2" // header
-	blue500         = "#2196F3" // hav
-	blue200         = "#90CAF9" // help
-	deepOrange500   = "#FF5722" // controls
+	blue700         = "#1976D2"
+	blue500         = "#2196F3"
+	blue200         = "#90CAF9"
+	deepOrange500   = "#FF5722"
 	deepOrange200   = "#FF8A65"
 	deepOrange700   = "#E64A19"
 	teal            = "#00838f"
@@ -112,36 +121,81 @@ const (
 	greenA700       = "#64DD17"
 )
 
-func (wa *WebApp) TransitionSpeedMs() int        { return 250 }
-func (wa *WebApp) LayBodyWideWidth() int         { return 1200 }
-func (wa *WebApp) LayBodyMediumWidth() int       { return 800 }
-func (wa *WebApp) LayMinHeaderWidth() int        { return 400 }
-func (wa *WebApp) LayNavBoxWidth() int           { return 210 }
-func (wa *WebApp) LayHeaderHeight() int          { return 120 }
-func (wa *WebApp) LayFooterHeight() int          { return 50 }
-func (wa *WebApp) LayMinimizedHeaderHeight() int { return wa.LayFooterHeight() }
-func (wa *WebApp) LayNavTopBotPad() int          { return 7 }
-func (wa *WebApp) LayNavLeftPad() int            { return 20 }
-
+// ColorBackground is just that.
 func (wa *WebApp) ColorBackground() string          { return "white" }
+
+// ColorHelpBackground is just that.
 func (wa *WebApp) ColorHelpBackground() string      { return whiteIsh }
+
+// ColorHeader is just that.
 func (wa *WebApp) ColorHeader() string              { return blue700 }
+
+// ColorCodeBlockText is just that.
 func (wa *WebApp) ColorCodeBlockText() string       { return greenA400 }
+
+// ColorCodeBlockBackground is just that.
 func (wa *WebApp) ColorCodeBlockBackground() string { return "black" }
+
+// ColorNavBackground is just that.
 func (wa *WebApp) ColorNavBackground() string       { return blue200 }
+
+// ColorNavText is just that.
 func (wa *WebApp) ColorNavText() string             { return "black" }
+
+// ColorNavSelected is just that.
 func (wa *WebApp) ColorNavSelected() string         { return wa.ColorBackground() }
+
+// ColorHover is just that.
 func (wa *WebApp) ColorHover() string               { return deepOrange500 }
+
+// ColorCodeHover is just that.
 func (wa *WebApp) ColorCodeHover() string           { return deepOrange700 }
+
+// ColorControls is just that.
 func (wa *WebApp) ColorControls() string            { return greenA200 }
+
+// ColorTitle is just that.
 func (wa *WebApp) ColorTitle() string               { return wa.ColorControls() }
 
+// TransitionSpeedMs is speed of css transitions in milliseconds.
+func (wa *WebApp) TransitionSpeedMs() int { return 250 }
+
+// LayBodyWideWidth is the min body width of "wide" mode.
+func (wa *WebApp) LayBodyWideWidth() int         { return 1200 }
+
+// LayBodyMediumWidth is the min body width of medium mode.
+// Small mode (presumably phones) is anything thinner.
+func (wa *WebApp) LayBodyMediumWidth() int       { return 800 }
+
+// LayMinHeaderWidth is just that.
+func (wa *WebApp) LayMinHeaderWidth() int        { return 400 }
+
+// LayNavBoxWidth is just that.
+func (wa *WebApp) LayNavBoxWidth() int           { return 210 }
+
+// LayHeaderHeight is just that.
+func (wa *WebApp) LayHeaderHeight() int          { return 120 }
+
+// LayFooterHeight is just that.
+func (wa *WebApp) LayFooterHeight() int          { return 50 }
+
+// LayMinimizedHeaderHeight is just that.
+func (wa *WebApp) LayMinimizedHeaderHeight() int { return wa.LayFooterHeight() }
+
+// LayNavTopBotPad is just that.
+func (wa *WebApp) LayNavTopBotPad() int          { return 7 }
+
+// LayNavLeftPad is just that.
+func (wa *WebApp) LayNavLeftPad() int            { return 20 }
+
+// LessonCount is just that.
 func (wa *WebApp) LessonCount() int {
 	c := model.NewTutorialLessonCounter()
 	wa.tut.Accept(c)
 	return c.Count()
 }
 
+// Render writes a web page to the given writer.
 func (wa *WebApp) Render(w io.Writer) error {
 	return wa.tmpl.ExecuteTemplate(w, tmplNameWebApp, wa)
 }
@@ -259,12 +313,12 @@ const (
 	tmplNameBlockPgm = "blockPgm"
 	tmplBodyBlockPgm = `
 {{define "` + tmplNameBlockPgm + `"}}
-<div class='proseblock'> {{.HtmlProse}} </div>
+<div class='proseblock'> {{.HTMLProse}} </div>
 {{if .Code}}
-<div class='codeBox' data-id='{{.Id}}'>
+<div class='codeBox' data-id='{{.ID}}'>
   <div class='codeBlockControl'>
     <span class='codePrompt'> &nbsp;&gt;&nbsp; </span>
-    <span class='codeBlockButton' onclick='codeBlockController.setAndRun({{.Id}})'>
+    <span class='codeBlockButton' onclick='codeBlockController.setAndRun({{.ID}})'>
       {{.Name}}
     </span>
     <span class='codeBlockSpacer'> &nbsp; </span>
@@ -381,7 +435,7 @@ href="https://github.com/tmux/tmux/wiki">tmux</a>.
     --alsologtostderr --v 0 \
     --stderrthreshold INFO \
     --mode tmux \
-    ws://{{.Host}}/_/ws?id={{.SessId}}
+    ws://{{.Host}}/_/ws?id={{.SessID}}
 </pre>
 </li>
 </ul>
@@ -1227,7 +1281,7 @@ var codeBlockController = new function() {
         'GET',
         '/_/runblock?fid=' + fileId
             + '&bid=' + cbIndex
-            + '&sid={{.SessId}}',
+            + '&sid={{.SessID}}',
         true);
     xhr.send();
   }

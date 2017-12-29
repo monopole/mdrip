@@ -39,25 +39,27 @@ func (c *myConn) Write(bytes []byte) (n int, err error) {
 	return len(bytes), nil
 }
 
+// Server represents a webserver.
 type Server struct {
 	loader           *loader.Loader
 	didFirstRender   bool
 	tutorial         model.Tutorial
 	store            sessions.Store
 	upgrader         websocket.Upgrader
-	connections      map[webapp.TypeSessId]*myConn
+	connections      map[webapp.TypeSessID]*myConn
 	connReaperQuitCh chan bool
 }
 
 const (
 	cookieName = "mdrip"
-	keySessId  = "sessId"
+	keySessID  = "sessId"
 )
 
 // var keyAuth = securecookie.GenerateRandomKey(16)
 var keyAuth = []byte("static-visible-secret")
 var keyEncrypt = []byte(nil)
 
+// NewServer returns a new web server configured with the given loader.
 func NewServer(l *loader.Loader) (*Server, error) {
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
@@ -72,43 +74,43 @@ func NewServer(l *loader.Loader) (*Server, error) {
 		nil,
 		s,
 		websocket.Upgrader{},
-		make(map[webapp.TypeSessId]*myConn),
+		make(map[webapp.TypeSessID]*myConn),
 		make(chan bool),
 	}
 	go result.reapConnections()
 	return result, nil
 }
 
-func getSessionId(s *sessions.Session) webapp.TypeSessId {
-	if c, ok := s.Values[keySessId].(string); ok {
-		return webapp.TypeSessId(c)
+func getSessionID(s *sessions.Session) webapp.TypeSessID {
+	if c, ok := s.Values[keySessID].(string); ok {
+		return webapp.TypeSessID(c)
 	}
 	return ""
 }
 
-func assureSessionId(s *sessions.Session) webapp.TypeSessId {
-	c := getSessionId(s)
+func assureSessionID(s *sessions.Session) webapp.TypeSessID {
+	c := getSessionID(s)
 	if c == "" {
-		c = makeSessionId()
-		s.Values[keySessId] = string(c)
+		c = makeSessionID()
+		s.Values[keySessID] = string(c)
 	}
 	return c
 }
 
-func makeSessionId() webapp.TypeSessId {
+func makeSessionID() webapp.TypeSessID {
 	b := make([]byte, 5)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-	return webapp.TypeSessId(fmt.Sprintf("%X", b))
+	return webapp.TypeSessID(fmt.Sprintf("%X", b))
 }
 
-func getSessionIdParam(n string, r *http.Request) (webapp.TypeSessId, error) {
+func getSessionIDParam(n string, r *http.Request) (webapp.TypeSessID, error) {
 	v := r.URL.Query().Get(n)
 	if v == "" {
 		return "", errors.New("no session Id")
 	}
-	return webapp.TypeSessId(v), nil
+	return webapp.TypeSessID(v), nil
 }
 
 // Pull session Id out of request, create a socket connection,
@@ -116,32 +118,32 @@ func getSessionIdParam(n string, r *http.Request) (webapp.TypeSessId, error) {
 // find the connection and write to it, else fall back to its
 // other behaviors.
 func (ws *Server) openWebSocket(w http.ResponseWriter, r *http.Request) {
-	sessId, err := getSessionIdParam("id", r)
+	sessID, err := getSessionIDParam("id", r)
 	if err != nil {
 		glog.Errorf("no session Id: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	existingConn := ws.connections[sessId]
+	existingConn := ws.connections[sessID]
 	var c *websocket.Conn
 	if existingConn != nil {
-		glog.Infof("Reusing live session %v found when asking for new session.", sessId)
+		glog.Infof("Reusing live session %v found when asking for new session.", sessID)
 		// Possibly the other side shutdown and restarted.
 		// Could close and make new one,
 		//  c.conn.Close()
-		//  delete(ws.connections, sessId)
+		//  delete(ws.connections, sessID)
 		// but try to reuse
 		c = existingConn.conn
 	} else {
-		glog.Infof("Attempting to upgrade session %v to a websocket.", sessId)
+		glog.Infof("Attempting to upgrade session %v to a websocket.", sessID)
 		c, err = ws.upgrader.Upgrade(w, r, nil)
 	}
 	if err != nil {
-		glog.Errorf("unable to upgrade for session %v: %v", sessId, err)
+		glog.Errorf("unable to upgrade for session %v: %v", sessID, err)
 		write500(w, err)
 		return
 	}
-	glog.Infof("established websocket for session %v", sessId)
+	glog.Infof("established websocket for session %v", sessID)
 	go func() {
 		_, message, err := c.ReadMessage()
 		if err == nil {
@@ -150,7 +152,7 @@ func (ws *Server) openWebSocket(w http.ResponseWriter, r *http.Request) {
 			glog.Info("websocket err: ", err)
 		}
 	}()
-	ws.connections[sessId] = &myConn{c, time.Now()}
+	ws.connections[sessID] = &myConn{c, time.Now()}
 }
 
 func write500(w http.ResponseWriter, e error) {
@@ -210,8 +212,8 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		write500(w, err)
 		return
 	}
-	sessId := assureSessionId(session)
-	glog.Infof("Main page render in sessId: %v", sessId)
+	sessID := assureSessionID(session)
+	glog.Infof("Main page render in sessID: %v", sessID)
 	if ws.didFirstRender {
 		// Consider reloading data on all renders beyond the first.
 		glog.Infof("Already did first render.")
@@ -231,7 +233,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app := ws.makeWebApp(sessId, r.Host, r.URL.Path)
+	app := ws.makeWebApp(sessID, r.Host, r.URL.Path)
 	ws.didFirstRender = true
 	if err := app.Render(w); err != nil {
 		write500(w, err)
@@ -239,7 +241,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (ws *Server) makeWebApp(sessId webapp.TypeSessId, host, path string) *webapp.WebApp {
+func (ws *Server) makeWebApp(sessID webapp.TypeSessID, host, path string) *webapp.WebApp {
 	v := newLessonFinder()
 	ws.tutorial.Accept(v)
 	var lessonPath []int
@@ -249,7 +251,7 @@ func (ws *Server) makeWebApp(sessId webapp.TypeSessId, host, path string) *webap
 		lessonPath = v.getLessonPath(path)
 	}
 	return webapp.NewWebApp(
-		sessId, host,
+		sessID, host,
 		ws.tutorial, ws.loader.DataSet().FirstArg(),
 		lessonPath, v.getCoursePaths())
 }
@@ -276,7 +278,7 @@ func (ws *Server) showDebugPage(w http.ResponseWriter, r *http.Request) {
 func (ws *Server) attemptTmuxWrite(b *program.BlockPgm) error {
 	t := tmux.NewTmux(tmux.Path)
 	if !t.IsUp() {
-		return errors.New("No local tmux to write to.")
+		return errors.New("no local tmux to write to")
 	}
 	_, err := t.Write(b.Code().Bytes())
 	return err
@@ -299,14 +301,14 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 			http.Error(w, "No session id for block runner", http.StatusBadRequest)
 			return
 		}
-		sessId := webapp.TypeSessId(arg)
+		sessID := webapp.TypeSessID(arg)
 		//session, err := ws.store.Get(r, cookieName)
 		//if err != nil {
 		//	write500(w, err)
 		//	return
 		//}
-		//sessId := assureSessionId(session)
-		glog.Info("sid = ", sessId)
+		//sessID := assureSessionID(session)
+		glog.Info("sid = ", sessID)
 		indexFile := getIntParam("fid", r, -1)
 		glog.Info("fid = ", indexFile)
 		indexBlock := getIntParam("bid", r, -1)
@@ -324,14 +326,14 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 
 		var err error
 
-		c := ws.connections[sessId]
+		c := ws.connections[sessID]
 		if c == nil {
-			glog.Infof("no socket for session %v", sessId)
+			glog.Infof("no socket for session %v", sessID)
 		} else {
 			_, err := c.Write(block.Code().Bytes())
 			if err != nil {
 				glog.Infof("socket write failed: %v", err)
-				delete(ws.connections, sessId)
+				delete(ws.connections, sessID)
 			}
 		}
 		if c == nil || err != nil {

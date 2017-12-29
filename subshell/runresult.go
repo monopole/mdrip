@@ -28,18 +28,24 @@ type BlockOutput struct {
 	output    string
 }
 
+// Completed is true if the stream was processed without error.  Does not
+// mean that the shell completed without error, only means there was no
+// piping problem or unexpected early termination.
 func (x BlockOutput) Completed() bool {
 	return x.completed == yep
 }
 
+// Output returns text accumulated from a stream.
 func (x BlockOutput) Output() string {
 	return x.output
 }
 
+// NewIncompleteOutput returns a BlockOutput configured to signal incompletion.
 func NewIncompleteOutput(output string) *BlockOutput {
 	return &BlockOutput{nope, output}
 }
 
+// NewCompleteOutput returns a BlockOutput configured to signal completion.
 func NewCompleteOutput(output string) *BlockOutput {
 	return &BlockOutput{yep, output}
 }
@@ -54,6 +60,7 @@ type RunResult struct {
 	anErr    error             // Shell error, if any.
 }
 
+// NewRunResult is a ctor for RunResult.
 func NewRunResult(out, err *BlockOutput) *RunResult {
 	return &RunResult{
 		out, err, "", -1,
@@ -61,63 +68,73 @@ func NewRunResult(out, err *BlockOutput) *RunResult {
 		nil}
 }
 
-// One of those "This should never happen" things.
+// HasProgrammerError is one of those "This should never happen" things.
 func (x *RunResult) HasProgrammerError() bool {
 	return (x.stdOut == nil && x.stdErr != nil) || (x.stdOut != nil && x.stdErr == nil)
 }
 
-// Output on stderr doesn't mean there was a failure
+// Completed means the shell run completed, but implies nothing about exit code.
 func (x *RunResult) Completed() bool {
 	return (x.stdOut == nil || x.stdOut.Completed()) &&
 		(x.stdErr == nil || x.stdErr.Completed())
 }
 
+// StdOut returns the accumulation from stdout.
 func (x *RunResult) StdOut() string {
 	if x.stdOut == nil {
-		return "[stdout empty]"
+		return ""
 	}
 	return x.stdOut.output
 }
 
+// StdErr returns the accumulation from stderr.
 func (x *RunResult) StdErr() string {
 	if x.stdErr == nil {
-		return "[stderr empty]"
+		return ""
 	}
 	return x.stdErr.output
 }
 
+// SetFileName sets the filename.
 func (x *RunResult) SetFileName(n base.FilePath) *RunResult {
 	x.fileName = n
 	return x
 }
 
+// FileName returns the filename.
 func (x *RunResult) FileName() base.FilePath {
 	return x.fileName
 }
 
+// SetError sets the shell error.
 func (x *RunResult) SetError(e error) *RunResult {
 	x.anErr = e
 	return x
 }
 
+// Error gets the shell error.
 func (x *RunResult) Error() error {
 	return x.anErr
 }
 
+// SetIndex sets the index of the failing block.
 func (x *RunResult) SetIndex(i int) *RunResult {
 	x.index = i
 	return x
 }
 
+// Index gets the index of the failing block.
 func (x *RunResult) Index() int {
 	return x.index
 }
 
+// SetBlock sets the contents of the failing block.
 func (x *RunResult) SetBlock(b *program.BlockPgm) *RunResult {
 	x.block = b
 	return x
 }
 
+// Print reports the result to stderr.
 func (x *RunResult) Print(selectedLabel base.Label) {
 	delim := strings.Repeat("-", 70) + "\n"
 	fmt.Fprintf(os.Stderr, delim)

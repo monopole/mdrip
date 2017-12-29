@@ -16,7 +16,7 @@ import (
 
 const (
 	timeout = 1 * time.Second
-	// Arrange for a sleep that is bit longer than the timeout.
+	// Arrange for a sleep that is longer than the timeout.
 	sleep = timeout + (1 * time.Second)
 )
 
@@ -57,7 +57,7 @@ func TestRunnerWithGoodStuff(t *testing.T) {
 
 func checkFail(t *testing.T, got *RunResult, wantIndex int, wantErr string) {
 	if got.Error() == nil {
-		t.Errorf("Expected an error, but no error")
+		t.Errorf("expected an error, but no error")
 	}
 	if got.Index() != wantIndex {
 		t.Errorf("got index %v, want index %v", got.Index(), wantIndex)
@@ -67,12 +67,24 @@ func checkFail(t *testing.T, got *RunResult, wantIndex int, wantErr string) {
 	}
 }
 
+func TestFalse(t *testing.T) {
+	checkFail(
+		t,
+		doIt([]string{
+			"echo beans\necho lemon\n",
+			"/bin/false\necho kale",
+			"echo tofu\ndate\n",
+		}),
+		1,
+		"")
+}
+
 func TestBadCommandAtStart(t *testing.T) {
 	checkFail(
 		t,
 		doIt([]string{
 			"lochNessMonster\ndate\n",
-			"echo beans\necho cheese\n",
+			"echo beans\necho lemon\n",
 		}),
 		0,
 		"line 4: lochNessMonster: command not found")
@@ -109,7 +121,7 @@ func TestTimeOutAtStart(t *testing.T) {
 		t,
 		doIt([]string{
 			"date\nsleep " + sleep.String() + "\necho kale",
-			"echo beans\necho cheese\n",
+			"echo beans\necho lemon\n",
 		}),
 		0,
 		scanner.MsgTimeout)
@@ -119,7 +131,7 @@ func TestTimeOutInTheMiddle(t *testing.T) {
 	checkFail(
 		t,
 		doIt([]string{
-			"echo beans\necho cheese\n",
+			"echo beans\necho lemon\n",
 			"date\nsleep " + sleep.String() + "\necho kale",
 			"echo tofu\ndate\n",
 		}),
@@ -131,7 +143,7 @@ func TestTimeOutAtTheEnd(t *testing.T) {
 	checkFail(
 		t,
 		doIt([]string{
-			"echo beans\necho cheese\n",
+			"echo beans\necho lemon\n",
 			"echo tofu\ndate\n",
 			"date\nsleep " + sleep.String() + "\n",
 		}),

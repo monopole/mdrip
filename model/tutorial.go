@@ -4,6 +4,7 @@ import (
 	"github.com/monopole/mdrip/base"
 )
 
+// Tutorial represents a book in tree / hierarchical form.
 type Tutorial interface {
 	Accept(v TutVisitor)
 	Title() string
@@ -12,37 +13,10 @@ type Tutorial interface {
 	Children() []Tutorial
 }
 
+// TutVisitor has the ability to visit the items specified in its methods.
 type TutVisitor interface {
 	VisitTopCourse(t *TopCourse)
 	VisitCourse(c *Course)
 	VisitLessonTut(l *LessonTut)
 	VisitBlockTut(b *BlockTut)
 }
-
-// A TopCourse is exactly like a Course accept that visitors
-// may treat it differently, ignoring everything about it
-// except its children.  Its name is special in that it might
-// be derived from a URL, from a list of files and directories,
-// etc.
-type TopCourse struct {
-	Course
-}
-
-func NewTopCourse(n string, p base.FilePath, c []Tutorial) *TopCourse {
-	return &TopCourse{Course{n, p, c}}
-}
-func (t *TopCourse) Accept(v TutVisitor) { v.VisitTopCourse(t) }
-
-// A Course is a directory - an ordered list of Lessons and Courses.
-type Course struct {
-	name     string
-	path     base.FilePath
-	children []Tutorial
-}
-
-func NewCourse(p base.FilePath, c []Tutorial) *Course { return &Course{p.Base(), p, c} }
-func (c *Course) Accept(v TutVisitor)                 { v.VisitCourse(c) }
-func (c *Course) Title() string                        { return c.Name() }
-func (c *Course) Name() string                        { return c.name }
-func (c *Course) Path() base.FilePath                 { return c.path }
-func (c *Course) Children() []Tutorial                { return c.children }

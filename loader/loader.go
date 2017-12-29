@@ -121,7 +121,8 @@ func scanFile(n base.FilePath) (model.Tutorial, error) {
 	return model.NewLessonTutFromMdContent(n, md), nil
 }
 
-// A tutorial complaining about its data source.
+// BadLoad returns a fake tutorial complaining about its data source.
+// For use with a webbrowser, to make the problem obvious.
 func BadLoad(n base.FilePath) model.Tutorial {
 	result := model.NewMdContent()
 	result.AddBlockParsed(model.NewProseOnlyBlock(base.MdProse(
@@ -150,27 +151,32 @@ func reorder(x []model.Tutorial, ordering []string) []model.Tutorial {
 	return shiftToTop(x, "README")
 }
 
+// Loader loads a dataset.
 type Loader struct {
 	ds *base.DataSet
 }
 
+// DataSet that the Loader will load.
 func (l *Loader) DataSet() *base.DataSet {
 	return l.ds
 }
 
+// NewLoader returns a Loader for the given DataSet.
 func NewLoader(ds *base.DataSet) *Loader {
 	return &Loader{ds}
 }
 
+// SmellsLikeGithub is true if the DataSet smells like github.
 func (l *Loader) SmellsLikeGithub() bool {
-	if l.ds.N() != 1 {
+	if l.ds.Size() != 1 {
 		return false
 	}
 	return l.ds.FirstArg().IsGithub()
 }
 
+// Load loads the DataSet into a Tutorial.
 func (l *Loader) Load() (model.Tutorial, error) {
-	if l.ds.N() == 1 {
+	if l.ds.Size() == 1 {
 		if l.ds.FirstArg().IsGithub() {
 			return loadTutorialFromGitHub(l.ds.FirstArg())
 		}

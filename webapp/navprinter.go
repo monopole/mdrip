@@ -14,6 +14,7 @@ type NavPrinter struct {
 	name          []string
 }
 
+// NewTutorialNavPrinter returns a new printer for the given writer.
 func NewTutorialNavPrinter(w io.Writer) *NavPrinter {
 	return &NavPrinter{
 		*model.NewTutorialTxtPrinter(w),
@@ -27,6 +28,7 @@ func (v *NavPrinter) navItemStyle() string {
 	return "navItemTop"
 }
 
+// VisitBlockTut does nothing.
 // Not expanding blocks in the nav - too busy looking.
 func (v *NavPrinter) VisitBlockTut(x *model.BlockTut) {
 }
@@ -43,6 +45,7 @@ func (v *NavPrinter) path() string {
 	return strings.Join(v.name, "/")
 }
 
+// VisitLessonTut visits a lesson to print it.
 func (v *NavPrinter) VisitLessonTut(x *model.LessonTut) {
 	v.lessonCounter++
 	v.addName(x)
@@ -61,6 +64,7 @@ func (v *NavPrinter) VisitLessonTut(x *model.LessonTut) {
 	v.rmName()
 }
 
+// VisitCourse visits a course to print it.
 func (v *NavPrinter) VisitCourse(x *model.Course) {
 	v.courseCounter++
 	v.addName(x)
@@ -85,6 +89,7 @@ func (v *NavPrinter) VisitCourse(x *model.Course) {
 	v.rmName()
 }
 
+// VisitTopCourse visits a course to print its children.
 func (v *NavPrinter) VisitTopCourse(x *model.TopCourse) {
 	for _, c := range x.Children() {
 		c.Accept(v)

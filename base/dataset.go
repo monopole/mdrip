@@ -4,18 +4,22 @@ import (
 	"errors"
 )
 
+// DataSet indicates the origin of multiple markdown sources.
 type DataSet struct {
 	args []*DataSource
 }
 
+// FirstArg is, uh, the first member of the dataset - sometimes special.
 func (d *DataSet) FirstArg() *DataSource {
 	return d.args[0]
 }
 
-func (d *DataSet) N() int {
+// Size is the dataset size.
+func (d *DataSet) Size() int {
 	return len(d.args)
 }
 
+// AsPaths is an array of file paths representing the dataset.
 func (d *DataSet) AsPaths() []FilePath {
 	result := make([]FilePath, len(d.args))
 	for i, x := range d.args {
@@ -24,6 +28,7 @@ func (d *DataSet) AsPaths() []FilePath {
 	return result
 }
 
+// String is a string form for the dataset.
 func (d *DataSet) String() string {
 	n := d.args[0].Display()
 	if len(d.args) > 1 {
@@ -32,6 +37,7 @@ func (d *DataSet) String() string {
 	return n
 }
 
+// NewDataSet makes a dataset from the given args.
 func NewDataSet(fArgs []string) (*DataSet, error) {
 	result := []*DataSource{}
 	for _, n := range fArgs {
@@ -42,7 +48,7 @@ func NewDataSet(fArgs []string) (*DataSet, error) {
 		result = append(result, item)
 	}
 	if len(result) < 1 {
-		return nil, errors.New("Must specify a data source - files, directory, or github clone url.")
+		return nil, errors.New("must specify a data source - files, directory, or github clone url")
 	}
 	return &DataSet{result}, nil
 }

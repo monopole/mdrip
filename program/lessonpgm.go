@@ -8,18 +8,24 @@ import (
 	"github.com/monopole/mdrip/base"
 )
 
-// A LessonPgm has a one to one correspondence to a file.
+// LessonPgm has a one to one correspondence to a file.
 type LessonPgm struct {
 	path   base.FilePath
 	blocks []*BlockPgm
 }
 
+// NewLessonPgm is a ctor.
 func NewLessonPgm(p base.FilePath, blocks []*BlockPgm) *LessonPgm {
 	return &LessonPgm{p, blocks}
 }
 
-func (l *LessonPgm) Name() string        { return l.path.Base() }
+// Name of the LessonPgm.
+func (l *LessonPgm) Name() string { return l.path.Base() }
+
+// Path of the file that holds the raw markdown for the lesson.
 func (l *LessonPgm) Path() base.FilePath { return l.path }
+
+// Blocks is all the code blocks extracted from the markdown.
 func (l *LessonPgm) Blocks() []*BlockPgm { return l.blocks }
 
 // Print sends contents to the given Writer.

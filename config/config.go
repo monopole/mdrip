@@ -84,13 +84,19 @@ Modes:
 `
 )
 
+// ModeType distinguishes the primary modes of execution in mdrip main.go.
+// These could be separate programs, but don't want to require multiple downloads.
 type ModeType int
 
 const (
-	ModeUnknown ModeType = iota
+	modeUnknown ModeType = iota
+	// ModePrint - extract code to stdout.
 	ModePrint
+	// ModeTest - run extracted code in a subshell, reporting errors.
 	ModeTest
+	// ModeDemo - render markdown in a webserver.
 	ModeDemo
+	// ModeTmux - run a tiny server that connects tmux to an mdrip in ModeDemo.
 	ModeTmux
 )
 
@@ -110,13 +116,14 @@ var (
 	port = flag.Int("port", 8000,
 		`In --mode demo, expose HTTP at the given port.`)
 
-	blockTimeOut = flag.Duration("blockTimeOut", 1 * time.Minute,
+	blockTimeOut = flag.Duration("blockTimeOut", 1*time.Minute,
 		`In --mode test, the max amount of time to wait for a command block to exit.`)
 
 	ignoreTestFailure = flag.Bool("ignoreTestFailure", false,
 		`In --mode test, exit with success regardless of extracted code failure.`)
 )
 
+// Config holds configuration for an instance of mdrip.
 type Config struct {
 	label      base.Label
 	mode       ModeType
@@ -128,7 +135,7 @@ func determineMode() ModeType {
 		return ModePrint
 	}
 	if len(*mode) < 3 {
-		return ModeUnknown
+		return modeUnknown
 	}
 	// Use 3rd letter since test and tmux have `t` as char 1,
 	// and test and demo have `e` as char 2.
@@ -151,14 +158,18 @@ func determineLabel() base.Label {
 	return base.Label(*label)
 }
 
+// BlockTimeOut is the duration to give a block to run before considering it dead.
 func (c *Config) BlockTimeOut() time.Duration {
 	return *blockTimeOut
 }
 
+// Preambled is a count of blocks to run in the current shell
+// before staring a subshell, to impact the env of the current shell.
 func (c *Config) Preambled() int {
 	return *preambled
 }
 
+// HostAndPort for the server when in ModeDemo.
 func (c *Config) HostAndPort() string {
 	hostname := "" // docker breaks if one uses localhost here
 	if *useHostname {
@@ -171,28 +182,33 @@ func (c *Config) HostAndPort() string {
 	return hostname + ":" + strconv.Itoa(*port)
 }
 
+// Mode returns the mode of the mdrip instance.
 func (c *Config) Mode() ModeType {
 	return c.mode
 }
 
+// IgnoreTestFailure means don't exit with error if a test fails in ModeTest.
 func (c *Config) IgnoreTestFailure() bool {
 	return *ignoreTestFailure
 }
 
+// Label to use when extracting code blocks for testing or printing.
 func (c *Config) Label() base.Label {
 	return c.label
 }
 
+// DataSet holds the source of data parsed from the mdrip command line.
 func (c *Config) DataSet() *base.DataSet {
 	return c.dataSource
 }
 
-// nonsense for tests - need something better.
+// DefaultConfig is a config for tests.
 func DefaultConfig() *Config {
 	ds, _ := base.NewDataSet([]string{"foo"})
 	return &Config{base.WildCardLabel, ModePrint, ds}
 }
 
+// GetConfig parses configuration from command line args.
 func GetConfig() (*Config, error) {
 	flag.Usage = Usage
 	flag.Parse()
@@ -201,15 +217,16 @@ func GetConfig() (*Config, error) {
 		return nil, err
 	}
 	desiredMode := determineMode()
-	if desiredMode == ModeUnknown {
-		return nil, errors.New(`For mode, specify print, test, demo or tmux.`)
+	if desiredMode == modeUnknown {
+		return nil, errors.New(`specify print, test, demo or tmux as the mode`)
 	}
 	if *ignoreTestFailure && desiredMode != ModeTest {
-		return nil, errors.New(`Makes no sense to specify --ignoreTestFailure without --mode test.`)
+		return nil, errors.New(`makes no sense to specify --ignoreTestFailure without --mode test`)
 	}
 	return &Config{determineLabel(), desiredMode, dataSource}, nil
 }
 
+// Usage prints a usage message to stdErr.
 func Usage() {
 	fmt.Fprintf(os.Stderr, "\nUsage:  %s {fileName}...\n", os.Args[0])
 	fmt.Fprint(os.Stderr, usageText)

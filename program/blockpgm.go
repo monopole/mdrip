@@ -20,15 +20,18 @@ type BlockPgm struct {
 	base.BlockBase
 }
 
+// NewEmptyBlockPgm returns an empty block.
 func NewEmptyBlockPgm() *BlockPgm {
 	return NewBlockPgm("")
 }
 
+// NewBlockPgm returns a block with the given code.
 func NewBlockPgm(code string) *BlockPgm {
 	return &BlockPgm{"noNameBlock", false, -1,
 		base.NewBlockBase(base.NoProse(), base.OpaqueCode(code))}
 }
 
+// NewBlockPgmFromBlockTut converts a BlockTut to a BlockPgm.
 func NewBlockPgmFromBlockTut(b *model.BlockTut) *BlockPgm {
 	return &BlockPgm{
 		b.Name(),
@@ -36,12 +39,18 @@ func NewBlockPgmFromBlockTut(b *model.BlockTut) *BlockPgm {
 		base.NewBlockBase(b.Prose(), b.Code())}
 }
 
-func (x *BlockPgm) Id() int      { return x.id }
+// ID returns the block's ID.
+func (x *BlockPgm) ID() int { return x.id }
+
+// Name returns the block name.
 func (x *BlockPgm) Name() string { return x.name }
-func (x *BlockPgm) HtmlProse() template.HTML {
+
+// HTMLProse returns HTML that should precede the block.
+func (x *BlockPgm) HTMLProse() template.HTML {
 	return template.HTML(string(blackfriday.Run(x.Prose())))
 }
 
+// Print prints the block.
 func (x *BlockPgm) Print(
 	w io.Writer, prefix string, n int, label base.Label, fileName base.FilePath) {
 	fmt.Fprintf(w, "echo \"%s @%s (block #%d in %s) of %s\"\n\n",

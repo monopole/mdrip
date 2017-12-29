@@ -11,25 +11,31 @@ import (
 	"github.com/monopole/mdrip/util"
 )
 
+// Tmux holds information about a tmux process (https://github.com/tmux/tmux).
 type Tmux struct {
 	path   string
-	paneId string
+	paneID string
 }
 
 const (
-	Path        = "/usr/bin/tmux"
+	// Path is the default path to the tmux executable on disk.
+	Path = "/usr/bin/tmux"
+	// SessionName is the string to use when naming a tmux session.
 	SessionName = "mdrip"
 )
 
+// NewTmux is a ctor.
 func NewTmux(programName string) *Tmux {
 	return &Tmux{programName, "0"}
 }
 
+// IsProgramInstalled checks for tmux.
 func IsProgramInstalled(programName string) bool {
 	_, err := exec.LookPath(programName)
 	return err == nil
 }
 
+// IsUp true if tmux appears to be running.
 func (t Tmux) IsUp() bool {
 	if _, err := exec.LookPath(t.path); err != nil {
 		glog.Info("Unable to find tmux")
@@ -68,6 +74,7 @@ func closeSocket(c *websocket.Conn, done chan struct{}) {
 	}
 }
 
+// Adapt opens a websocket to the given address, and sends what it gets to tmux.
 func (t Tmux) Adapt(addr string) {
 	done := make(chan struct{})
 
@@ -157,7 +164,7 @@ func (t Tmux) Write(bytes []byte) (n int, err error) {
 	cmd := exec.Command(t.path, "load-buffer", tmpFile.Name())
 	out, err := cmd.Output()
 	if err == nil {
-		cmd = exec.Command(t.path, "paste-buffer", "-t", t.paneId)
+		cmd = exec.Command(t.path, "paste-buffer", "-t", t.paneID)
 		out, err = cmd.Output()
 	}
 
@@ -169,7 +176,7 @@ func (t Tmux) Write(bytes []byte) (n int, err error) {
 }
 
 func (t Tmux) start() error {
-	cmd := exec.Command(t.path, "new", "-s", SessionName, "-d")
+	cmd := exec.Command(t.path, "new-session", "-s", SessionName, "-d")
 	out, err := cmd.Output()
 	glog.Info("Starting ", out)
 	glog.Info("Err: ", err)

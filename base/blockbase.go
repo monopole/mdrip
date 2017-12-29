@@ -6,6 +6,11 @@ type BlockBase struct {
 	code  OpaqueCode
 }
 
-func (x *BlockBase) Prose() MdProse                  { return x.prose }
-func (x *BlockBase) Code() OpaqueCode                { return x.code }
+// Prose from the block.
+func (x *BlockBase) Prose() MdProse { return x.prose }
+
+// Code from the block.
+func (x *BlockBase) Code() OpaqueCode { return x.code }
+
+// NewBlockBase is a ctor.
 func NewBlockBase(p MdProse, c OpaqueCode) BlockBase { return BlockBase{p, c} }

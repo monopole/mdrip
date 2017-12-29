@@ -17,24 +17,29 @@ type LessonPgmExtractor struct {
 	blockAccum []*BlockPgm
 }
 
+// NewLessonPgmExtractor is a ctor.
 func NewLessonPgmExtractor(label base.Label) *LessonPgmExtractor {
 	return &LessonPgmExtractor{label, "", []*LessonPgm{}, []*BlockPgm{}}
 }
 
+// Lessons found.
 func (v *LessonPgmExtractor) Lessons() []*LessonPgm {
 	return v.lessons
 }
 
+// FirstTitle is first H1 header taken from the data - used as the overall title.
 func (v *LessonPgmExtractor) FirstTitle() string {
 	return v.firstTitle
 }
 
+// VisitBlockTut does just that.
 func (v *LessonPgmExtractor) VisitBlockTut(b *model.BlockTut) {
 	if v.label == base.WildCardLabel || b.HasLabel(v.label) {
 		v.blockAccum = append(v.blockAccum, NewBlockPgmFromBlockTut(b))
 	}
 }
 
+// VisitLessonTut does just that.
 func (v *LessonPgmExtractor) VisitLessonTut(l *model.LessonTut) {
 	if len(v.firstTitle) == 0 {
 		v.firstTitle = l.Title()
@@ -58,12 +63,14 @@ func (v *LessonPgmExtractor) VisitLessonTut(l *model.LessonTut) {
 	v.lessons = append(v.lessons, NewLessonPgm(l.Path(), v.blockAccum))
 }
 
+// VisitCourse does just that.
 func (v *LessonPgmExtractor) VisitCourse(c *model.Course) {
 	for _, x := range c.Children() {
 		x.Accept(v)
 	}
 }
 
+// VisitTopCourse does just that.
 func (v *LessonPgmExtractor) VisitTopCourse(t *model.TopCourse) {
 	for _, x := range t.Children() {
 		x.Accept(v)

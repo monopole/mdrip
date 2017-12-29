@@ -12,7 +12,7 @@ func TestBlockPgm(t *testing.T) {
 		[]base.Label{}, base.MdProse([]byte("_foo_")), base.OpaqueCode("bar"))
 	bTut := model.NewBlockTut(bParsed)
 	bPgm := NewBlockPgmFromBlockTut(bTut)
-	got := string(bPgm.HtmlProse())
+	got := string(bPgm.HTMLProse())
 	expected := "<p><em>foo</em></p>\n"
 	if got != expected {
 		t.Errorf(

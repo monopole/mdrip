@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"errors"
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/scanner"
 	"github.com/monopole/mdrip/util"
-	"errors"
 )
 
 // Subshell can run a program
@@ -22,8 +22,7 @@ type Subshell struct {
 	program      *program.Program
 }
 
-const cleanup = false
-
+// NewSubshell returns a shell loaded with a program and block timeout ready to run.
 func NewSubshell(timeout time.Duration, p *program.Program) *Subshell {
 	return &Subshell{timeout, p}
 }
@@ -94,8 +93,9 @@ func accumulateOutput(prefix string, in <-chan string) <-chan *BlockOutput {
 	return out
 }
 
-// processShellOutput tries to associate shell output
-// (stderr and stdout) with command blocks.
+// processShellOutput associates shell output with command blocks
+// (both stderr and stdout).  It assume that the shell program has
+// been seeded with echo MsgHappy statements.
 //
 // It loops over the blocks, trying to pull output off,
 // expecting successful block output to include MsgHappy
@@ -122,8 +122,8 @@ func processShellOutput(
 			}
 			outBlock := <-chAccOut
 			errBlock := <-chAccErr
-			// Supposedly the only way these can be null is if the
-			// command block had no commands.
+			// These can be nil if there was absolutely no output, either because
+			// there were no commands, or only commands with no output, e.g. /bin/false.
 			if outBlock == nil || !outBlock.Completed() ||
 				errBlock == nil || !errBlock.Completed() {
 				return NewRunResult(
@@ -179,10 +179,10 @@ func makeAccumulator(
 	return accumulateOutput(name, scanner.BuffScanner(wait, name, stream))
 }
 
-// shortWait waits for shell to end, and return its exit error.
+// politeWait waits for shell to end, and return its exit error.
 // It doesn't wait long, because we presume the shell is either already done,
 // or is hung, and we've already burned s.blockTimeout waiting for it.
-func shortWait(shell *exec.Cmd) (err error) {
+func politeWait(shell *exec.Cmd) (err error) {
 	done := make(chan error, 1)
 	err = nil
 	go func() {
@@ -195,7 +195,7 @@ func shortWait(shell *exec.Cmd) (err error) {
 	select {
 	case <-time.After(2 * time.Second):
 		glog.Infof("Run:  killing the shell after a polite wait")
-		err = shell.Process.Kill();
+		err = shell.Process.Kill()
 		if err == nil {
 			err = errors.New("shell timed out")
 		} // else pass along the error from Kill.
@@ -204,7 +204,7 @@ func shortWait(shell *exec.Cmd) (err error) {
 			glog.Infof("Run:  Shell failed with error %v.", err)
 		}
 	}
-return
+	return
 }
 
 // Run runs command blocks in a subprocess, stopping and
@@ -225,11 +225,9 @@ return
 // when the subprocess exits on error.
 func (s *Subshell) Run() (result *RunResult) {
 	tmpFile := writeFile(s.program.Lessons())
-	if cleanup {
-		defer func() {
-			util.Check("delete temp file", os.Remove(tmpFile.Name()))
-		}()
-	}
+	defer func() {
+		util.Check("delete temp file", os.Remove(tmpFile.Name()))
+	}()
 
 	shell := exec.Command("bash", tmpFile.Name())
 
@@ -250,7 +248,7 @@ func (s *Subshell) Run() (result *RunResult) {
 	if glog.V(2) {
 		glog.Infof("Run: pid = %d", pid)
 	}
-	pgid, err := util.GetProcesssGroupId(pid)
+	pgid, err := util.GetProcesssGroupID(pid)
 	if err == nil {
 		if glog.V(2) {
 			glog.Infof("Run:  pgid = %d", pgid)
@@ -267,7 +265,7 @@ func (s *Subshell) Run() (result *RunResult) {
 	// wrong in the plumbing.  If the shell is still running, it
 	// should be killed.
 
-	err = shortWait(shell)
+	err = politeWait(shell)
 	if glog.V(2) {
 		glog.Info("Run:  Shell done.")
 	}

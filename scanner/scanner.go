@@ -9,8 +9,16 @@ import (
 
 // Special strings that might appear in shell output, signalling
 // things to the stream processors.
+
+// MsgHappy indicates no-anomaly completion of a command block.
 const MsgHappy = "MDRIP_HAPPY_Completed_command_block"
-const MsgError = "MDRIP_ERROR_Problem_while_executing_command_block"
+
+// MsgError indicates something went wrong in processing the command block.
+// This is not necessarily the indication of a command failure, and may only
+// indicate a logic or stream error in mdrip.
+const MsgError = "MDRIP_ERROR_Problem_while_processing_command_block"
+
+// MsgTimeout indicates the block didn't complete fast enough.
 const MsgTimeout = "MDRIP_TIMEOUT_Command_block_did_not_finish_in_allotted_time"
 
 // convertStreamToLineChannel returns a string channel to which it writes _lines_.
@@ -21,7 +29,7 @@ const MsgTimeout = "MDRIP_TIMEOUT_Command_block_did_not_finish_in_allotted_time"
 // converted to special messages on the channel.
 //
 // When the stream ends, the channel closes.
-func convertStreamToLineChannel(label string, stream io.ReadCloser) <-chan string  {
+func convertStreamToLineChannel(label string, stream io.ReadCloser) <-chan string {
 	ch := make(chan string, 1)
 	go func() {
 		defer close(ch)

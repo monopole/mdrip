@@ -23,6 +23,7 @@ const (
 	blackIndex = 1 // next color in palette
 )
 
+// Lissajous returns an image.
 // image canvas covers [-size..+size]
 // nframes is number of animation frames
 // cycles is number of complete x oscillator revolutions

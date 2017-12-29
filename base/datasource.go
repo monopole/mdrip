@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// DataSource is where markdown came from.
 type DataSource struct {
 	raw      string
 	repoName string
@@ -14,10 +15,12 @@ type DataSource struct {
 	absPath  string
 }
 
+// IsGithub is true if the datasource was github.
 func (d *DataSource) IsGithub() bool {
 	return len(d.repoName) > 0
 }
 
+// Display is a string intended for display.
 func (d *DataSource) Display() string {
 	if d.IsGithub() {
 		result := "gh:" + d.repoName
@@ -29,6 +32,7 @@ func (d *DataSource) Display() string {
 	return d.raw
 }
 
+// Href returns a browser url compatible form of the datasource.
 func (d *DataSource) Href() string {
 	if d.IsGithub() {
 		result := "https://github.com/" + d.repoName
@@ -40,33 +44,39 @@ func (d *DataSource) Href() string {
 	return "file://" + d.absPath
 }
 
+// GithubCloneArg returns the data source in a form suitable for git clone.
 // Using https instead of ssh so no need for keys
 // (works only with public repos obviously).
 func (d *DataSource) GithubCloneArg() string {
 	return "https://github.com/" + d.repoName + ".git"
 }
 
+// RelPath is the relative file system path of the datasource.
 func (d *DataSource) RelPath() FilePath {
 	return FilePath(d.relPath)
 }
 
+// AbsPath is the absolute file system path of the datasource.
 func (d *DataSource) AbsPath() FilePath {
 	return FilePath(d.absPath)
 }
 
+// SetAbsPath changes the path.
 func (d *DataSource) SetAbsPath(arg string) {
 	d.absPath = arg
 }
 
+// Raw form of the datasource.
 func (d *DataSource) Raw() string {
 	return d.raw
 }
 
+// NewDataSource ctor.
 func NewDataSource(arg string) (*DataSource, error) {
 	n := strings.TrimSpace(arg)
 	if len(n) < 1 {
 		return nil, errors.New(
-			"Need data source - file name, directory name, or github clone url.")
+			"need data source - file name, directory name, or github clone url")
 	}
 	if smellsLikeGithubCloneArg(arg) {
 		repoName, path, err := extractGithubRepoName(arg)
@@ -78,7 +88,7 @@ func NewDataSource(arg string) (*DataSource, error) {
 	path, err := filepath.Abs(arg)
 	if err != nil {
 		return nil, errors.New(
-			"Unable to resolve absolute path of " + arg)
+			"unable to resolve absolute path of " + arg)
 	}
 	return &DataSource{arg, "", arg, path}, nil
 }
@@ -106,7 +116,7 @@ func extractGithubRepoName(n string) (string, string, error) {
 	}
 	i := strings.Index(n, string(filepath.Separator))
 	if i < 1 {
-		return "", "", errors.New("No separator.")
+		return "", "", errors.New("no separator")
 	}
 	j := strings.Index(n[i+1:], string(filepath.Separator))
 	if j < 0 {
