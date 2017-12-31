@@ -11,11 +11,10 @@ import (
 	"github.com/monopole/mdrip/program"
 )
 
-// TypeSessID is type representing a session ID.
+// TypeSessID represents a session ID.
 type TypeSessID string
 
 // WebApp presents a tutorial to a web browser.
-// Not a complex app, so eschewing react, angular2, polymer, etc.
 type WebApp struct {
 	sessID      TypeSessID
 	host        string
