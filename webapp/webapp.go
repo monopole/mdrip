@@ -1,11 +1,16 @@
 package webapp
 
 import (
+	"crypto/rand"
+	"encoding/gob"
 	"html/template"
 	"io"
 
 	"bytes"
 
+	"fmt"
+
+	"github.com/gorilla/sessions"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 	"github.com/monopole/mdrip/program"
@@ -14,9 +19,86 @@ import (
 // TypeSessID represents a session ID.
 type TypeSessID string
 
+const forRegistration = TypeSessID("arbitrary")
+
+func init() {
+	gob.Register(forRegistration)
+}
+
+// SessionData holds session state data, presumably associated with a cookie.
+type SessionData struct {
+	// The session ID.
+	SessID TypeSessID
+	// Is the header showing?
+	IsHeaderOn bool
+	// Is the nav showing?
+	IsNavOn bool
+	// The active lesson.
+	LessonIndex int
+	// The active block.
+	BlockIndex int
+}
+
+// These must all be unique, and preferably short.
+// They are used as URL query param and cookie field names.
+const (
+	// KeySessID is the param name for session ID.
+	KeySessID = "sid"
+	// KeyIsHeaderOn is the param name for is the header on boolean.
+	KeyIsHeaderOn = "hed"
+	// KeyIsNavOn is the param name for the is the nav on boolean.
+	KeyIsNavOn = "nav"
+	// KeyLessonIndex is the param name for the lesson index.
+	KeyLessonIndex = "lix"
+	// KeyBlockIndex is the param name for the block index.
+	KeyBlockIndex = "bix"
+)
+
+func makeSessionID() TypeSessID {
+	b := make([]byte, 4)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	return TypeSessID(fmt.Sprintf("%X", b))
+}
+
+// AssureSessionData tries to recover session data, saving defaults for missing data.
+func AssureSessionData(s *sessions.Session) *SessionData {
+	r := &SessionData{}
+	c, ok := s.Values[KeySessID].(string)
+	ok = ok && len(c) > 0
+	if ok {
+		r.SessID = TypeSessID(c)
+	} else {
+		r.SessID = makeSessionID()
+		s.Values[KeySessID] = r.SessID
+	}
+	r.IsHeaderOn, ok = s.Values[KeyIsHeaderOn].(bool)
+	if !ok {
+		r.IsHeaderOn = true
+		s.Values[KeyIsHeaderOn] = r.IsHeaderOn
+	}
+	r.IsNavOn, ok = s.Values[KeyIsNavOn].(bool)
+	if !ok {
+		r.IsNavOn = false
+		s.Values[KeyIsNavOn] = r.IsNavOn
+	}
+	r.LessonIndex, ok = s.Values[KeyLessonIndex].(int)
+	if !ok {
+		r.LessonIndex = 0
+		s.Values[KeyLessonIndex] = r.LessonIndex
+	}
+	r.BlockIndex, ok = s.Values[KeyBlockIndex].(int)
+	if !ok {
+		r.BlockIndex = 0
+		s.Values[KeyBlockIndex] = r.BlockIndex
+	}
+	return r
+}
+
 // WebApp presents a tutorial to a web browser.
 type WebApp struct {
-	sessID      TypeSessID
+	sessionData *SessionData
 	host        string
 	tut         model.Tutorial
 	ds          *base.DataSource
@@ -29,7 +111,7 @@ type WebApp struct {
 
 // NewWebApp makes a new web app.
 func NewWebApp(
-	sessID TypeSessID, host string,
+	sessionData *SessionData, host string,
 	tut model.Tutorial, ds *base.DataSource, lp []int, cp [][]int) *WebApp {
 	v := program.NewLessonPgmExtractor(base.WildCardLabel)
 	tut.Accept(v)
@@ -38,12 +120,12 @@ func NewWebApp(
 		title = title[maxTitleLength-3:] + "..."
 	}
 	return &WebApp{
-		sessID, host, tut, ds, makeParsedTemplate(tut),
+		sessionData, host, tut, ds, makeParsedTemplate(tut),
 		v.Lessons(), title, lp, cp}
 }
 
 // SessID is the id of the session returned
-func (wa *WebApp) SessID() TypeSessID { return wa.sessID }
+func (wa *WebApp) SessID() TypeSessID { return wa.sessionData.SessID }
 
 // Host is the webapp's host.
 func (wa *WebApp) Host() string { return wa.host }
@@ -73,7 +155,22 @@ const (
 	maxTitleLength = len("gh:kubernetes/website/reference") + 10
 )
 
-// InitialLesson is where the user should start - the last element or zero.
+// InitialHeaderOn is should the header be on?
+func (wa *WebApp) InitialHeaderOn() bool {
+	return wa.sessionData.IsHeaderOn
+}
+
+// InitialNavOn is should the nav be on?
+func (wa *WebApp) InitialNavOn() bool {
+	return wa.sessionData.IsNavOn
+}
+
+// InitialBlock is where the user should start.
+func (wa *WebApp) InitialBlock() int {
+	return wa.sessionData.BlockIndex
+}
+
+// InitialLesson is where the user should start.
 func (wa *WebApp) InitialLesson() int {
 	if len(wa.lessonPath) == 0 {
 		return 0
@@ -187,6 +284,21 @@ func (wa *WebApp) LayNavTopBotPad() int { return 7 }
 // LayNavLeftPad is just that.
 func (wa *WebApp) LayNavLeftPad() int { return 20 }
 
+// KeyLessonIndex delivers the corresponding const to a template.
+func (wa *WebApp) KeyLessonIndex() string { return KeyLessonIndex }
+
+// KeyBlockIndex delivers the corresponding const to a template.
+func (wa *WebApp) KeyBlockIndex() string { return KeyBlockIndex }
+
+// KeyIsHeaderOn delivers the corresponding const to a template.
+func (wa *WebApp) KeyIsHeaderOn() string { return KeyIsHeaderOn }
+
+// KeyIsNavOn delivers the corresponding const to a template.
+func (wa *WebApp) KeyIsNavOn() string { return KeyIsNavOn }
+
+// KeySessID delivers the corresponding const to a template.
+func (wa *WebApp) KeySessID() string { return KeySessID }
+
 // LessonCount is just that.
 func (wa *WebApp) LessonCount() int {
 	c := model.NewTutorialLessonCounter()
@@ -232,7 +344,7 @@ func makeAppTemplate(htmlNavActual string) string {
 <body onload='onLoad()'>
 
   <header id='header'>
-    <div class='navButtonBox' onclick='navController.toggle()'>
+    <div class='navButtonBox'>
       <div class='navBurger'>
         <div class='burgBar1'></div>
         <div class='burgBar2'></div>
@@ -339,12 +451,12 @@ const (
 
 const htmlLessonNavRow = `
 <div class='lessonNavRow'>
-  <div class='lessonPrevClickerRow' onclick='lessonController.goPrev()'>
+  <div class='lessonPrevClickerRow'>
     <div class='lessonPrevTitle'> quantum flux </div>
     <div class='lessonPrevPointer'> &lt; </div>
   </div>
-  <div class='helpButtonBox' onclick='helpController.toggle()'> ? </div>
-  <div class='lessonNextClickerRow' onclick='lessonController.goNext()'>
+  <div class='helpButtonBox'> ? </div>
+  <div class='lessonNextClickerRow'>
     <div class='lessonNextPointer'> &gt; </div>
     <div class='lessonNextTitle'> magnetic flux  </div>
   </div>
@@ -434,7 +546,7 @@ href="https://github.com/tmux/tmux/wiki">tmux</a>.
     --alsologtostderr --v 0 \
     --stderrthreshold INFO \
     --mode tmux \
-    ws://{{.Host}}/_/ws?id={{.SessID}}
+    ws://{{.Host}}/_/ws?{{.KeySessID}}={{.SessID}}
 </pre>
 </li>
 </ul>
@@ -825,6 +937,13 @@ function randomInt(n) {
   return Math.floor(Math.random() * n)
 }
 
+function myAddListener(n, f) {
+  var btn = document.getElementsByClassName(n);
+  for (var i = 0; i < btn.length; i++) {
+    btn[i].addEventListener('click', f);
+  }
+}
+
 var bodyController = new function() {
   var styleBody = null;
 
@@ -879,6 +998,9 @@ var headerController = new function() {
   var isVisible = function() {
     return (styleHeader.height == '{{.LayHeaderHeight}}px');
   }
+  this.IsVisible = function() {
+    return isVisible()
+  }
   this.height = function() {
     return styleHeader.height;
   }
@@ -890,6 +1012,7 @@ var headerController = new function() {
     }
     navController.render();
     helpController.render();
+    saveSession();
   }
   this.initialize = function() {
     styleHeader = document.getElementById('header').style;
@@ -898,7 +1021,11 @@ var headerController = new function() {
     styleLessonNavRow = document.getElementsByClassName('lessonNavRow')[0].style;
   }
   this.reset = function() {
-    showIt()
+    if ({{.InitialHeaderOn}}) {
+      showIt();
+    } else {
+      hideIt();
+    }
   }
 }
 
@@ -995,6 +1122,9 @@ var navController = new function() {
   var isVisible = function() {
     return elBurger.classList.contains('burgIsAnX')
   }
+  this.IsVisible = function() {
+    return isVisible()
+  }
   var myRender = function() {
     if (isVisible()) {
       showIt()
@@ -1031,6 +1161,7 @@ var navController = new function() {
     } else {
       showIt()
     }
+    saveSession();
   }
   var keyHandler = function(event) {
     switch (event.key) {
@@ -1068,11 +1199,16 @@ var navController = new function() {
         '(min-width: ' + bodyController.getMediumWidth()
         + ') and (max-width: ' + bodyController.getWideWidth() + ')');
     mqWide.addListener(this.handleWidthChange);
-    mqMedium.addListener(this.handleWidthChange)
+    mqMedium.addListener(this.handleWidthChange);
+    myAddListener('navButtonBox', this.toggle);
     this.handleWidthChange('whatever');
   }
   this.reset = function() {
-    hideIt();
+    if ({{.InitialNavOn}}) {
+      showIt();
+    } else {
+      hideIt();
+    }
   }
 }
 
@@ -1128,6 +1264,7 @@ var helpController = new function() {
   }
   this.initialize = function() {
     style = getElByClass('helpBox').style;
+    myAddListener('helpButtonBox', this.toggle);
   }
   this.reset = function() {
     hideIt()
@@ -1166,7 +1303,6 @@ var codeBlockController = new function() {
     try {
       var successful = document.execCommand('copy');
       var msg = successful ? 'successful' : 'unsuccessful';
-      console.log('Copying text command was ' + msg);
     } catch (err) {
       console.log('Oops, unable to copy');
     }
@@ -1180,6 +1316,7 @@ var codeBlockController = new function() {
     }
     cbIndex--;
     activateCurrent();
+    saveSession();
   }
   this.goNext = function() {
     this.deActivateCurrent();
@@ -1189,6 +1326,7 @@ var codeBlockController = new function() {
     }
     cbIndex++;
     activateCurrent();
+    saveSession();
   }
   var controlBar = function() {
     return blocks[cbIndex].firstElementChild;
@@ -1225,16 +1363,13 @@ var codeBlockController = new function() {
        var b = blocks[i];
        var id = parseInt(b.getAttribute('data-id'));
        if (i != id) {
-         console.log("Counting problem")
+         console.log('Counting problem')
        }
     }
   }
   // For monkeyController
   this.toggle = function() {
     this.setCurrent(randomInt(blocks.length));
-  }
-  this.reset = function() {
-    this.deActivateCurrent()
   }
   this.setCurrent = function(id) {
     if (!goodIndex(id)) {
@@ -1246,6 +1381,9 @@ var codeBlockController = new function() {
     cbIndex = id;
     activateCurrent();
     return true;
+  }
+  this.getActiveBlock = function() {
+    return cbIndex;
   }
   this.setAndRun = function(id) {
     if (!this.setCurrent(id)) {
@@ -1277,16 +1415,20 @@ var codeBlockController = new function() {
       }
     };
     xhr.open(
-        'GET',
-        '/_/runblock?fid=' + fileId
-            + '&bid=' + cbIndex
-            + '&sid={{.SessID}}',
+        'POST',
+        '/_/runblock'
+            + '?{{.KeyLessonIndex}}=' + fileId
+            + '&{{.KeyBlockIndex}}=' + cbIndex
+            + '&{{.KeySessID}}={{.SessID}}',
         true);
     xhr.send();
   }
   this.initialize = function() {
     requestRunning = false;
     cbIndex = -1;
+  }
+  this.reset = function() {
+    this.setCurrent({{.InitialBlock}});
   }
 }
 
@@ -1448,6 +1590,7 @@ var lessonController = new function() {
       return;
     }
     this.assureActiveLesson(activeIndex + 1)
+    saveSession();
   }
   this.goPrev = function() {
     if (activeIndex < 0) {
@@ -1455,10 +1598,16 @@ var lessonController = new function() {
       return;
     }
     this.assureActiveLesson(activeIndex - 1)
+    saveSession();
+  }
+  this.getActiveLesson = function() {
+    return activeIndex
   }
   this.initialize = function(cp) {
     coursePaths = cp;
     activeIndex = -1;
+    myAddListener('lessonPrevClickerRow', this.goPrev.bind(this));
+    myAddListener('lessonNextClickerRow', this.goNext.bind(this));
     elLessonName = getElByClass('activeLessonName');
     elPrevName = document.getElementsByClassName('lessonPrevTitle');
     elNextName = document.getElementsByClassName('lessonNextTitle');
@@ -1468,6 +1617,29 @@ var lessonController = new function() {
   this.reset = function() {
     this.assureActiveLesson({{.InitialLesson}});
   }
+}
+
+var suppressSessionSave = false
+
+function saveSession() {
+  if (suppressSessionSave) {
+    return
+  }
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == XMLHttpRequest.DONE) {
+      // console.log('saved session')
+    }
+  };
+  xhr.open(
+      'POST',
+      '/_/s'
+          + '?{{.KeyIsHeaderOn}}=' + headerController.IsVisible()
+          + '&{{.KeyIsNavOn}}=' + navController.IsVisible()
+          + '&{{.KeyLessonIndex}}=' + lessonController.getActiveLesson()
+          + '&{{.KeyBlockIndex}}=' + codeBlockController.getActiveBlock(),
+      true);
+  xhr.send();
 }
 
 var monkeyController = new function() {
@@ -1486,8 +1658,10 @@ var monkeyController = new function() {
       interval = null;
       this.reset();
       on = false;
+      suppressSessionSave = false;
       return;
     }
+    suppressSessionSave = true;
     interval = window.setInterval(run, {{.TransitionSpeedMs}} + 50);
     on = true;
   }
@@ -1510,7 +1684,7 @@ function onLoad() {
   monkeyController.initialize(
       new Array(
           headerController, helpController,
-          codeBlockController, navController, lessonController));
+          lessonController, navController, codeBlockController));
   monkeyController.reset();
   window.addEventListener('keydown', function (event) {
     if (event.defaultPrevented) {

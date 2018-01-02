@@ -41,7 +41,7 @@ var waTests = []waTest{
 
 func TestWebAppBasicTemplateRendered(t *testing.T) {
 	ds, _ := base.NewDataSource("/tmp")
-	wa := NewWebApp("", "", emptyLesson, ds, []int{}, [][]int{{}})
+	wa := NewWebApp(&SessionData{}, "", emptyLesson, ds, []int{}, [][]int{{}})
 	for _, test := range waTests {
 
 		var b bytes.Buffer

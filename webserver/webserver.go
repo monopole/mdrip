@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"net/http"
@@ -52,7 +51,6 @@ type Server struct {
 
 const (
 	cookieName = "mdrip"
-	keySessID  = "sessId"
 )
 
 // var keyAuth = securecookie.GenerateRandomKey(16)
@@ -81,32 +79,8 @@ func NewServer(l *loader.Loader) (*Server, error) {
 	return result, nil
 }
 
-func getSessionID(s *sessions.Session) webapp.TypeSessID {
-	if c, ok := s.Values[keySessID].(string); ok {
-		return webapp.TypeSessID(c)
-	}
-	return ""
-}
-
-func assureSessionID(s *sessions.Session) webapp.TypeSessID {
-	c := getSessionID(s)
-	if c == "" {
-		c = makeSessionID()
-		s.Values[keySessID] = string(c)
-	}
-	return c
-}
-
-func makeSessionID() webapp.TypeSessID {
-	b := make([]byte, 5)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-	return webapp.TypeSessID(fmt.Sprintf("%X", b))
-}
-
-func getSessionIDParam(n string, r *http.Request) (webapp.TypeSessID, error) {
-	v := r.URL.Query().Get(n)
+func getSessIdParam(r *http.Request) (webapp.TypeSessID, error) {
+	v := r.URL.Query().Get(webapp.KeySessID)
 	if v == "" {
 		return "", errors.New("no session Id")
 	}
@@ -118,7 +92,7 @@ func getSessionIDParam(n string, r *http.Request) (webapp.TypeSessID, error) {
 // find the connection and write to it, else fall back to its
 // other behaviors.
 func (ws *Server) openWebSocket(w http.ResponseWriter, r *http.Request) {
-	sessID, err := getSessionIDParam("id", r)
+	sessID, err := getSessIdParam(r)
 	if err != nil {
 		glog.Errorf("no session Id: %v", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -212,8 +186,8 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		write500(w, err)
 		return
 	}
-	sessID := assureSessionID(session)
-	glog.Infof("Main page render in sessID: %v", sessID)
+	sessionData := webapp.AssureSessionData(session)
+	glog.Infof("Main page render in sessID: %v", sessionData.SessID)
 	if ws.didFirstRender {
 		// Consider reloading data on all renders beyond the first.
 		glog.Infof("Already did first render.")
@@ -233,7 +207,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app := ws.makeWebApp(sessID, r.Host, r.URL.Path)
+	app := ws.makeWebApp(sessionData, r.Host, r.URL.Path)
 	ws.didFirstRender = true
 	if err := app.Render(w); err != nil {
 		write500(w, err)
@@ -241,7 +215,7 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (ws *Server) makeWebApp(sessID webapp.TypeSessID, host, path string) *webapp.WebApp {
+func (ws *Server) makeWebApp(sessionData *webapp.SessionData, host, path string) *webapp.WebApp {
 	v := newLessonFinder()
 	ws.tutorial.Accept(v)
 	var lessonPath []int
@@ -251,7 +225,7 @@ func (ws *Server) makeWebApp(sessID webapp.TypeSessID, host, path string) *webap
 		lessonPath = v.getLessonPath(path)
 	}
 	return webapp.NewWebApp(
-		sessID, host,
+		sessionData, host,
 		ws.tutorial, ws.loader.DataSet().FirstArg(),
 		lessonPath, v.getCoursePaths())
 }
@@ -296,30 +270,24 @@ func inRange(w http.ResponseWriter, name string, arg, n int) bool {
 
 func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		arg := r.URL.Query().Get("sid")
+		arg := r.URL.Query().Get(webapp.KeySessID)
 		if len(arg) == 0 {
 			http.Error(w, "No session id for block runner", http.StatusBadRequest)
 			return
 		}
 		sessID := webapp.TypeSessID(arg)
-		//session, err := ws.store.Get(r, cookieName)
-		//if err != nil {
-		//	write500(w, err)
-		//	return
-		//}
-		//sessID := assureSessionID(session)
-		glog.Info("sid = ", sessID)
-		indexFile := getIntParam("fid", r, -1)
-		glog.Info("fid = ", indexFile)
-		indexBlock := getIntParam("bid", r, -1)
-		glog.Info("bid = ", indexBlock)
+		glog.Infof("%s = %s", webapp.KeySessID, sessID)
+		indexFile := getIntParam(webapp.KeyLessonIndex, r, -1)
+		glog.Infof("%s = %s", webapp.KeyLessonIndex, indexFile)
+		indexBlock := getIntParam(webapp.KeyBlockIndex, r, -1)
+		glog.Infof("%s = %s", webapp.KeyBlockIndex, indexBlock)
 
 		p := program.NewProgramFromTutorial(base.WildCardLabel, ws.tutorial)
-		if !inRange(w, "fid", indexFile, len(p.Lessons())) {
+		if !inRange(w, webapp.KeyLessonIndex, indexFile, len(p.Lessons())) {
 			return
 		}
 		lesson := p.Lessons()[indexFile]
-		if !inRange(w, "bid", indexBlock, len(lesson.Blocks())) {
+		if !inRange(w, webapp.KeyBlockIndex, indexBlock, len(lesson.Blocks())) {
 			return
 		}
 		block := lesson.Blocks()[indexBlock]
@@ -343,14 +311,26 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 				// nothing more to try
 			}
 		}
-		//session.Values["file"] = strconv.Itoa(indexFile)
-		//session.Values["block"] = strconv.Itoa(indexBlock)
-		//err = session.Save(r, w)
-		//if err != nil {
-		//	glog.Errorf("Unable to save session: %v", err)
-		//}
 		fmt.Fprintln(w, "Ok")
 	}
+}
+
+func (ws *Server) saveSession(w http.ResponseWriter, r *http.Request) {
+	session, err := ws.store.Get(r, cookieName)
+	if err != nil {
+		write500(w, err)
+		return
+	}
+	session.Values[webapp.KeyIsNavOn] = getBoolParam(webapp.KeyIsNavOn, r, false)
+	session.Values[webapp.KeyIsHeaderOn] = getBoolParam(webapp.KeyIsHeaderOn, r, false)
+	session.Values[webapp.KeyLessonIndex] = getIntParam(webapp.KeyLessonIndex, r, 0)
+	session.Values[webapp.KeyBlockIndex] = getIntParam(webapp.KeyBlockIndex, r, 0)
+	err = session.Save(r, w)
+	if err != nil {
+		glog.Errorf("Unable to save session: %v", err)
+	}
+	fmt.Fprintln(w, "Ok")
+	glog.Info("Saved session.")
 }
 
 func (ws *Server) favicon(w http.ResponseWriter, r *http.Request) {
@@ -368,6 +348,14 @@ func (ws *Server) image(w http.ResponseWriter, r *http.Request) {
 
 func getIntParam(n string, r *http.Request, d int) int {
 	v, err := strconv.Atoi(r.URL.Query().Get(n))
+	if err != nil {
+		return d
+	}
+	return v
+}
+
+func getBoolParam(n string, r *http.Request, d bool) bool {
+	v, err := strconv.ParseBool(r.URL.Query().Get(n))
 	if err != nil {
 		return d
 	}
@@ -426,6 +414,7 @@ func (ws *Server) Serve(hostAndPort string) error {
 	r.HandleFunc("/_/r/", ws.reload)
 	r.HandleFunc("/_/r/{gitclone:.*}", ws.reload)
 	r.HandleFunc("/_/runblock", ws.makeBlockRunner())
+	r.HandleFunc("/_/s", ws.saveSession)
 	r.HandleFunc("/_/debug", ws.showDebugPage)
 	r.HandleFunc("/_/ws", ws.openWebSocket)
 	r.HandleFunc("/_/image", ws.image)
