@@ -61,7 +61,6 @@ var keyEncrypt = []byte(nil)
 func NewServer(l *loader.Loader) (*Server, error) {
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
-		Domain:   "localhost",
 		Path:     "/",
 		MaxAge:   3600 * 8, // 8 hours
 		HttpOnly: true,
