@@ -88,7 +88,7 @@ func AssureSessionData(s *sessions.Session) *SessionData {
 	}
 	r.BlockIndex, ok = s.Values[KeyBlockIndex].(int)
 	if !ok {
-		r.BlockIndex = 0
+		r.BlockIndex = -1
 		s.Values[KeyBlockIndex] = r.BlockIndex
 	}
 	return r
@@ -544,10 +544,7 @@ href="https://github.com/tmux/tmux/wiki">tmux</a>.
 </li>
 <li>In some non-tmux shell, run mdrip in <em>tmux</em> mode with a session arg:
 <pre>
-  mdrip \
-    --alsologtostderr --v 0 \
-    --stderrthreshold INFO \
-    --mode tmux \
+  mdrip --mode tmux \
     ws://{{.Host}}/_/ws?{{.KeySessID}}={{.SessID}}
 </pre>
 </li>
