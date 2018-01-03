@@ -274,21 +274,22 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		sessID := webapp.TypeSessID(arg)
-		glog.Infof("%s = %s", webapp.KeySessID, sessID)
-		indexFile := getIntParam(webapp.KeyLessonIndex, r, -1)
-		glog.Infof("%s = %s", webapp.KeyLessonIndex, indexFile)
-		indexBlock := getIntParam(webapp.KeyBlockIndex, r, -1)
-		glog.Infof("%s = %s", webapp.KeyBlockIndex, indexBlock)
+		lessonIndex := getIntParam(webapp.KeyLessonIndex, r, -1)
+		blockIndex := getIntParam(webapp.KeyBlockIndex, r, -1)
+		glog.Infof("%s = %s, %s = %d, %s = %d",
+			webapp.KeySessID, sessID,
+			webapp.KeyLessonIndex, lessonIndex,
+			webapp.KeyBlockIndex, blockIndex)
 
 		p := program.NewProgramFromTutorial(base.WildCardLabel, ws.tutorial)
-		if !inRange(w, webapp.KeyLessonIndex, indexFile, len(p.Lessons())) {
+		if !inRange(w, webapp.KeyLessonIndex, lessonIndex, len(p.Lessons())) {
 			return
 		}
-		lesson := p.Lessons()[indexFile]
-		if !inRange(w, webapp.KeyBlockIndex, indexBlock, len(lesson.Blocks())) {
+		lesson := p.Lessons()[lessonIndex]
+		if !inRange(w, webapp.KeyBlockIndex, blockIndex, len(lesson.Blocks())) {
 			return
 		}
-		block := lesson.Blocks()[indexBlock]
+		block := lesson.Blocks()[blockIndex]
 
 		var err error
 
@@ -303,6 +304,7 @@ func (ws *Server) makeBlockRunner() func(w http.ResponseWriter, r *http.Request)
 			}
 		}
 		if c == nil || err != nil {
+			glog.Info("no socket, attempting direct tmux paste")
 			err = ws.attemptTmuxWrite(block)
 			if err != nil {
 				glog.Infof("tmux write failed: %v", err)
