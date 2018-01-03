@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golang/glog"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 )
@@ -87,7 +86,6 @@ func (v *lessonFinder) VisitBlockTut(x *model.BlockTut) {
 }
 
 func (v *lessonFinder) VisitLessonTut(x *model.LessonTut) {
-	glog.V(2).Infof("visiting lesson %s \n", x.Name())
 	v.addIndexEntry()
 	v.namePathAccumulator = append(v.namePathAccumulator, x.Name())
 	v.addMapEntry()
@@ -100,7 +98,6 @@ func (v *lessonFinder) VisitLessonTut(x *model.LessonTut) {
 
 func (v *lessonFinder) VisitCourse(x *model.Course) {
 	v.courseCounter++
-	glog.V(2).Infof("visiting course %s \n", x.Name())
 	v.namePathAccumulator = append(v.namePathAccumulator, x.Name())
 	v.coursePathAccumulator = append(v.coursePathAccumulator, v.courseCounter)
 	v.addMapEntry()
@@ -112,7 +109,6 @@ func (v *lessonFinder) VisitCourse(x *model.Course) {
 }
 
 func (v *lessonFinder) VisitTopCourse(x *model.TopCourse) {
-	glog.V(2).Infof("visiting top %s \n", x.Name())
 	v.addMapEntry()
 	for _, c := range x.Children() {
 		c.Accept(v)
