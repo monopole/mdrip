@@ -62,7 +62,7 @@ func NewServer(l *loader.Loader) (*Server, error) {
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   3600 * 8, // 8 hours
+		MaxAge:   8 * 60 * 60, // 8 hours (Max-Age has units seconds)
 		HttpOnly: true,
 	}
 	result := &Server{
@@ -186,6 +186,11 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sessionData := webapp.AssureSessionData(session)
+	err = session.Save(r, w)
+	if err != nil {
+		write500(w, err)
+		return
+	}
 	glog.Infof("Main page render in sessID: %v", sessionData.SessID)
 	if ws.didFirstRender {
 		// Consider reloading data on all renders beyond the first.
@@ -200,12 +205,6 @@ func (ws *Server) showControlPage(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	err = session.Save(r, w)
-	if err != nil {
-		write500(w, err)
-		return
-	}
-
 	app := ws.makeWebApp(sessionData, r.Host, r.URL.Path)
 	ws.didFirstRender = true
 	if err := app.Render(w); err != nil {

@@ -55,21 +55,19 @@ const (
 )
 
 func makeSessionID() TypeSessID {
-	b := make([]byte, 4)
+	b := make([]byte, 3)
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
-	return TypeSessID(fmt.Sprintf("%X", b))
+	return TypeSessID(fmt.Sprintf("%x", b))
 }
 
 // AssureSessionData tries to recover session data, saving defaults for missing data.
 func AssureSessionData(s *sessions.Session) *SessionData {
 	r := &SessionData{}
-	c, ok := s.Values[KeySessID].(string)
-	ok = ok && len(c) > 0
-	if ok {
-		r.SessID = TypeSessID(c)
-	} else {
+	var ok bool
+	r.SessID, ok = s.Values[KeySessID].(TypeSessID)
+	if !ok {
 		r.SessID = makeSessionID()
 		s.Values[KeySessID] = r.SessID
 	}
@@ -478,6 +476,10 @@ Snapshot of markdown from
   <tr>
     <td class='kind'> activate (previous, next) code block </td>
     <td> w, s &nbsp; j, k </td>
+  </tr>
+  <tr>
+    <td class='kind'> scroll to active code block </td>
+    <td> x </td>
   </tr>
   <tr>
      <td class='kind'> copy/execute activated block </td>
@@ -1318,6 +1320,9 @@ var codeBlockController = new function() {
     activateCurrent();
     saveSession();
   }
+  this.goCurrent = function() {
+    activateCurrent();
+  }
   this.goNext = function() {
     this.deActivateCurrent();
     if (cbIndex >= blocks.length) {
@@ -1584,20 +1589,20 @@ var lessonController = new function() {
     }
     activeIndex = index;
   }
-  this.goNext = function() {
-    if (activeIndex >= coursePaths.length) {
-      // Do nothing, not even modulo wrap.
-      return;
-    }
-    this.assureActiveLesson(activeIndex + 1)
-    saveSession();
-  }
   this.goPrev = function() {
     if (activeIndex < 0) {
       // Already -1
       return;
     }
     this.assureActiveLesson(activeIndex - 1)
+    saveSession();
+  }
+  this.goNext = function() {
+    if (activeIndex >= coursePaths.length) {
+      // Do nothing, not even modulo wrap.
+      return;
+    }
+    this.assureActiveLesson(activeIndex + 1)
     saveSession();
   }
   this.getActiveLesson = function() {
@@ -1696,6 +1701,9 @@ function onLoad() {
         codeBlockController.runCurrent();
         codeBlockController.goNext();
         break;
+      case 'x':
+        codeBlockController.goCurrent();
+        break;
       case '-':
         headerController.toggle();
         break;
@@ -1730,5 +1738,6 @@ function onLoad() {
       default:
     }
   }, false);
+  window.setTimeout(codeBlockController.goCurrent, 700);
 }
 `
