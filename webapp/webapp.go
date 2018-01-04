@@ -1310,9 +1310,11 @@ var codeBlockController = new function() {
   this.goPrev = function() {
     this.deActivateCurrent();
     if (cbIndex < 0) {
-      // Already -1
+      // After a pause, go to the previous lesson.
+      lessonController.goPrev()
       return;
     }
+    // Allow this to go -1 (out of range).
     cbIndex--;
     activateCurrent();
     saveSession();
@@ -1323,9 +1325,11 @@ var codeBlockController = new function() {
   this.goNext = function() {
     this.deActivateCurrent();
     if (cbIndex >= blocks.length) {
-      // Do nothing, not even modulo wrap.
+      // After a pause, go to the next lesson.
+      lessonController.goNext()
       return;
     }
+    // Allow this to go to blocks.length (out of range).
     cbIndex++;
     activateCurrent();
     saveSession();
