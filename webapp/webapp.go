@@ -350,9 +350,7 @@ func makeAppTemplate(htmlNavActual string) string {
       </div>
     </div>
     <div class='headerColumn'>
-      <a target='_blank' href='{{.DataSourceLink}}'>
-        <title id='title'> {{.DocTitle}} </title>
-      </a>
+      <title id='title'> {{.DocTitle}} </title>
       <div class='activeLessonName'> Droplet Formation Rates </div>
       ` + htmlLessonNavRow + `
     </div>
@@ -591,7 +589,7 @@ header {
   background: {{.ColorHeader}};
   /* background: linear-gradient(0deg, {{.ColorBackground}}, {{.ColorHeader}}); */
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around; /* space-between */
   flex-direction: row;
   flex-wrap: nowrap;
   align-items: center;
@@ -695,17 +693,20 @@ footer {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  min-height: 2.8em;
-  min-width: 2em;
   cursor: pointer;
   color: {{.ColorControls}};
   font-weight: bold;
+  border-radius: 50%;
 }
+
+.helpButtonBox {
+  width: 2em;
+}
+
 .helpButtonBox:hover {
-  color: {{.ColorHover}};
-}
-.navButtonBox {
-  min-width: 6em;
+  background-color: {{.ColorHover}};
+  transition: all {{.TransitionSpeedMs}}ms;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,0.1);
 }
 
 .headerColumn {
@@ -723,15 +724,10 @@ footer {
 title {
   font-size: 2em;
   font-weight: bold;
-  color: {{.ColorTitle}};
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-}
-title:hover {
-  color: {{.ColorHover}};
-  font-weight: bold;
 }
 
 .activeLessonName {
@@ -888,33 +884,46 @@ title:hover {
 }
 
 .navBurger {
-  display: inline-block;
+  border-radius: 50%;
+
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+
+  width: 2.8em;
+  height: 2.8em;
   cursor: pointer;
+}
+
+.navBurger:hover {
+  background-color: {{.ColorHover}};
+  transition: all {{.TransitionSpeedMs}}ms;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .burgBar1, .burgBar2, .burgBar3 {
   width: 28px;
   height: 4px;
   /* top rig bot lef */
-  margin: 6px 0 6px 0px;
+  margin: 2px 0 2px 0px;
   transition: {{.TransitionSpeedMs}}ms;
+  /* offset-x | offset-y | blur-radius | spread-radius | color */
 	box-shadow: 0px 1px 1px 1px rgba(0,0,0,0.4);
   border: solid 1px #555;
 	background-color: {{.ColorControls}};
 	border-radius:25px;
 }
-.burgBar1:hover, .burgBar2:hover, .burgBar3:hover {
-  background-color: {{.ColorHover}};
-}
 
 .burgIsAnX .burgBar1 {
-  transform: translate(-6px, 1px) rotate(-40deg);
+  transform: translate(0px, 5px) rotate(-45deg);
 }
 .burgIsAnX .burgBar2 {
-  transform: translate(4px, 0px);
+  display: none;
 }
 .burgIsAnX .burgBar3 {
-  transform: translate(-6px, -1px) rotate(40deg);
+  transform: translate(0px, -5px) rotate(45deg);
+	box-shadow: 0px 0px 0px 0px rgba(0,0,0,0), 2px 0px 1px 0px rgba(0,0,0,0.4);
 }
 `
 
@@ -1573,7 +1582,7 @@ var lessonController = new function() {
     if (goodIndex(activeIndex)) {
       codeBlockController.deActivateCurrent();
       assureNoActiveLesson()
-      assureNoActiveCourse()
+      /* assureNoActiveCourse() */
     }
     assureActivePath(index)
     var elLesson = getBodyLesson(index)
