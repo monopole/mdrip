@@ -1,10 +1,8 @@
 package base
 
 import (
-	"testing"
-
 	"fmt"
-	"path/filepath"
+	"testing"
 )
 
 var repoNames = []string{"monopole/mdrip", "kubernetes/website"}
@@ -27,7 +25,7 @@ func TestExtractGithubRepoName(t *testing.T) {
 			for _, extractFmt := range extractFmts {
 				spec := repoName
 				if len(pathName) > 0 {
-					spec = filepath.Join(spec, pathName)
+					spec += "/" + pathName
 				}
 				input := fmt.Sprintf(extractFmt, spec)
 				if !smellsLikeGithubCloneArg(input) {
@@ -36,7 +34,7 @@ func TestExtractGithubRepoName(t *testing.T) {
 				}
 				repo, path, err := extractGithubRepoName(input)
 				if err != nil {
-					t.Errorf("problem %v", err)
+					t.Errorf("input='%s', err=%v", input, err)
 				}
 				if repo != repoName {
 					t.Errorf("\n"+

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -226,6 +227,10 @@ func politeWait(shell *exec.Cmd) (err error) {
 func (s *Subshell) Run() (result *RunResult) {
 	tmpFile := writeFile(s.program.Lessons())
 	defer func() {
+		if runtime.GOOS == "windows" {
+			// Allow more time for process to die.
+			time.Sleep(1 * time.Second)
+		}
 		util.Check("delete temp file", os.Remove(tmpFile.Name()))
 	}()
 
