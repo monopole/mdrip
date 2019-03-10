@@ -2,14 +2,17 @@ package subshell
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
-	"errors"
 	"github.com/golang/glog"
 	"github.com/monopole/mdrip/program"
 	"github.com/monopole/mdrip/scanner"
@@ -226,7 +229,29 @@ func politeWait(shell *exec.Cmd) (err error) {
 func (s *Subshell) Run() (result *RunResult) {
 	tmpFile := writeFile(s.program.Lessons())
 	defer func() {
-		util.Check("delete temp file", os.Remove(tmpFile.Name()))
+		// Windows has trouble with processes hanging on to temp files.
+		attempts := 6
+		var err error
+		for i := 0; i < attempts; i++ {
+			if i > 0 {
+				time.Sleep(1 * time.Second)
+			}
+			err = os.Remove(tmpFile.Name())
+			if err == nil {
+				return
+			}
+		}
+		msg := fmt.Sprintf(
+			"After %d attempts, unable to delete %s, error=%v",
+			attempts, tmpFile.Name(), err)
+		if runtime.GOOS == "windows" {
+			// Something wrong with end of process detection
+			// or release on windows.  Just log and return.
+			log.Print(msg)
+			return
+		}
+		// Hold other OS's to higher standard.
+		log.Fatal(msg)
 	}()
 
 	shell := exec.Command("bash", tmpFile.Name())
