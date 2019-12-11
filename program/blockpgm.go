@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
-	"github.com/russross/blackfriday"
+	"github.com/russross/blackfriday/v2"
 	"html/template"
 	"io"
 )

@@ -10,6 +10,10 @@ require (
 	github.com/gorilla/sessions v0.0.0-20160922145804-ca9ada445741
 	github.com/gorilla/websocket v1.2.0
 	github.com/pkg/errors v0.8.0
-	github.com/russross/blackfriday v2.0.0+incompatible
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/russross/blackfriday/v2 v2.0.1
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 )
+
+// v2.0.0 is incompatible with kubectl libraries
+exclude github.com/russross/blackfriday v2.0.0+incompatible
