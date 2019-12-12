@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
-	"github.com/russross/blackfriday/v2"
+	bf2 "gopkg.in/russross/blackfriday.v2"
 	"html/template"
 	"io"
 )
@@ -47,7 +47,7 @@ func (x *BlockPgm) Name() string { return x.name }
 
 // HTMLProse returns HTML that should precede the block.
 func (x *BlockPgm) HTMLProse() template.HTML {
-	return template.HTML(string(blackfriday.Run(x.Prose())))
+	return template.HTML(string(bf2.Run(x.Prose())))
 }
 
 // Print prints the block.
