@@ -125,9 +125,9 @@ var (
 
 // Config holds configuration for an instance of mdrip.
 type Config struct {
-	label      base.Label
-	mode       ModeType
-	dataSource *base.DataSet
+	label   base.Label
+	mode    ModeType
+	dataSet *base.DataSet
 }
 
 func determineMode() ModeType {
@@ -199,7 +199,7 @@ func (c *Config) Label() base.Label {
 
 // DataSet holds the source of data parsed from the mdrip command line.
 func (c *Config) DataSet() *base.DataSet {
-	return c.dataSource
+	return c.dataSet
 }
 
 // DefaultConfig is a config for tests.

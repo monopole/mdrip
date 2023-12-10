@@ -1,20 +1,18 @@
 package loader
 
 import (
-	"os"
-	"testing"
-
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
+	"testing"
 
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/model"
 )
 
 // only run locally, not on travis
-func xTestReload(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "loader-test-")
+func TestReload(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "loader-test-")
 	if err != nil {
 		t.Errorf("Trouble creating temp dir")
 		return
@@ -26,7 +24,7 @@ func xTestReload(t *testing.T) {
 	fmt.Fprintln(&out, "```")
 	fmt.Fprintln(&out, "echo face")
 	fmt.Fprintln(&out, "```")
-	err = ioutil.WriteFile(tmpDir+"/foo.md", out.Bytes(), 0644)
+	err = os.WriteFile(tmpDir+"/foo.md", out.Bytes(), 0644)
 	if err != nil {
 		t.Errorf("Trouble writing to " + tmpDir)
 		return

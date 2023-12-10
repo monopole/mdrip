@@ -39,16 +39,16 @@ func (d *DataSet) String() string {
 
 // NewDataSet makes a dataset from the given args.
 func NewDataSet(fArgs []string) (*DataSet, error) {
-	result := []*DataSource{}
+	var list []*DataSource
 	for _, n := range fArgs {
 		item, err := NewDataSource(n)
 		if err != nil {
 			return nil, errors.New("Bad arg " + n)
 		}
-		result = append(result, item)
+		list = append(list, item)
 	}
-	if len(result) < 1 {
+	if len(list) < 1 {
 		return nil, errors.New("must specify a data source - files, directory, or github clone url")
 	}
-	return &DataSet{result}, nil
+	return &DataSet{list}, nil
 }

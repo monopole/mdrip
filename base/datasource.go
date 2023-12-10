@@ -9,13 +9,18 @@ import (
 
 // DataSource is where markdown came from.
 type DataSource struct {
-	raw      string
+	// The raw, original specification of the data source.
+	raw string
+	// The GitHub repository name, if any.
 	repoName string
-	relPath  string
-	absPath  string
+	// The path to the file or directory of interest, relative
+	// to the GitHub repo.  If empty, then the whole repo is used.
+	relPath string
+	// The absolute path to the local directory.
+	absPath string
 }
 
-// IsGithub is true if the datasource was github.
+// IsGithub is true if the datasource was GitHub.
 func (d *DataSource) IsGithub() bool {
 	return len(d.repoName) > 0
 }
@@ -44,9 +49,7 @@ func (d *DataSource) Href() string {
 	return "file://" + d.absPath
 }
 
-// GithubCloneArg returns the data source in a form suitable for git clone.
-// Using https instead of ssh so no need for keys
-// (works only with public repos obviously).
+// GithubCloneArg returns the data source in a form suitable for `git clone`.
 func (d *DataSource) GithubCloneArg() string {
 	return "https://github.com/" + d.repoName + ".git"
 }
@@ -78,22 +81,24 @@ func NewDataSource(arg string) (*DataSource, error) {
 		return nil, errors.New(
 			"need data source - file name, directory name, or github clone url")
 	}
-	if smellsLikeGithubCloneArg(arg) {
-		repoName, path, err := extractGithubRepoName(arg)
+	if SmellsLikeGithubCloneArg(arg) {
+		repoName, path, err := ExtractGithubRepoName(arg)
 		if err != nil {
 			return nil, err
 		}
-		return &DataSource{arg, repoName, path, ""}, nil
+		return &DataSource{raw: arg, repoName: repoName, relPath: path}, nil
 	}
 	path, err := filepath.Abs(arg)
 	if err != nil {
 		return nil, errors.New(
 			"unable to resolve absolute path of " + arg)
 	}
-	return &DataSource{arg, "", arg, path}, nil
+	return &DataSource{raw: arg, relPath: arg, absPath: path}, nil
 }
 
-func smellsLikeGithubCloneArg(arg string) bool {
+// SmellsLikeGithubCloneArg returns true if the argument seems
+// like it could be GitHub url or `git clone` argument.
+func SmellsLikeGithubCloneArg(arg string) bool {
 	arg = strings.ToLower(arg)
 	return strings.HasPrefix(arg, "gh:") ||
 		strings.HasPrefix(arg, "github.com") ||
@@ -101,9 +106,10 @@ func smellsLikeGithubCloneArg(arg string) bool {
 		strings.Index(arg, "github.com/") > -1
 }
 
-// From strings like git@github.com:monopole/mdrip.git or
-// https://github.com/monopole/mdrip, extract github.com.
-func extractGithubRepoName(n string) (string, string, error) {
+// ExtractGithubRepoName parses strings like git@github.com:monopole/mdrip.git or
+// https://github.com/monopole/mdrip, extracting the repository name
+// and the path inside the repository.
+func ExtractGithubRepoName(n string) (string, string, error) {
 	for _, p := range []string{
 		// Order matters here.
 		"gh:", "https://", "http://", "git@", "github.com:", "github.com/"} {

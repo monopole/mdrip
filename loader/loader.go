@@ -2,111 +2,52 @@ package loader
 
 import (
 	"bytes"
-	"io/ioutil"
+	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/golang/glog"
 	"github.com/monopole/mdrip/base"
 	"github.com/monopole/mdrip/lexer"
 	"github.com/monopole/mdrip/model"
 	"github.com/pkg/errors"
 )
 
-const (
-	badLeadingChar = "~.#"
-)
-
-func isOrderFile(n base.FilePath) bool {
-	s, err := os.Stat(string(n))
+func scanDir(dir base.FilePath) (model.Tutorial, error) {
+	dirEntries, err := dir.ReadDir()
 	if err != nil {
-		return false
+		return BadLoad(dir), err
 	}
-	if s.IsDir() {
-		return false
-	}
-	if !s.Mode().IsRegular() {
-		return false
-	}
-	return filepath.Base(s.Name()) == "README_ORDER.txt"
-}
-
-func isDesirableFile(n base.FilePath) bool {
-	s, err := os.Stat(string(n))
-	if err != nil {
-		return false
-	}
-	if s.IsDir() {
-		return false
-	}
-	if !s.Mode().IsRegular() {
-		return false
-	}
-	if filepath.Ext(s.Name()) != ".md" {
-		return false
-	}
-	base := filepath.Base(s.Name())
-	if strings.Index(badLeadingChar, string(base[0])) > -1 {
-		return false
-	}
-	return true
-}
-
-func isDesirableDir(n base.FilePath) bool {
-	s, err := os.Stat(string(n))
-	if err != nil {
-		return false
-	}
-	if !s.IsDir() {
-		return false
-	}
-	// Allow special dir names.
-	if s.Name() == "." || s.Name() == "./" || s.Name() == ".." {
-		return true
-	}
-	// Ignore .git, etc.
-	if strings.HasPrefix(filepath.Base(s.Name()), ".") {
-		return false
-	}
-	return true
-}
-
-func scanDir(d base.FilePath) (model.Tutorial, error) {
-	files, err := d.ReadDir()
-	if err != nil {
-		return BadLoad(d), err
-	}
-	var items = []model.Tutorial{}
-	var ordering = []string{}
-	for _, f := range files {
-		p := d.Join(f)
-		if isDesirableFile(p) {
-			l, err := scanFile(p)
-			if err == nil {
-				items = append(items, l)
+	var (
+		items    []model.Tutorial
+		ordering []string
+	)
+	for _, f := range dirEntries {
+		p := dir.Join(f)
+		if p.IsDesirableFile() {
+			if tut, er := scanFile(p); er == nil {
+				items = append(items, tut)
 			}
 			continue
 		}
-		if isDesirableDir(p) {
-			c, err := scanDir(p)
-			if err == nil {
-				items = append(items, c)
+		if p.IsDesirableDir() {
+			if tut, er := scanDir(p); er == nil {
+				items = append(items, tut)
 			}
 			continue
 		}
-		if isOrderFile(p) {
-			contents, err := p.Read()
-			if err == nil {
+		if p.IsOrderFile() {
+			if contents, er := p.Read(); er == nil {
 				ordering = strings.Split(contents, "\n")
 			}
 		}
 	}
 	if len(items) == 0 {
-		return nil, errors.New("no content in directory " + string(d))
+		return nil, errors.New("no content in directory " + string(dir))
 	}
-	return model.NewCourse(d, reorder(items, ordering)), nil
+	return model.NewCourse(dir, reorder(items, ordering)), nil
 }
 
 func scanFile(n base.FilePath) (model.Tutorial, error) {
@@ -122,33 +63,12 @@ func scanFile(n base.FilePath) (model.Tutorial, error) {
 }
 
 // BadLoad returns a fake tutorial complaining about its data source.
-// For use with a webbrowser, to make the problem obvious.
+// For use with a web browser, to make the problem obvious.
 func BadLoad(n base.FilePath) model.Tutorial {
 	result := model.NewMdContent()
 	result.AddBlockParsed(model.NewProseOnlyBlock(base.MdProse(
 		"## Unable to load data from _" + string(n) + "_\n")))
 	return model.NewLessonTutFromMdContent(n, result)
-}
-
-func shiftToTop(x []model.Tutorial, top string) []model.Tutorial {
-	result := []model.Tutorial{}
-	other := []model.Tutorial{}
-	for _, f := range x {
-		if f.Name() == top {
-			result = append(result, f)
-		} else {
-			other = append(other, f)
-		}
-	}
-	return append(result, other...)
-}
-
-// reorder tutorial array in some fashion
-func reorder(x []model.Tutorial, ordering []string) []model.Tutorial {
-	for i := len(ordering) - 1; i >= 0; i-- {
-		x = shiftToTop(x, ordering[i])
-	}
-	return shiftToTop(x, "README")
 }
 
 // Loader loads a dataset.
@@ -187,13 +107,13 @@ func (l *Loader) Load() (model.Tutorial, error) {
 }
 
 func loadTutorialFromPath(source *base.DataSource) (model.Tutorial, error) {
-	if isDesirableFile(source.AbsPath()) {
+	if source.AbsPath().IsDesirableFile() {
 		return scanFile(source.AbsPath())
 	}
-	if !isDesirableDir(source.AbsPath()) {
+	if !source.AbsPath().IsDesirableDir() {
 		return nil, errors.New("nothing found at " + string(source.AbsPath()))
 	}
-	glog.Infof("Loading %s from path %s\n", source.Display(), source.AbsPath())
+	slog.Info(fmt.Sprintf("Loading %s from path %s\n", source.Display(), source.AbsPath()))
 
 	c, err := scanDir(source.AbsPath())
 	if err != nil {
@@ -203,16 +123,16 @@ func loadTutorialFromPath(source *base.DataSource) (model.Tutorial, error) {
 }
 
 func loadTutorialFromPaths(source *base.DataSource, paths []base.FilePath) (model.Tutorial, error) {
-	var items = []model.Tutorial{}
+	var items []model.Tutorial
 	for _, f := range paths {
-		if isDesirableFile(f) {
+		if f.IsDesirableFile() {
 			l, err := scanFile(f)
 			if err == nil {
 				items = append(items, l)
 			}
 			continue
 		}
-		if isDesirableDir(f) {
+		if f.IsDesirableDir() {
 			c, err := scanDir(f)
 			if err == nil {
 				items = append(items, c)
@@ -228,7 +148,7 @@ func loadTutorialFromPaths(source *base.DataSource, paths []base.FilePath) (mode
 
 func cleanUp(tmpDir string) {
 	os.RemoveAll(tmpDir)
-	glog.Infof("Deleted " + tmpDir)
+	slog.Info("Deleted " + tmpDir)
 }
 
 func loadTutorialFromGitHub(source *base.DataSource) (model.Tutorial, error) {
@@ -237,12 +157,12 @@ func loadTutorialFromGitHub(source *base.DataSource) (model.Tutorial, error) {
 		return BadLoad(base.FilePath(source.Raw())),
 			errors.Wrap(err, "maybe no git on path")
 	}
-	tmpDir, err := ioutil.TempDir("", "mdrip-git-")
+	tmpDir, err := os.MkdirTemp("", "mdrip-git-")
 	if err != nil {
 		return BadLoad(base.FilePath(source.Raw())),
 			errors.Wrap(err, "unable to create tmp dir")
 	}
-	glog.Infof("Cloning to %s ...\n", tmpDir)
+	slog.Info("Cloning to " + tmpDir)
 	defer cleanUp(tmpDir)
 	cmd := exec.Command(gitPath, "clone", source.GithubCloneArg(), tmpDir)
 	var out bytes.Buffer
@@ -252,7 +172,7 @@ func loadTutorialFromGitHub(source *base.DataSource) (model.Tutorial, error) {
 		return BadLoad(base.FilePath(source.Raw())),
 			errors.Wrap(err, "git clone failure")
 	}
-	glog.Info("Clone complete.")
+	slog.Info("Clone complete.")
 	fullPath := tmpDir
 	if len(source.RelPath()) > 0 {
 		fullPath = filepath.Join(fullPath, string(source.RelPath()))
