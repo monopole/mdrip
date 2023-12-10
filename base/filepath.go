@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// FilePath holds a non-empty, absolute file path.
+// FilePath holds a file path and offers mdrip specific methods on it.
 type FilePath string
 
 // ReadDir treats the path as a directory name and reads it.

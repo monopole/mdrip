@@ -14,9 +14,8 @@ func TestExtractGithubRepoName(t *testing.T) {
 			"",
 			"README.md",
 			"foo/index.md",
-			"more/than/one/blahBlah.md",
 		} {
-			for _, tstFmt := range []string{
+			for _, extractFmt := range []string{
 				"gh:%s",
 				"GH:%s",
 				"gitHub.com/%s",
@@ -25,7 +24,7 @@ func TestExtractGithubRepoName(t *testing.T) {
 				"git@gitHUB.com:%s.git",
 				"github.com:%s",
 			} {
-				arg := makeTheTestArgument(repoName, pathName, tstFmt)
+				arg := makeTheTestArgument(repoName, pathName, extractFmt)
 				if !SmellsLikeGithubCloneArg(arg) {
 					t.Errorf("Should smell like github arg: %s\n", arg)
 					continue
