@@ -6,9 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/golang/glog"
-	"github.com/pkg/errors"
 )
 
 // GetProcesssGroupID purports to get a process group Id common to all
@@ -26,8 +23,8 @@ func GetProcesssGroupID(pid int) (int, error) {
 		"/bin/ps", "--pid", strconv.Itoa(pid), "-o", "pgid", "--no-headers").Output()
 	groupID := strings.TrimSpace(string(cmdOut))
 	if execErr != nil || len(groupID) < 1 {
-		return 0, errors.New(
-			"Unable to yank groupID from ps command: " + groupID + " " + execErr.Error())
+		return 0, fmt.Errorf(
+			"unable to yank groupID from ps command: %s; %w", groupID, execErr)
 	}
 	pgid, convErr := strconv.Atoi(groupID)
 	if convErr != nil {
@@ -39,7 +36,7 @@ func GetProcesssGroupID(pid int) (int, error) {
 // Check reports the error fatally if it's non-nil.
 func Check(msg string, err error) {
 	if err != nil {
-		glog.Fatal(errors.Wrap(err, msg))
+		panic(fmt.Errorf("%s; %w", msg, err))
 	}
 }
 

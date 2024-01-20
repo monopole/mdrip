@@ -12,7 +12,6 @@ import (
 	"github.com/monopole/mdrip/tobeinternal/base"
 	"github.com/monopole/mdrip/tobeinternal/lexer"
 	"github.com/monopole/mdrip/tobeinternal/model"
-	"github.com/pkg/errors"
 )
 
 func scanDir(dir base.FilePath) (model.Tutorial, error) {
@@ -45,7 +44,7 @@ func scanDir(dir base.FilePath) (model.Tutorial, error) {
 		}
 	}
 	if len(items) == 0 {
-		return nil, errors.New("no content in directory " + string(dir))
+		return nil, fmt.Errorf("no content in directory %s", dir)
 	}
 	return model.NewCourse(dir, reorder(items, ordering)), nil
 }
@@ -57,7 +56,7 @@ func scanFile(n base.FilePath) (model.Tutorial, error) {
 	}
 	md := lexer.Parse(contents)
 	if len(md.Blocks) < 1 {
-		return BadLoad(n), errors.New("no content in " + string(n))
+		return BadLoad(n), fmt.Errorf("no content in %s", n)
 	}
 	return model.NewLessonTutFromMdContent(n, md), nil
 }
@@ -111,7 +110,7 @@ func loadTutorialFromPath(source *base.DataSource) (model.Tutorial, error) {
 		return scanFile(source.AbsPath())
 	}
 	if !source.AbsPath().IsDesirableDir() {
-		return nil, errors.New("nothing found at " + string(source.AbsPath()))
+		return nil, fmt.Errorf("nothing found at %s", source.AbsPath())
 	}
 	slog.Info(fmt.Sprintf("Loading %s from path %s\n", source.Display(), source.AbsPath()))
 
@@ -141,7 +140,7 @@ func loadTutorialFromPaths(source *base.DataSource, paths []base.FilePath) (mode
 		}
 	}
 	if len(items) == 0 {
-		return BadLoad(paths[0]), errors.New("nothing useful found in paths")
+		return BadLoad(paths[0]), fmt.Errorf("nothing useful found in paths")
 	}
 	return model.NewTopCourse(source.Display(), source.AbsPath(), items), nil
 }
@@ -155,12 +154,12 @@ func loadTutorialFromGitHub(source *base.DataSource) (model.Tutorial, error) {
 	gitPath, err := exec.LookPath("git")
 	if err != nil {
 		return BadLoad(base.FilePath(source.Raw())),
-			errors.Wrap(err, "maybe no git on path")
+			fmt.Errorf("maybe no git on path; %w", err)
 	}
 	tmpDir, err := os.MkdirTemp("", "mdrip-git-")
 	if err != nil {
 		return BadLoad(base.FilePath(source.Raw())),
-			errors.Wrap(err, "unable to create tmp dir")
+			fmt.Errorf("unable to create tmp dir; %w", err)
 	}
 	slog.Info("Cloning to " + tmpDir)
 	defer cleanUp(tmpDir)
@@ -170,7 +169,7 @@ func loadTutorialFromGitHub(source *base.DataSource) (model.Tutorial, error) {
 	err = cmd.Run()
 	if err != nil {
 		return BadLoad(base.FilePath(source.Raw())),
-			errors.Wrap(err, "git clone failure")
+			fmt.Errorf("git clone failure; %w", err)
 	}
 	slog.Info("Clone complete.")
 	fullPath := tmpDir
