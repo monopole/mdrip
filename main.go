@@ -5,12 +5,12 @@ import (
 	"os"
 
 	"github.com/golang/glog"
-	"github.com/monopole/mdrip/config"
-	"github.com/monopole/mdrip/loader"
-	"github.com/monopole/mdrip/program"
-	"github.com/monopole/mdrip/subshell"
-	"github.com/monopole/mdrip/tmux"
-	"github.com/monopole/mdrip/webserver"
+	"github.com/monopole/mdrip/tobeinternal/config"
+	"github.com/monopole/mdrip/tobeinternal/loaderold"
+	"github.com/monopole/mdrip/tobeinternal/program"
+	"github.com/monopole/mdrip/tobeinternal/subshell"
+	"github.com/monopole/mdrip/tobeinternal/tmux"
+	"github.com/monopole/mdrip/tobeinternal/webserver"
 )
 
 func trueMain(c *config.Config) error {
@@ -23,7 +23,7 @@ func trueMain(c *config.Config) error {
 		// Treat the first arg as a host address argument.
 		t.Adapt(c.DataSet().FirstArg().Raw())
 	case config.ModeDemo:
-		l := loader.NewLoader(c.DataSet())
+		l := loaderold.NewLoader(c.DataSet())
 		s, err := webserver.NewServer(l)
 		if err != nil {
 			return err
@@ -33,7 +33,7 @@ func trueMain(c *config.Config) error {
 			return err
 		}
 	case config.ModeTest:
-		t, err := loader.NewLoader(c.DataSet()).Load()
+		t, err := loaderold.NewLoader(c.DataSet()).Load()
 		if err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func trueMain(c *config.Config) error {
 			}
 		}
 	default:
-		t, err := loader.NewLoader(c.DataSet()).Load()
+		t, err := loaderold.NewLoader(c.DataSet()).Load()
 		if err != nil {
 			return err
 		}
