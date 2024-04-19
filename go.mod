@@ -12,5 +12,5 @@ require (
 
 require (
 	github.com/gorilla/securecookie v1.1.2 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.23.0 // indirect
 )
