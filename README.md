@@ -49,9 +49,8 @@ GOBIN=$TMPDIR go install github.com/monopole/mdrip/v2
 > `mdrip print {filePath}`
 
 This searches the given path for files named
-`*.md` (ignoring everything else).
-It parses the markdown into memory, then emits a
-script.
+`*.md`, parses the markdown into memory, then
+emits code blocks as one script.
 
 The `filePath` argument can be
 
@@ -62,11 +61,11 @@ The `filePath` argument can be
 
 To extract and noisily run blocks in the current terminal:
 
-> `eval "$(mdrip print goExample.md)"`
+> `eval "$(mdrip print goTutorial.md)"`
 
 It's better to pipe them to a subprocess:
 
-> `mdrip goExample.md | source /dev/stdin`
+> `mdrip goTutorial.md | source /dev/stdin`
 
 The difference between these two compositions is the
 same as the difference between
@@ -121,13 +120,13 @@ This mode is an instance of [literate programming] in
 that code (shell commands) are embedded in explanatory
 content (markdown).  One can use [_here_ documents] to
 incorporate any programming language into the tests
-(as in [goExample.md](./goExample.md) below).
+(as in [goTutorial.md](./goTutorial.md) below).
 
 ### Debugging and demonstrations
 
 The command
 
-> `mdrip demo goExample.md`
+> `mdrip demo goTutorial.md`
 
 serves rendered markdown at `http://localhost:8000`.
 
