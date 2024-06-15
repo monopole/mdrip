@@ -1,0 +1,16 @@
+.navLeftFile {
+    padding-left: 1em;
+    display: flex;
+    line-height: 2em;
+}
+
+.navLeftFileDeactivated:hover {
+    color: var(--color-hover);
+    font-weight: bold;
+}
+
+.navLeftFileActivated {
+    border-bottom-left-radius: 2rem;
+    border-top-left-radius: 2rem;
+    background-color: var(--color-md-background);
+}

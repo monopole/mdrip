@@ -1,0 +1,16 @@
+.helpButton {
+    font-size: larger;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-controls);
+    border-radius: 50%;
+    width: 2rem;
+}
+
+.helpButton:hover {
+    background-color: var(--color-hover);
+    transition: all {{.TransitionSpeedMs}}ms;
+    box-shadow: 0 0 0 3rem rgba(255,255,255,0.1) inset;
+}

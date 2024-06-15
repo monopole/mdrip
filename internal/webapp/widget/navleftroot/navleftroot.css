@@ -1,0 +1,9 @@
+.navLeftRoot {
+    /* top rig bot lef */
+    padding: 1em 0 1em 0;
+    /* negate parent's rtl setting that was used to place scroll-bar on left */
+    direction:ltr;
+}
+.navLeftRoot:focus {
+    outline: none;
+}

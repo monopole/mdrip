@@ -1,0 +1,79 @@
+<div class='helpBox'>
+  <div class="helpBoxInner">
+    <p>
+      Markdown source: <em>{{.AppState.DataSource}}</em>
+    </p>
+
+    <h3>Keys</h3>
+
+    <table>
+      <tr>
+        <td class='desc'> show help (what you are reading)</td>
+        <td class='keys'> ? &nbsp; / &nbsp; Esc </td>
+      </tr>
+      <tr>
+        <td class='desc'> reload markdown from server</td>
+        <td class='keys'> r </td>
+      </tr>
+      <tr>
+        <td class='desc'> activate (previous, next) code block</td>
+        <td class='keys'> w, s &nbsp; j, k </td>
+      </tr>
+      <tr>
+        <td class='desc'> scroll to active code block</td>
+        <td class='keys'> x </td>
+      </tr>
+      <tr>
+        <td class='desc'> copy/execute activated block</td>
+        <td class='keys'> &crarr; </td>
+      </tr>
+      <tr>
+        <td class='desc'> (previous, next) file</td>
+        <td class='keys'> a, d &nbsp; h, l &nbsp; &larr;, &rarr; </td>
+      </tr>
+      <tr>
+        <td class='desc'> minimize header</td>
+        <td class='keys'> - </td>
+      </tr>
+      <tr>
+        <td class='desc'> nav sidebar</td>
+        <td class='keys'> n </td>
+      </tr>
+      <tr>
+        <td class='desc'> monkey</td>
+        <td class='keys'> ! </td>
+      </tr>
+    </table>
+
+    <h3> Use <code>tmux</code> to get automatic code block execution</h3>
+
+    <p>
+      Serve the content locally with
+      <a href="https://github.com/monopole/mdrip"
+         target="_blank">mdrip</a>:
+    </p>
+
+    <pre>
+  GOBIN=$TMPDIR go install github.com/monopole/mdrip
+  $TMPDIR/mdrip demo {{.AppState.DataSource}}
+</pre>
+
+    <p>
+      and run <a href="https://github.com/tmux/tmux/wiki"
+                 target="_blank">tmux</a>:
+    </p>
+
+    <pre>
+  tmux
+</pre>
+
+    <p>
+      Then, at <a href="http://localhost:8080"
+                  target="_blank">localhost:8080</a>,
+      whatever action copies a code block (&crarr; or mouse click)
+      also pastes the block to the active tmux pane for
+      immediate execution.
+    </p>
+
+  </div>
+</div>

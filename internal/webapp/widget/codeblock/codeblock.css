@@ -1,0 +1,57 @@
+.codeBlockContainer {
+    display: grid;
+    padding-top: 4px;
+    grid-template-columns: 2em 1fr;
+    grid-template-rows: 1em 1fr;
+    grid-template-areas:
+    ". controlBar"
+    "prompt codeArea";
+    column-gap: 6px;
+    row-gap: 5px;
+    justify-items: start;
+}
+
+.codeBlockControl {
+    grid-area: controlBar;
+    align-self: center;
+    font-family: "Lucida Console", Monaco, monospace;
+    font-size: small;
+    color: var(--color-code-label);
+}
+
+.codeBlockTitle {
+    height: 100%;
+    cursor: pointer;
+}
+
+.codeBlockTitle:hover {
+    color: var(--color-hover);
+}
+
+.codeBlockPrompt {
+    grid-area: prompt;
+    justify-self: center;
+    align-self: stretch;
+    color: var(--color-controls);
+    background-color: var(--color-code-background);
+    box-shadow: var(--color-code-shadow) 0 3px 5px;
+    padding-top: 0.6em;
+    width: 100%;
+    border: solid 1px #555;
+    border-radius: 4px;
+    display: none;
+}
+
+.codeBlockArea {
+    grid-area: codeArea;
+    white-space: pre;
+    font-family: "Lucida Console", monospace;
+    color: var(--color-code-inactive);
+    background-color: var(--color-code-background);
+    padding-bottom: 1em;
+    padding-left: 1em;
+    width: 95%;
+    overflow-x: auto;
+    border: solid 1px #555;
+    border-radius: 4px;
+}

@@ -1,76 +1,45 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
-	"github.com/golang/glog"
-	"github.com/monopole/mdrip/tobeinternal/config"
-	"github.com/monopole/mdrip/tobeinternal/loaderold"
-	"github.com/monopole/mdrip/tobeinternal/program"
-	"github.com/monopole/mdrip/tobeinternal/subshell"
-	"github.com/monopole/mdrip/tobeinternal/tmux"
-	"github.com/monopole/mdrip/tobeinternal/webserver"
+	"github.com/monopole/mdrip/v2/internal/commands/demo"
+	"github.com/monopole/mdrip/v2/internal/commands/gentestdata"
+	"github.com/monopole/mdrip/v2/internal/commands/print"
+	"github.com/monopole/mdrip/v2/internal/commands/test"
+	"github.com/monopole/mdrip/v2/internal/commands/tmux"
+	"github.com/monopole/mdrip/v2/internal/loader"
+	"github.com/monopole/mdrip/v2/internal/parsren/usegold"
+	"github.com/monopole/mdrip/v2/internal/utils"
+	"github.com/spf13/afero"
+	"github.com/spf13/cobra"
 )
 
-func trueMain(c *config.Config) error {
-	switch c.Mode() {
-	case config.ModeTmux:
-		t := tmux.NewTmux(tmux.Path)
-		if !t.IsUp() {
-			glog.Fatal(tmux.Path, " not running")
-		}
-		// Treat the first arg as a host address argument.
-		t.Adapt(c.DataSet().FirstArg().Raw())
-	case config.ModeDemo:
-		l := loaderold.NewLoader(c.DataSet())
-		s, err := webserver.NewServer(l)
-		if err != nil {
-			return err
-		}
-		err = s.Serve(c.HostAndPort())
-		if err != nil {
-			return err
-		}
-	case config.ModeTest:
-		t, err := loaderold.NewLoader(c.DataSet()).Load()
-		if err != nil {
-			return err
-		}
-		p := program.NewProgramFromTutorial(c.Label(), t)
-		s := subshell.NewSubshell(c.BlockTimeOut(), p)
-		if r := s.Run(); r.Error() != nil {
-			r.Print(c.Label())
-			if !c.IgnoreTestFailure() {
-				glog.Fatal(r.Error())
-			}
-		}
-	default:
-		t, err := loaderold.NewLoader(c.DataSet()).Load()
-		if err != nil {
-			return err
-		}
-		p := program.NewProgramFromTutorial(c.Label(), t)
-		if c.Preambled() > 0 {
-			p.PrintPreambled(os.Stdout, c.Preambled())
-		} else {
-			p.PrintNormal(os.Stdout)
-		}
+const (
+	shortHelp = "Extract and manipulate code blocks from a markdown tree."
+)
+
+func newCommand() *cobra.Command {
+	c := &cobra.Command{
+		Use:   utils.PgmName + " {path}",
+		Short: shortHelp,
+		Long:  shortHelp + " (" + utils.Version + ")",
 	}
-	return nil
+	ldr := loader.New(afero.NewOsFs())
+	p := usegold.NewGParser()
+	c.AddCommand(
+		demo.NewCommand(ldr, p),
+		gentestdata.NewCommand(),
+		print.NewCommand(ldr, p),
+		test.NewCommand(ldr, p),
+		tmux.NewCommand(ldr),
+	)
+	return c
 }
 
 func main() {
-	c, err := config.GetConfig()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		config.Usage()
+	if err := newCommand().Execute(); err != nil {
 		os.Exit(1)
 	}
-	err = trueMain(c)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		config.Usage()
-		os.Exit(1)
-	}
+	os.Exit(0)
 }

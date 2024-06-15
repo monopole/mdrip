@@ -1,0 +1,6 @@
+.navLeftTopFolder {
+    padding-left: 1em;
+    display: flex;
+    flex-direction: column;
+    line-height: 2em;
+}

@@ -1,0 +1,81 @@
+:root {
+    /* scrollbar-width: none; */
+    /* -ms-overflow-style: none; */
+
+    --layout-nav-top-height: 6rem;
+    --layout-nav-bottom-height: 3rem;
+    --layout-nav-lr-width: 14rem;
+
+    /* handy https://htmlcolorcodes.com/color-chart */
+
+    --color-hover: #BA4A00; /* dim orange */
+    --color-controls: #9CCC65; /* light green */
+    --color-text: #D7CCC8; /* beige */
+
+    --color-header-background: #202020; /* grey 01 */
+    --color-lr-nav-background: var(--color-header-background);
+
+    --color-md-text: #c9c9c9; /* light grey */
+    --color-md-background: #010409; /* grey 03 */
+    --color-anchor: #2f81f7;
+
+    --color-code-background: black;
+    --color-code-active: #23ff56; /* terminal green */
+    --color-code-inactive: #10aa10; /* terminal green */
+    --color-code-checkmark: #00b7eb; /* powedr blue */
+    --color-code-shadow: rgba(10, 100, 10, 0.85); /* dark green with some transparency */
+    --color-code-label: #404040;
+
+    --color-help-text: black;
+    --color-help-background: #7f8c8d; /* light grey */
+
+    --color-bad-layout: pink;
+}
+
+:root::-webkit-scrollbar{
+    display: none;
+}
+
+blockquote {
+    background: #101010;
+    border-left: 0.3em solid var(--color-header-background);
+
+    /* top|bottom left|right */
+    margin: 0em 10px;
+
+    /* top|bottom left|right */
+    padding: 0.5em 10px;
+}
+
+/* top right bottom left */
+
+blockquote p {
+    display: inline;
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    color: var(--color-text);
+    font-family: Verdana, sans-serif;
+    font-size: small;
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    color: var(--color-anchor);
+}
+/*
+a:hover, a:visited, a:link, a:active {
+    text-decoration: none;
+}
+*/
+
+code {
+    font-size: larger;
+}
+
+.checkMarkUnicode {
+    display: inline-block;
+    color: var(--color-code-checkmark);
+}

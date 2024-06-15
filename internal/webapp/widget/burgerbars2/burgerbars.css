@@ -1,0 +1,103 @@
+#burgerBars {
+    width: 60px;
+    height: 45px;
+    position: relative;
+    margin: 50px auto;
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+    /*-webkit-transition: .5s ease-in-out;*/
+    /*-moz-transition: .5s ease-in-out;*/
+    /*-o-transition: .5s ease-in-out;*/
+    transition: {{.TransitionSpeedMs}}ms ease-in-out;
+    cursor: pointer;
+}
+
+#burgerBars:hover {
+    color: var(--color-hover);
+}
+
+#burgerBars span {
+    display: block;
+    position: absolute;
+    height: 9px;
+    width: 50%;
+    background: var(--color-controls);
+    opacity: 1;
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+    /*-webkit-transition: .25s ease-in-out;*/
+    /*-moz-transition: .25s ease-in-out;*/
+    /*-o-transition: .25s ease-in-out;*/
+    /*transition:  calc({{.TransitionSpeedMs}}ms / 2.0) ease-in-out;*/
+    transition:  {{.TransitionSpeedMs}}ms ease-in-out;
+}
+
+#burgerBars span:nth-child(even) {
+    left: 50%;
+    border-radius: 0 9px 9px 0;
+}
+
+#burgerBars span:nth-child(odd) {
+    left:0px;
+    border-radius: 9px 0 0 9px;
+}
+
+#burgerBars span:nth-child(1), #burgerBars span:nth-child(2) {
+    top: 0px;
+}
+
+#burgerBars span:nth-child(3), #burgerBars span:nth-child(4) {
+    top: 18px;
+}
+
+#burgerBars span:nth-child(5), #burgerBars span:nth-child(6) {
+    top: 36px;
+}
+
+#burgerBars.open span:nth-child(1),#burgerBars.open span:nth-child(6) {
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    -o-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+#burgerBars.open span:nth-child(2),#burgerBars.open span:nth-child(5) {
+    -webkit-transform: rotate(-45deg);
+    -moz-transform: rotate(-45deg);
+    -o-transform: rotate(-45deg);
+    transform: rotate(-45deg);
+}
+
+#burgerBars.open span:nth-child(1) {
+    left: 5px;
+    top: 7px;
+}
+
+#burgerBars.open span:nth-child(2) {
+    left: calc(50% - 5px);
+    top: 7px;
+}
+
+#burgerBars.open span:nth-child(3) {
+    left: -50%;
+    opacity: 0;
+}
+
+#burgerBars.open span:nth-child(4) {
+    left: 100%;
+    opacity: 0;
+}
+
+#burgerBars.open span:nth-child(5) {
+    left: 5px;
+    top: 29px;
+}
+
+#burgerBars.open span:nth-child(6) {
+    left: calc(50% - 5px);
+    top: 29px;
+}

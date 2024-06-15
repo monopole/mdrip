@@ -1,0 +1,12 @@
+.navRightRoot {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    /*align-items: center;*/
+    /*align-content: space-around;*/
+    /* top rig bot lef */
+    /*padding: 1em 0 1em 0;*/
+}
+.navRightRoot:focus {
+    outline: none;
+}

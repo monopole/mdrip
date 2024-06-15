@@ -1,0 +1,16 @@
+.navLeftFolder {
+    padding-left: 1em;
+    display: flex;
+    flex-direction: column;
+    line-height: 2em;
+}
+
+.navLeftFolderName:hover {
+    color: var(--color-hover);
+    font-weight: bold;
+}
+
+.navLeftFolderChildren {
+    display: flex;
+    flex-direction: column;
+}

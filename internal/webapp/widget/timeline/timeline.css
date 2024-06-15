@@ -1,0 +1,48 @@
+.timelineRow {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.timelinePrev,
+.timelineNext {
+    cursor: pointer;
+    display: flex;
+    flex-basis: 80%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+}
+
+.timelinePrev:hover,
+.timelineNext:hover {
+    color: var(--color-hover);
+}
+
+.timelinePrev {
+    justify-content: flex-end;
+}
+
+.timelineNext {
+}
+
+.timelineTitlePrev,
+.timelineTitleNext {
+    /*font-style: oblique;*/
+    /*font-size: 1em;*/
+}
+
+.timelineTitlePrev {
+    text-align: right;
+}
+
+.timelinePointer {
+    /* top right bottom left */
+    padding: 0 1em 0 1em;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--color-controls);
+}
