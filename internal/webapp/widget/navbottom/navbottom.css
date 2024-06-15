@@ -1,0 +1,9 @@
+.bnvRow {
+    display: flex;
+    background: var(--color-header-background);
+    flex-direction: row;
+    align-items: center;
+    height: var(--layout-nav-bottom-height);
+    width: 100vw;
+}
+

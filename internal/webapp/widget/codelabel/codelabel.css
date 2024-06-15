@@ -1,0 +1,15 @@
+.codeLabel {
+    /* top rig bot lef */
+    padding: 0.5em 0 0.5em 1em;
+    width: 90%;
+}
+
+.codeLabelDeactivated:hover {
+    color: var(--color-hover);
+    font-weight: bold;
+}
+
+.codeLabelActivated {
+    border-radius: 0rem 2rem 2rem 0rem;
+    background-color: var(--color-md-background);
+}

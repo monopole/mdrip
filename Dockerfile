@@ -5,9 +5,6 @@ RUN apt-get update && apt-get install -y git
 COPY gopath/bin/mdrip /mdrip
 EXPOSE 8080
 CMD ["/mdrip",\
-    "--alsologtostderr",\
-    "--v=0",\
-    "--stderrthreshold=INFO",\
+    "demo",\
     "--port=8080",\
-    "--mode=demo",\
-    "gh:monopole/snt"]
+    "."]

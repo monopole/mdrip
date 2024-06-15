@@ -1,0 +1,41 @@
+/* Maybe try: https://css-tricks.com/snippets/css/a-guide-to-flexbox/#aa-examples */
+
+header {
+    display: flex;
+    background: var(--color-header-background);
+    justify-content: space-between;
+    flex-direction: row;
+    align-items: center;
+    height: var(--layout-nav-top-height);
+    width: 100vw;
+    transition: height {{.TransitionSpeedMs}}ms;
+    /*box-shadow: 0 2px 2px 2px rgba(0,0,0,.4);*/
+}
+
+.nvtTitleDoc {
+    display: block;
+    font-weight: bold;
+    font-size: larger;
+}
+
+.nvtLrSpacer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 10%;
+    min-width: 10%;
+}
+
+.nvtTitlesColumn {
+    width: 80%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.nvtTitleCurr {
+    /*font-size: 1em;*/
+    /*font-weight: bold;*/
+}

@@ -1,0 +1,50 @@
+/* Consider https://codepen.io/alvarotrigo/pen/xxYGELY */
+
+.burgerBars {
+    /* a column of horizontal bars */
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: center;
+
+    width: 3.0em;
+    height: 3.0em;
+    cursor: pointer;
+
+    border-radius: 60%;
+    color: var(--color-controls);
+}
+
+.burgerBars:hover {
+    background-color: var(--color-hover);
+    transition: all {{.TransitionSpeedMs}}ms;
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.1), 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.burgerBar1, .burgerBar2, .burgerBar3 {
+    width: 28px;
+    height: 3px;
+    /* top rig bot lef */
+    margin-top: 2px;
+    margin-bottom: 2px;
+    background-color: var(--color-controls);
+    transition: {{.TransitionSpeedMs}}ms;
+
+    /* offset-x | offset-y | blur-radius | spread-radius | color */
+    box-shadow: 0px 1px 1px 1px rgba(0,0,0,0.4);
+    border: solid 1px #555;
+    border-radius: 25px;
+}
+
+.burgerIsAnX .burgerBar1 {
+    transform: translate(0px, 5px) rotate(-45deg);
+    box-shadow: 0px 0px 0px 0px rgba(0,0,0,0);
+}
+.burgerIsAnX .burgerBar3 {
+    transform: translate(0px, -4px) rotate(45deg);
+    box-shadow: 0px 0px 0px 0px rgba(0,0,0,0);
+}
+.burgerIsAnX .burgerBar2 {
+    display: none;
+}

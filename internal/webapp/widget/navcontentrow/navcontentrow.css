@@ -1,0 +1,125 @@
+/*
+
+ncr == Navigated Content Row
+
+* A fixed header at the top of page that doesn't scroll, likely
+  containing nav buttons.
+* Rendered content in the center, between two nav panels.
+  This is the 'content row'.
+* Main content should scroll, but without scroll bars.
+* Left and right nav should
+  * be hide-able,
+  * not scroll,
+  * always extend from the header to a point just above where
+    the footer appears.
+* At end of the content, there should be a footer bar
+  more or less matching the controls and style of the header.
+
+All of the above precludes using a grid. Putting the main content into
+a middle grid cell, and being able to hide the nav columns means that
+scrolling gets funky (if you use a grid).  There's surely some
+way to get it to work, but the scheme below works and only
+requires one wierd trick: two layers.
+
+The bottom layer will be a column, with a top header row,
+a content row, and a bottom bar.  The content row will have a left nav,
+content with a min height that always fills the view, and a right nav.
+The bottom row is another nav bar.
+
+The top layer will have a fixed header and a fixed left and right nav.
+
+On toggle, the three fixed items will disappear, and the spacers beneath
+them will also disappear as needed to let the content get bigger.
+
+*/
+
+.ncrWrapper {
+    position: relative;
+
+    background-color: var(--color-md-background);
+}
+
+.ncrNavTbCommon {
+    width: 100vw;
+    /* Make this a bad color because it should not be visible. */
+    background-color: var(--color-bad-layout);
+}
+
+.ncrNavTopCommon {
+    height: var(--layout-nav-top-height);
+    transition: height {{.TransitionSpeedMs}}ms;
+}
+
+.ncrNavTopSp {
+}
+
+.ncrNavTopAct {
+    position: fixed;
+    top: 0;
+}
+
+.ncrNavBottom {
+    height: var(--layout-nav-bottom-height);
+}
+
+.ncrNavLrCommon {
+    display: inline-block;
+    overflow: hidden; /* initially hidden, auto when shown */
+    transition: width {{.TransitionSpeedMs}}ms, min-width {{.TransitionSpeedMs}}ms, top {{.TransitionSpeedMs}}ms, height {{.TransitionSpeedMs}}ms;
+}
+
+.ncrNavSpLeft, .ncrNavSpRight {
+    width: 0;
+}
+
+.ncrNavActLeft {
+    /* scroll-bar on left */
+    direction:rtl;
+}
+
+.ncrNavActLeft, .ncrNavActRight {
+    position: fixed;
+    width: 0;  /* initially hidden, var(--layout-nav-lr-width) when shown */
+    min-width: 0;  /* initially hidden, var(--layout-nav-lr-width) when shown */
+
+    top: calc(var(--layout-nav-top-height) + 0rem);
+    height: calc(100vh - var(--layout-nav-top-height) - var(--layout-nav-bottom-height));
+
+    background-color: var(--color-lr-nav-background);
+    scrollbar-width: thin;
+    overflow: auto;
+}
+
+.ncrNavActRight {
+    right: 0;
+}
+
+.ncrContentRow {
+    /* This row contains a left nav, some content and a right nav. */
+    display: flex;
+    flex-direction: row;
+    overflow-y:auto;
+    min-height: calc(100vh - var(--layout-nav-top-height) - var(--layout-nav-bottom-height));
+}
+
+.ncrContentRow::-webkit-scrollbar {
+    display: none;
+}
+
+.ncrContentCenter {
+    display: inline-block;
+    color: var(--color-md-text);
+    background-color: var(--color-md-background);
+    /* top right bottom left */
+    padding: 1em 1em 1em 1em;
+    width: 100vw;
+    transition: width {{.TransitionSpeedMs}}ms, min-width {{.TransitionSpeedMs}}ms;
+}
+
+.ncrOnShadow {
+    box-shadow: 1rem 1rem 1rem 0rem rgba(0,0,0,.2) inset;
+}
+
+.ncrOffShadow {
+    box-shadow: 0 1rem 1rem 0rem rgba(0,0,0,.2) inset;
+}

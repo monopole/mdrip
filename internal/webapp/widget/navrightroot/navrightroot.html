@@ -1,0 +1,5 @@
+<div class='navRightRoot' tabindex='-1'>
+  {{range $i, $c := .AppState.InitialLabels}}
+    {{ template "tmplCodeLabel" (idAndLabel $i $c) }}
+  {{end}}
+</div>

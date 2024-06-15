@@ -4,18 +4,34 @@
 [travis-mdrip]: https://travis-ci.org/monopole/mdrip
 [tmux]: https://github.com/tmux/tmux/wiki
 
-`mdrip` turns a directory hierarchy of markdown files into a testable, tutorial web app.
-
-* Navigate with keys (mouse usage optional).
-* Track progress with check marks.
-* Immediately execute code blocks in [tmux] without copy/paste.
-
-Or just use `mdrip` to place markdown-based tutorials under CI/CD testing,
-to avoid disappointing users.
-
+Rips code blocks from markdown and makes it useful.
 
 [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip)
 [![Go Report Card](https://goreportcard.com/badge/github.com/monopole/mdrip)](https://goreportcard.com/report/github.com/monopole/mdrip)
+
+### Testing
+
+Extract and run all code block in all the markdown 
+in and below your current directory:
+```
+mdrip test
+```
+The above command exits successfully of all the code blocks do, else it exits 
+with an error code.
+
+Add this to your CI to assure that the code in your markdown works.
+
+It's unlikely that you want to run every block;
+use a [label](#labels) to be selective.
+
+### Give presentations
+
+To convert your markdown into an interactive tutorial 
+that works with [tmux], run
+```
+mdrip demo
+```
+You can then run blocks in a tmux session with keys strokes only (and no copy/paste).
 
 
 ## Installation
@@ -23,21 +39,19 @@ to avoid disappointing users.
 Assuming [Go](https://golang.org/dl) installed just:
 
 ```
-go get github.com/monopole/mdrip
+GOBIN=$TMPDIR go install github.com/monopole/mdrip/v2
 ```
 
-or put it in your tmp dir
-```
-GOBIN=$TMPDIR go install github.com/monopole/mdrip
-```
+## The Details
 
-## Execution
+### Printing and running
 
-> `mdrip {filePath}`
+> `mdrip print {filePath}`
 
 This searches the given path for files named
-`*.md` (ignoring everything else), and parses
-the markdown into memory.
+`*.md` (ignoring everything else).
+It parses the markdown into memory, then emits a
+script.
 
 The `filePath` argument can be
 
@@ -46,53 +60,16 @@ The `filePath` argument can be
 * a github URL in the style `gh:{user}/{repoName}`,
 * or a particular file or a directory in the repo, e.g. `gh:{user}/{repoName}/foo/bar`.
 
-What happens next depends on the `--mode` flag.
+To extract and noisily run blocks in the current terminal:
 
-## Demo Mode: make a tutorial web app
+> `eval "$(mdrip print goExample.md)"`
 
-> `mdrip --mode demo {filePath}`
+It's better to pipe them to a subprocess:
 
-This serves rendered markdown at
-`http://localhost:8000`.  Change the endpoint using
-`--port` and `--hostname`.
+> `mdrip goExample.md | source /dev/stdin`
 
-Clicking on a code block in your browser (or navigating
-to it using keys only) will copy its contents to
-your clipboard.  Hit '?' in the browser to see key controls.
-
-If you have a local instance of [tmux]
-running, the `mdrip` server sends the code
-block directly to active tmux
-pane for immediate execution.
-
-##### Example:
-
-Render the content you are now reading locally:
-```
-$TMPDIR/mdrip --mode demo gh:monopole/mdrip/README.md
-```
-
-Visit [localhost:8000](http://localhost:8000).
-
-If you have it, start tmux.  Click on command
-blocks in your browser to send them directly
-to your active tmux window.
-
-
-## Print Mode: extract code to stdout
-
-In this default mode, the command
-
-> `eval "$(mdrip file.md)"`
-
-runs extracted blocks in the current
-terminal, while
-
-> `mdrip file.md | source /dev/stdin`
-
-runs extracted blocks in a piped shell that exits with
-extracted code status.  The difference between these
-two compositions is the same as the difference between
+The difference between these two compositions is the
+same as the difference between
 
 > `eval "$(exit)"`
 
@@ -100,32 +77,42 @@ and
 
 > `echo exit | source /dev/stdin`
 
-The former affects your current shell, the latter does
-not.  To stop on error, pipe `mdrip` output to `bash
--e`.
+The former affects your current shell, the latter doesn't.
 
-##### Example:
+To stop on error, pipe `mdrip` output to `bash -e`.
 
-Print all the fenced code blocks from this `README`:
+Te get better reporting on which blocks fail, use the `test`
+command:
 
-```
-$TMPDIR/mdrip gh:monopole/mdrip/README.md
-```
+> `mdrip test goTutorial.md`
 
-## Test Mode: place markdown code under test
+The stdout and stderr of the subprocess are captured,
+an only the output associated with a failing block
+is reported.
 
-> `mdrip --mode test /path/to/tutorial.md`
+### Labels
 
-runs extracted blocks in an `mdrip` subshell,
-leaving the executing shell unchanged.
+One can _label_ a code block by preceding it with
+a one-line HTML comment, e.g:
 
-In this mode, `mdrip` captures the stdout and stderr of
-the subprocess, reporting only blocks that fail,
-facilitating error diagnosis.  Normally, mdrip exits
-with non-zero status only when used incorrectly,
-e.g. file not found, bad flags, etc.  In test mode,
-mdrip will exit with the status of any failing code
-block.
+<blockquote>
+<pre>
+&lt;&#33;-- @initializeCluster @test  @tutorial03 --&gt;
+&#96;&#96;&#96;
+echo hello
+&#96;&#96;&#96;
+</pre>
+</blockquote>
+
+One can then use the `--label` flag to select only
+code blocks with that label, e.g.
+
+> `mdrip test --label test {filePath}`
+
+The first label on a block is slightly special, in
+that it's reported as the block's _name_ for various
+purposes.  If no labels are present, one is generated
+for these purposes.
 
 [literate programming]: http://en.wikipedia.org/wiki/Literate_programming
 [_here_ documents]: http://tldp.org/LDP/abs/html/here-docs.html
@@ -134,52 +121,22 @@ This mode is an instance of [literate programming] in
 that code (shell commands) are embedded in explanatory
 content (markdown).  One can use [_here_ documents] to
 incorporate any programming language into the tests
-(see the [example](#example) below).
+(as in [goExample.md](./goExample.md) below).
 
-#### Labels
+### Debugging and demonstrations
 
-Fenced code blocks can be preceeded in the markdown by
-a one-line HTML comment with embedded labels in this form:
+The command
 
-<blockquote>
-<pre>
-&lt;&#33;-- @initializeCluster @tutorial03 @test --&gt;
-&#96;&#96;&#96;
-echo hello
-&#96;&#96;&#96;
-</pre>
-</blockquote>
+> `mdrip demo goExample.md`
 
-Then the `--label` flag can be used to extract only
-code blocks with the given label, e.g.
+serves rendered markdown at `http://localhost:8000`.
 
-> `mdrip --label test {filePath}`
+Hit '?' in the browser to see key controls.
 
-discards all code blocks other than those with a
-preceding `@test` label.
-
-This can be used, for example, to gather blocks that
-should be placed under test, and ignore those that
-shouldn't.  An example of the latter would be commands
-that prompt an interactive user to login (test
-frameworks typically have their own notion of an
-authenticated user).
-
-#### Special labels
-
- * The first label on a block is slightly special, in
-   that it's reported as the block name for logging in
-   test mode.  So its useful to treat it as a method
-   name for the block, e.g. `@initializeCluster` or
-   `@createWebServer`.
-
- * The label `@sleep` causes mdrip to insert a `sleep
-   2` command _after_ the block.  Appropriate if one is
-   starting a server in the background in that block,
-   and want to impose a short wait (which you'd get
-   implicitly if a human were executing the blocks more
-   slowly as part of a demo).
-
+If you have a local instance of [tmux]
+running, the `mdrip` server sends the code
+block directly to active tmux
+pane for immediate execution.
 
 #### Example:
 
@@ -193,15 +150,13 @@ Use this to extract blocks to `stdout`:
 
 ```
 alias mdrip=$TMPDIR/mdrip
-mdrip --label lesson1 \
-    gh:monopole/mdrip/data/example_tutorial.md
+mdrip --label lesson1 gh:monopole/mdrip/goTutorial.md
 ```
 
 Test the code from the markdown in a subshell:
 ```
 clear
-mdrip --mode test --label lesson1 \
-    gh:monopole/mdrip/data/example_tutorial.md
+mdrip --mode test --label lesson1 gh:monopole/mdrip/goTutorial.md
 echo $?
 ```
 
@@ -213,7 +168,7 @@ that it fails locally:
 ```
 tmp=$(mktemp -d)
 git clone https://github.com/monopole/mdrip.git $tmp
-file=$tmp/data/example_tutorial.md
+file=$tmp/goTutorial.md
 mdrip --mode test --label lesson1 $file
 ```
 
@@ -232,11 +187,10 @@ echo $?
 
 The return code should be zero.
 
-
 So, adding a line like
 
 ```
-mdrip --mode test --label {someLabel} {filePath}
+mdrip test --label {someLabel} {filePath}
 ```
 to your CI/CD test framework covers
 the execution path determined by that label.
@@ -247,11 +201,23 @@ the execution path determined by that label.
 [fenced code blocks]: https://help.github.com/articles/creating-and-highlighting-code-blocks/#fenced-code-blocks
 [block quote]: https://github.github.com/gfm/#block-quotes
 
- * Place commands that the reader should copy/paste/execute in
-   [fenced code blocks].
+Place commands that the reader should copy/paste/execute in
+[fenced code blocks].
 
- * Eschew preceding commands with redundant prompts (e.g. `$`).
+Code-style text not intended for immediate execution, e.g. alternative
+commands or example output, should be in a fenced code block indented via a
+[block quote].  This makes them invisible to `mdrip`.
 
- * Code-style text not intended for immediate execution, e.g. alternative
-   commands or example output, should be in a fenced code block indented via a
-   [block quote].  This makes them invisible to `mdrip`.
+Don't put prompts in your code blocks.
+
+The following is easy to copy/paste:
+> ```
+> echo hello
+> du -sk
+> ```
+But this isn't:
+> ```
+> $ echo hello
+> $ du -sk
+> ```
+
