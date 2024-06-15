@@ -39,7 +39,7 @@ You can then run blocks in a tmux session with keys strokes only (and no copy/pa
 Assuming [Go](https://golang.org/dl) installed just:
 
 ```
-GOBIN=$TMPDIR go install github.com/monopole/mdrip/v2
+go install github.com/monopole/mdrip/v2
 ```
 
 ## The Details
@@ -59,31 +59,22 @@ The `filePath` argument can be
 * a github URL in the style `gh:{user}/{repoName}`,
 * or a particular file or a directory in the repo, e.g. `gh:{user}/{repoName}/foo/bar`.
 
-To extract and noisily run blocks in the current terminal:
-
-> `eval "$(mdrip print goTutorial.md)"`
-
-It's better to pipe them to a subprocess:
-
-> `mdrip goTutorial.md | source /dev/stdin`
-
-The difference between these two compositions is the
-same as the difference between
-
-> `eval "$(exit)"`
-
-and
-
-> `echo exit | source /dev/stdin`
-
-The former affects your current shell, the latter doesn't.
-
-To stop on error, pipe `mdrip` output to `bash -e`.
+So one can pipe the blocks to a subprocess:
+```
+mdrip print goTutorial.md | source /dev/stdin
+```
+Stop on error with:
+```
+mdrip print goTutorial.md | bash -e
+```
+Dangerously run then in your current shell: `eval "$(mdrip print goTutorial.md)`
 
 Te get better reporting on which blocks fail, use the `test`
 command:
 
-> `mdrip test goTutorial.md`
+```
+mdrip test goTutorial.md
+```
 
 The stdout and stderr of the subprocess are captured,
 an only the output associated with a failing block
@@ -125,12 +116,13 @@ incorporate any programming language into the tests
 ### Debugging and demonstrations
 
 The command
-
-> `mdrip demo goTutorial.md`
+```
+mdrip demo gh:monopole/mdrip/goTutorial.md
+```
 
 serves rendered markdown at `http://localhost:8000`.
 
-Hit '?' in the browser to see key controls.
+Hit `?` in the browser to see key controls.
 
 If you have a local instance of [tmux]
 running, the `mdrip` server sends the code
@@ -139,8 +131,8 @@ pane for immediate execution.
 
 #### Example:
 
-[Go tutorial]: https://github.com/monopole/mdrip/blob/master/data/example_tutorial.md
-[raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/data/example_tutorial.md
+[Go tutorial]: https://github.com/monopole/mdrip/blob/master/goTutorial.md
+[raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/goTutorial.md
 
 This [Go tutorial] has code blocks that write, compile
 and run a Go program.
@@ -148,14 +140,13 @@ and run a Go program.
 Use this to extract blocks to `stdout`:
 
 ```
-alias mdrip=$TMPDIR/mdrip
-mdrip --label lesson1 gh:monopole/mdrip/goTutorial.md
+mdrip print --label lesson1 gh:monopole/mdrip/goTutorial.md
 ```
 
 Test the code from the markdown in a subshell:
 ```
 clear
-mdrip --mode test --label lesson1 gh:monopole/mdrip/goTutorial.md
+mdrip test --label lesson1 gh:monopole/mdrip/goTutorial.md
 echo $?
 ```
 
@@ -168,7 +159,7 @@ that it fails locally:
 tmp=$(mktemp -d)
 git clone https://github.com/monopole/mdrip.git $tmp
 file=$tmp/goTutorial.md
-mdrip --mode test --label lesson1 $file
+mdrip test --label lesson1 $file
 ```
 
 Fix the problems:
@@ -180,7 +171,7 @@ sed -i 's|badCommandToTriggerTestFailure|echo Hello|' $file
 
 Run the test again:
 ```
-mdrip --mode test --label lesson1 $file
+mdrip test --label lesson1 $file
 echo $?
 ```
 
