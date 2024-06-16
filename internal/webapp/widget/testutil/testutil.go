@@ -187,6 +187,7 @@ func mdBytes(id int) []byte {
 			buff.WriteString("```\n")
 		}
 		if !often() {
+			buff.WriteString("\n<!-- @mississippi -->\n")
 			buff.WriteString("\n```\n")
 			buff.WriteString(randomCodeBlock())
 			buff.WriteString("```\n")
@@ -251,10 +252,10 @@ In other words, baby, kiss me
 `
 
 	mdFmt1 = `
-## Sun Tzu %d
+## Fake Sun Tzu %d
 
-Hence, when we are able to attack, we must seem unable;
-when using our forces, we must appear inactive.
+Hence, when we are able to attack, we must look like we're scanning tic-toc;
+when using our forces, we must appear to be drowsy.
 
 | x | y | z | planet |
 |---|---|---|---------|
@@ -263,15 +264,16 @@ when using our forces, we must appear inactive.
 | g | h | i | venus |
 | j | k | l | earth |
 
-When we are near, we must make the enemy believe we are far away;
-when far away, we must make him believe we are near.
+When we are near, we must make the enemy believe that we've gone out for coffee;
+when far away, we must make him believe we are under the bed.
 
 `
 
 	mdFmt2 = `
-## Starship Troopers %d
+## Have Space Suit - Will Travel %d
 
-Women and cats will do as they please, and men and dogs should relax and get used to the idea.
+Women and cats will do as they please;
+men and dogs should relax and get used to the idea.
 
 > There is no worse tyranny than to force a man to pay 
 > for what he does not want merely because you think
@@ -283,7 +285,10 @@ Always store beer in a dark place.
 > let a = b**2 + c**2
 > print math.sqrt(a)
 > ` + "```" + `
-	
+
+This is the Unix philosophy: Write programs that do one thing and do it well.
+Write programs to work together. Write programs to handle text streams,
+because that is a universal interface.
 `
 )
 
@@ -298,15 +303,11 @@ date
 ls /etc | wc -l
 echo Doug McIlroy, can you summarize what\'s most important?
 `, `
-echo "your mom"
+echo "Greetings, program!"
 time
-cal
 date
-which ls
 cat /etc/hosts | wc -c
-echo "the rain in Spain"
-cat /etc/hosts | wc -l
-echo "falls mainly on the plain"
+cal
 `,
 	}
 

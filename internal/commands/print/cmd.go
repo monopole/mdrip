@@ -38,7 +38,11 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 				loader.NewVisitorDump(os.Stdout).VisitFolder(fld)
 			}
 			fld.Accept(p)
-			loader.DumpBlocks(os.Stdout, p.FilteredBlocks(loader.WildCardLabel))
+			label := loader.WildCardLabel
+			if flags.label != "" {
+				label = loader.Label(flags.label)
+			}
+			loader.DumpBlocks(os.Stdout, p.FilteredBlocks(label))
 			return nil
 		},
 		SilenceUsage: true,

@@ -2,7 +2,7 @@ Follow these instructions to write a `Go` program.
 
 Create a directory to work in:
 
-<!-- @init @lesson1 @cleanup -->
+<!-- @init @lesson1 -->
 ```
 workDir=$(mktemp -d)
 mkdir -p ${workDir}/src/example

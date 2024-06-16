@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -71,26 +72,29 @@ func runTheBlocks(blocks []*loader.CodeBlock, timeout time.Duration) error {
 			C: "echo " + unlikelyWord,
 			V: unlikelyWord,
 		},
-		//SentinelErr: shexec.Sentinel{
-		//	C: unlikelyWord,
-		//	V: `unrecognized command: "` + unlikelyWord + `"`,
-		//},
+		// TODO: try:
+		//  SentinelErr: shexec.Sentinel{
+		//	  C: unlikelyWord,
+		//	  V: `unrecognized command: "` + unlikelyWord + `"`,
+		//  },
 	})
 	if err := sh.Start(durationStartup); err != nil {
 		return err
 	}
-	for i := range blocks {
-		fmt.Printf("******** running command %d\n", i)
-		c := shexec.NewLabellingCommander(blocks[i].Code())
-		// Why doesn't the following work?
-		// c := &shexec.PassThruCommander{C: blocks[i].Code()}
+	for _, b := range blocks {
+		slog.Info("running", "command", b.FirstLabel())
+		c := shexec.NewLabellingCommander(b.Code())
+		// TODO: try: c := &shexec.PassThruCommander{C: blocks[i].Code()}
+		fmt.Println(b.Code())
 		if err := sh.Run(timeout, c); err != nil {
-			fmt.Printf("**************** got an error: %v\n", err.Error())
+			fmt.Println("err = ", err.Error())
+			return err
 		}
+		fmt.Println("no error")
 	}
 	if err := sh.Stop(durationShutdown, ""); err != nil {
 		return err
 	}
-	fmt.Println("All done.")
+	slog.Info("All done.")
 	return nil
 }
