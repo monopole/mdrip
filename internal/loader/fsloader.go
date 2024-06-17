@@ -2,7 +2,6 @@ package loader
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,7 +42,6 @@ func (fsl *FsLoader) LoadTrees(args []string) (*MyFolder, error) {
 		if len(args) == 1 {
 			arg = FilePath(args[0])
 		}
-		slog.Info("loading one tree", "arg", arg)
 		return fsl.LoadOneTree(arg)
 	}
 	// Make one folder to hold all the argument folders.

@@ -109,14 +109,14 @@ class NavigatedContentRowController {
 
     makeCenterWide() {
         this.elCenter.style.width = '100vw';
-        this.elCenter.classList.remove('ncrOnShadow');
-        this.elCenter.classList.add('ncrOffShadow');
+        // this.elCenter.classList.remove('ncrOnShadow');
+        // this.elCenter.classList.add('ncrOffShadow');
     }
 
     makeCenterSkinny() {
         this.elCenter.style.width = 'calc(100vw - (2 * var(--layout-nav-lr-width)))';
-        this.elCenter.classList.remove('ncrOffShadow');
-        this.elCenter.classList.add('ncrOnShadow');
+        // this.elCenter.classList.remove('ncrOffShadow');
+        // this.elCenter.classList.add('ncrOnShadow');
     }
 
     makeTopShorter() {

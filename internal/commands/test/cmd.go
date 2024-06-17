@@ -3,7 +3,6 @@ package test
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/monopole/mdrip/v2/internal/loader"
@@ -42,13 +41,9 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 				label = loader.Label(flags.label)
 			}
 			fld.Accept(p)
-			blocks := p.FilteredBlocks(label)
-			if debugging {
-				loader.DumpBlocks(os.Stdout, blocks)
-				// fld.Accept(loader.NewVisitorDump(os.Stdout))
-			}
-			return runTheBlocks(blocks, flags.blockTimeOut)
+			return runTheBlocks(p.FilteredBlocks(label), flags.blockTimeOut)
 		},
+		SilenceUsage: true,
 	}
 	c.Flags().StringVar(
 		&flags.label,
@@ -67,7 +62,7 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 func runTheBlocks(blocks []*loader.CodeBlock, timeout time.Duration) error {
 	const unlikelyWord = "rumplestilskin"
 	sh := shexec.NewShell(shexec.Parameters{
-		Params: channeler.Params{Path: "/bin/sh"},
+		Params: channeler.Params{Path: "/bin/bash", Args: []string{"-e"}},
 		SentinelOut: shexec.Sentinel{
 			C: "echo " + unlikelyWord,
 			V: unlikelyWord,
@@ -77,20 +72,41 @@ func runTheBlocks(blocks []*loader.CodeBlock, timeout time.Duration) error {
 		//	  C: unlikelyWord,
 		//	  V: `unrecognized command: "` + unlikelyWord + `"`,
 		//  },
+		//SentinelErr: shexec.Sentinel{
+		//	C: unlikelyWord + "Err",
+		//	V: unlikelyWord + `Err: command not found`,
+		//},
 	})
 	if err := sh.Start(durationStartup); err != nil {
 		return err
 	}
 	for _, b := range blocks {
-		slog.Info("running", "command", b.FirstLabel())
-		c := shexec.NewLabellingCommander(b.Code())
-		// TODO: try: c := &shexec.PassThruCommander{C: blocks[i].Code()}
-		fmt.Println(b.Code())
+		if debugging {
+			fmt.Println("==== running " + string(b.FirstLabel()))
+		}
+		c := shexec.NewRecallCommander(b.Code())
+		// TODO: there's a race condition in that when a bad command hits,
+		// and the process dies, the error from that bad command somehow
+		// slips in behind the error encountered when the shexec infra tries
+		// to write the next command.  This means that the error reported
+		// is the one from the infra, not the one from the process - and
+		// we want to see the latter.
+		// c := &shexec.PassThruCommander{C: b.Code()}
+		if debugging {
+			fmt.Println("------------------------------")
+			fmt.Print(b.Code())
+			fmt.Println("------------------------------")
+		}
 		if err := sh.Run(timeout, c); err != nil {
-			fmt.Println("err = ", err.Error())
+			if debugging {
+				fmt.Println("returning from command with err = ", err.Error())
+				fmt.Println("stdErr=", c.DataErr())
+			}
 			return err
 		}
-		fmt.Println("no error")
+		if debugging {
+			fmt.Println("no error, going for next command")
+		}
 	}
 	if err := sh.Stop(durationShutdown, ""); err != nil {
 		return err

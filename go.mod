@@ -14,14 +14,14 @@ require (
 	github.com/tdewolff/minify/v2 v2.20.31
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	github.com/yuin/goldmark v1.6.0
+	go.abhg.dev/goldmark/mermaid v0.5.0
 
 )
 
-//replace (
-//	github.com/gomarkdown/markdown => ../../gomarkdown/markdown
-//	github.com/monopole/shexec => ../shexec
-//	github.com/yuin/goldmark => ../../yuin/goldmark
-//)
+replace github.com/monopole/shexec => ../shexec
+
+// replace github.com/gomarkdown/markdown => ../../gomarkdown/markdown
+// replace github.com/yuin/goldmark => ../../yuin/goldmark
 
 exclude github.com/monopole/mdrip v1.0.3
 

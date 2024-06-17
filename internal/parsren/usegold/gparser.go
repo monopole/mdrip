@@ -7,6 +7,8 @@ import (
 	"log/slog"
 	"strings"
 
+	"go.abhg.dev/goldmark/mermaid"
+
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/webapp/widget/codeblock"
@@ -48,13 +50,14 @@ func NewGParser() *GParser {
 	gp := goldmark.New(
 		goldmark.WithExtensions(
 			extension.GFM,
+			&mermaid.Extender{},
 		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
 		),
 		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
-			html.WithXHTML(),
+			// html.WithHardWraps(),
+			// html.WithXHTML(),
 			html.WithUnsafe(),
 		),
 	)

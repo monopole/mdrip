@@ -10,7 +10,7 @@ import (
 
 const (
 	PgmName = "mdrip"
-	Version = "v0.2.2"
+	Version = "v2.0.0-rc02"
 )
 
 var leading = regexp.MustCompile("^[0-9]+_")

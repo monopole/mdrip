@@ -4,7 +4,7 @@
 .mdFilesContent {
     padding: 1em;
     box-shadow: var(--color-md-text) 0 0.0em 0.5em;
-    border-radius: 0.5em;
+    border-radius: var(--layout-md-corner-radius);
 }
 
 .mdFilesContent:focus {

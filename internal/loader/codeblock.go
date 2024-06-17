@@ -62,21 +62,20 @@ func (cb *CodeBlock) FirstLabel() Label {
 	return Label(fmt.Sprintf("codeBlock%03d", cb.index))
 }
 
-func (cb *CodeBlock) Dump(wr io.Writer) {
-	if len(cb.labels) > 0 {
-		_, _ = fmt.Fprintf(wr, "# labels: ")
-		for _, l := range cb.labels {
-			_, _ = fmt.Fprint(wr, " ", l)
-		}
-		_, _ = fmt.Fprintln(wr)
+func (cb *CodeBlock) Dump(wr io.Writer, index int) {
+	_, _ = fmt.Fprintf(wr, "# ----- BLOCK%4d: ", index)
+	for _, l := range cb.labels {
+		_, _ = fmt.Fprint(wr, " ", l)
 	}
-	_, _ = fmt.Fprintf(wr, "#   lang: %s\n", cb.language)
+	if cb.language != "" {
+		_, _ = fmt.Fprintf(wr, " (lang=%s)", cb.language)
+	}
+	_, _ = fmt.Fprintln(wr)
 	_, _ = fmt.Fprint(wr, cb.code)
 }
 
 func DumpBlocks(wr io.Writer, blocks []*CodeBlock) {
 	for i, b := range blocks {
-		_, _ = fmt.Fprintf(wr, "# ----- BLOCK%3d -----------------\n", i)
-		b.Dump(wr)
+		b.Dump(wr, i)
 	}
 }

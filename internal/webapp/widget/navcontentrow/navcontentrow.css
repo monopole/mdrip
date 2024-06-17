@@ -106,14 +106,20 @@ them will also disappear as needed to let the content get bigger.
     display: none;
 }
 
+
 .ncrContentCenter {
     display: inline-block;
+    background-color: var(--color-lr-nav-background);
+    width: 100vw;
+    transition: width {{.TransitionSpeedMs}}ms, min-width {{.TransitionSpeedMs}}ms;
+}
+
+.ncrContentBubble {
     color: var(--color-md-text);
     background-color: var(--color-md-background);
     /* top right bottom left */
     padding: 1em 1em 1em 1em;
-    width: 100vw;
-    transition: width {{.TransitionSpeedMs}}ms, min-width {{.TransitionSpeedMs}}ms;
+    border-radius: var(--layout-md-corner-radius);
 }
 
 .ncrOnShadow {
