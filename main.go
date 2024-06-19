@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/monopole/mdrip/v2/internal/commands/demo"
 	"github.com/monopole/mdrip/v2/internal/commands/gentestdata"
 	"github.com/monopole/mdrip/v2/internal/commands/print"
+	"github.com/monopole/mdrip/v2/internal/commands/serve"
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren/usegold"
 	"github.com/monopole/mdrip/v2/internal/utils"
@@ -26,7 +26,7 @@ func newCommand() *cobra.Command {
 	ldr := loader.New(afero.NewOsFs())
 	p := usegold.NewGParser()
 	c.AddCommand(
-		demo.NewCommand(ldr, p),
+		serve.NewCommand(ldr, p),
 		gentestdata.NewCommand(),
 		print.NewCommand(ldr, p),
 		// "test" disabled until the UX improves - pipe "print" into "bash -e" instead.

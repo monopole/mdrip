@@ -1,4 +1,4 @@
-package demo
+package serve
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const cmdName = "demo"
+const cmdName = "serve"
 
 type myFlags struct {
 	port        int

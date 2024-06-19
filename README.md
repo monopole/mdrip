@@ -14,7 +14,7 @@ Rips code blocks from markdown and makes them useful.
 Extract and run all code block in all the markdown 
 in and below your current directory:
 > ```
-> mdrip print | /bin/bash -e
+> mdrip print . | /bin/bash -e
 > ```
 
 This exits successfully if all the commands in the code blocks do,
@@ -29,7 +29,7 @@ To convert your markdown into an interactive browser-based
 tutorial that works with [tmux], run
 
 > ```
-> mdrip demo
+> mdrip serve .
 > ```
 
 This serves a web app showing the markdown. From the app
@@ -42,6 +42,7 @@ into `tmux` via a `tmux` api.
 
 Assuming [Go](https://golang.org/dl) installed just:
 
+<!-- @installation -->
 ```
 go install github.com/monopole/mdrip/v2
 ```
@@ -49,6 +50,7 @@ go install github.com/monopole/mdrip/v2
 ## The Details
 
 To run the following examples, generate some markdown locally using
+<!-- @genTestData -->
 ```
 mdrip gentestdata mdTestData
 ```
@@ -57,6 +59,7 @@ The final argument is the name of a directory to create and fill with markdown.
 This test data has code blocks with read-only commands, e.g. `cat /etc/hosts`.
 
 Also grab the `bustedGoTutorial.md` file:
+<!-- @downloadBusted -->
 ```
 curl -O https://raw.githubusercontent.com/monopole/mdrip/master/hack/bustedGoTutorial.md
 ```
@@ -69,6 +72,7 @@ Obviously, inspect as desired.
 The sub-command `print` searches the given path for `*.md`, parses the markdown
 into memory, then emits code blocks as one script.
 
+<!-- @justPrint -->
 ```
 clear
 mdrip print mdTestData | head -n 40
@@ -82,17 +86,23 @@ The argument to `print` can be
 * or a particular file or a directory in the repo, e.g. `gh:{user}/{repoName}/foo/bar`.
 
 So one can pipe the blocks into pipe subprocess with:
+
+<!-- @pipeToRunAll -->
 ```
 clear
 mdrip print mdTestData/dir5 | source /dev/stdin
 ```
 Or send the blocks to a subprocess that stops on the first error:
+
+<!-- @pipeToFailOnErr -->
 ```
 clear
 mdrip print mdTestData/dir5 | /bin/bash -e
 echo $?
 ```
 Or run them in your current shell (handy for setting env variables that you wish to use):
+
+<!-- @evalInShell -->
 ```
 clear
 eval "$(mdrip print mdTestData/dir5)"
@@ -116,6 +126,7 @@ Labels are just words that start with an `@` in the comment.
 One can then use the `--label` flag to select only
 code blocks with that label, e.g.
 
+<!-- @labelExample -->
 ```
 clear
 mdrip print --label mississippi mdTestData/dir2 | head -n 40
@@ -135,11 +146,13 @@ content (markdown).  One can use [_here_ documents] to
 incorporate any programming language into the tests
 (as in [bustedGoTutorial.md](./hack/bustedGoTutorial.md) below).
 
-### Debugging and demonstrations
+### Demonstrations
 
 The command
+
+<!-- @serveTestData -->
 ```
-mdrip demo mdTestData
+mdrip serve mdTestData
 ```
 parse the markdown from the given path and
 renders it at `http://localhost:8000`.
@@ -161,12 +174,15 @@ and run a Go program.
 
 Use this to extract blocks to `stdout`:
 
+<!-- @lookAtBlocks -->
 ```
 clear
 mdrip print --label lesson1 bustedGoTutorial.md
 ```
 
 Test the code from the markdown in a subshell:
+
+<!-- @testTheBlocks -->
 ```
 clear
 mdrip print --label lesson1 bustedGoTutorial.md | bash -e
@@ -189,6 +205,8 @@ diff bustedGoTutorial.md goTutorial.md
 ```
 
 Run the test again:
+
+<!-- @testAgain -->
 ```
 clear
 mdrip print --label lesson1 goTutorial.md | bash -e
