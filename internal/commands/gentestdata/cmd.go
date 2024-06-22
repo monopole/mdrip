@@ -3,14 +3,12 @@ package gentestdata
 import (
 	"errors"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
-
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/utils"
 	"github.com/monopole/mdrip/v2/internal/webapp/widget/testutil"
 	"github.com/spf13/cobra"
+	"log"
+	"os"
 )
 
 const (
@@ -44,10 +42,10 @@ to an empty folder to create known state for testing.
 			if stat == pathIsAFile {
 				return fmt.Errorf("%q is a file; not removing", path)
 			}
-			if filepath.IsAbs(path) {
-				// Don't want to blow away /etc
-				return fmt.Errorf("not allowing absoluate paths at this time")
-			}
+			// TODO: Be paranoid?
+			//  if filepath.IsAbs(path) {
+			// 	  return fmt.Errorf("not allowing absolute paths at this time")
+			//  }
 			if stat == pathIsAFolder {
 				if !flags.overwrite {
 					return fmt.Errorf("folder %q exists; not overwriting", path)

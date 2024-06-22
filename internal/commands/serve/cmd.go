@@ -20,7 +20,6 @@ type myFlags struct {
 	port        int
 	title       string
 	useHostName bool
-	debug       bool
 }
 
 // hostAndPort for the server.
@@ -54,7 +53,7 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 		Short:   "Serves a markdown / code-running application at a particular port on localhost.",
 		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 && !flags.debug {
+			if len(args) == 0 {
 				args = []string{string(loader.CurrentDir)}
 			}
 			dl := webserver.NewDataLoader(
@@ -86,10 +85,5 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 		"use-host-name",
 		false,
 		"Use the 'hostname' utility to specify where to serve, else implicitly use 'localhost'.")
-	c.Flags().BoolVar(
-		&flags.debug,
-		"debug",
-		false,
-		"Use hard coded markdown test data instead of reading from current directory.")
 	return c
 }

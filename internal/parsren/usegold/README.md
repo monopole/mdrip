@@ -2,7 +2,7 @@
 
 https://github.com/yuin/goldmark
 
-Notes made in _Fall 2023_
+Notes made in late 2023; likely very out of date
 
 ## GOOD
  - One active, dedicated, awesome maintainer.
@@ -12,11 +12,10 @@ Notes made in _Fall 2023_
  - It has (at least) 80 releases!  https://github.com/yuin/goldmark/releases
  - (at least) 80% coverage
 
-### MEH
+### maybe problems
  - Some PRs being ignored by the maintainer. Sure.
  - It doesn't yet support block level attributes, but maybe it's coming.
- - The parser API doesn't seem to return errors. Odd.
-
-
-Since this package renders HTML, the  `webapp` depends on it,
-and this dependence seeps into various things.
+ - The parser API doesn't seem to return errors.
+ - The rendering aspect of the package is pretty tightly bound 
+   to its parsing aspect.
+ 
