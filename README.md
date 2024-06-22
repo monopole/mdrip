@@ -1,42 +1,40 @@
 # mdrip
 
-[fenced code blocks]: https://help.github.com/articles/creating-and-highlighting-code-blocks/#fenced-code-blocks
+[literate programming]: http://en.wikipedia.org/wiki/Literate_programming
+[_here_ documents]: http://tldp.org/LDP/abs/html/here-docs.html
+[busted Go tutorial]: ./hack/bustedGoTutorial.md
+[raw]: https://raw.githubusercontent.com/monopole/mdrip/master/hack/bustedGoTutorial.md
 [travis-mdrip]: https://travis-ci.org/monopole/mdrip
 [tmux]: https://github.com/tmux/tmux/wiki
+[fenced code blocks]: https://help.github.com/articles/creating-and-highlighting-code-blocks/#fenced-code-blocks
+[block quote]: https://github.github.com/gfm/#block-quotes
+[label]: #labels
 
 Rips code blocks from markdown and makes them useful.
 
 <!-- [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip) -->
 [![Go Report Card](https://goreportcard.com/badge/github.com/monopole/mdrip)](https://goreportcard.com/report/github.com/monopole/mdrip)
 
-### Place the blocks under test
+## Summary
 
-Extract and run all code block in all the markdown 
-in and below your current directory:
+Extract and run all markdown code blocks in your current directory:
 > ```
 > mdrip print . | /bin/bash -e
 > ```
 
-This exits successfully if all the commands in the code blocks do,
-else it exits with the error code of the failed command.
-
+This exits with the error code of the first failed command.
 It's unlikely that you'll want to run every block;
-use a [label](#labels) to be selective.
+use a [label] to be selective.
 
-### Give presentations
-
-To convert your markdown into an interactive browser-based
-tutorial that works with [tmux], run
+Convert your markdown into a web app that works with [tmux]:
 
 > ```
-> mdrip serve .
+> mdrip serve --port 8080 .
 > ```
 
-This serves a web app showing the markdown. From the app
-you can send code blocks to a tmux session using the `Enter`
-key without performing a copy/paste.  The browser
-sends a POST to the server, and the server sends code 
-into `tmux` via a `tmux` api.
+While focused on a code block, hit the `Enter` key.
+The app posts the block's ID to the server, and the server sends
+the corresponding code block to `tmux` via its api.
 
 ## Installation
 
@@ -44,140 +42,36 @@ Assuming [Go](https://golang.org/dl) installed just:
 
 <!-- @installation -->
 ```
-go install github.com/monopole/mdrip/v2@latest
+go install github.com/monopole/mdrip/v2@v2.0.0-rc07   # or @latest
 ```
 
-## The Details
+## Testing
 
-To run the following examples, generate some markdown locally using
-<!-- @genTestData -->
-```
-mdrip gentestdata mdTestData
-```
-The final argument is the name of a directory to create and fill with markdown.
+For something to work with, 
+download the [busted Go tutorial] ([raw]):
 
-This test data has code blocks with read-only commands, e.g. `cat /etc/hosts`.
-
-Also grab the `bustedGoTutorial.md` file:
 <!-- @downloadBusted -->
 ```
-curl -O https://raw.githubusercontent.com/monopole/mdrip/master/hack/bustedGoTutorial.md
-```
-The code blocks in this file will create some files in your `TMPDIR`.
-
-Obviously, inspect as desired.
-
-### Printing and running
-
-The sub-command `print` searches the given path for `*.md`, parses the markdown
-into memory, then emits code blocks as one script.
-
-<!-- @justPrint -->
-```
-clear
-mdrip print mdTestData | head -n 40
+repo=https://raw.githubusercontent.com/monopole/mdrip
+curl -O $repo/master/hack/bustedGoTutorial.md
 ```
 
-The argument to `print` can be
+It has code blocks that seek to write, compile 
+and run a Go program in your `TMPDIR`.
 
-* a single local file,
-* a local directory,
-* a github URL in the style `gh:{user}/{repoName}`,
-* or a particular file or a directory in the repo, e.g. `gh:{user}/{repoName}/foo/bar`.
-
-So one can pipe the blocks into pipe subprocess with:
-
-<!-- @pipeToRunAll -->
-```
-clear
-mdrip print mdTestData/dir5 | source /dev/stdin
-```
-Or send the blocks to a subprocess that stops on the first error:
-
-<!-- @pipeToFailOnErr -->
-```
-clear
-mdrip print mdTestData/dir5 | /bin/bash -e
-echo $?
-```
-Or run them in your current shell (handy for setting env variables that you wish to use):
-
-<!-- @evalInShell -->
-```
-clear
-eval "$(mdrip print mdTestData/dir5)"
-```
-
-### Labels
-
-One can _label_ a code block by preceding it with a one-line HTML comment, e.g:
-
-<blockquote>
-<pre>
-&lt;&#33;-- @initializeCluster @test @tutorial03 --&gt;
-&#96;&#96;&#96;
-echo hello
-&#96;&#96;&#96;
-</pre>
-</blockquote>
-
-Labels are just words that start with an `@` in the comment.
-
-One can then use the `--label` flag to select only
-code blocks with that label, e.g.
-
-<!-- @labelExample -->
-```
-clear
-mdrip print --label mississippi mdTestData/dir2 | head -n 40
-```
-
-The first label on a block is slightly special, in
-that it's reported as the block's name for various
-purposes.  If no labels are present, a unique 
-name is generated.
-
-[literate programming]: http://en.wikipedia.org/wiki/Literate_programming
-[_here_ documents]: http://tldp.org/LDP/abs/html/here-docs.html
-
-This mode is an instance of [literate programming] in
-that code (shell commands) are embedded in explanatory
-content (markdown).  One can use [_here_ documents] to
-incorporate any programming language into the tests
-(as in [bustedGoTutorial.md](./hack/bustedGoTutorial.md) below).
-
-### Demonstrations
-
-The command
-
-<!-- @serveTestData -->
-```
-mdrip serve mdTestData
-```
-parse the markdown from the given path and
-renders it at `http://localhost:8000`.
-
-Hit `?` in the browser to see key controls.
-
-If you have a local instance of [tmux]
-running, the `mdrip` server sends the code
-block directly to active tmux
-pane for immediate execution.
-
-#### Example:
-
-[Go tutorial]: https://github.com/monopole/mdrip/blob/master/hack/bustedGoTutorial.md
-[raw-example]: https://raw.githubusercontent.com/monopole/mdrip/master/hack/bustedGoTutorial.md
-
-This [Go tutorial] has code blocks that write, compile
-and run a Go program.
-
-Use this to extract blocks to `stdout`:
+Extract blocks to `stdout`:
 
 <!-- @lookAtBlocks -->
 ```
 clear
-mdrip print --label lesson1 bustedGoTutorial.md
+mdrip print bustedGoTutorial.md
+```
+
+Extract a subset of blocks by using a [label]:
+<!-- @useLabel -->
+```
+clear
+mdrip print --label goCommand bustedGoTutorial.md
 ```
 
 Test the code from the markdown in a subshell:
@@ -185,7 +79,7 @@ Test the code from the markdown in a subshell:
 <!-- @testTheBlocks -->
 ```
 clear
-mdrip print --label lesson1 bustedGoTutorial.md | bash -e
+mdrip print bustedGoTutorial.md | bash -e
 echo $?
 ```
 
@@ -193,29 +87,45 @@ The above command should show an error, and exit with non-zero status,
 because that example tutorial has several baked-in errors.
 
 Fix the problems:
-<!-- @fixTutorial -->
+
+<!-- @copyTheTutorial -->
 ```
 cp bustedGoTutorial.md goTutorial.md
+```
+
+<!-- @fixTutorial -->
+```
 sed -i 's|comment this|// comment this|' goTutorial.md
 sed -i 's|intended to fail|intended to succeed|' goTutorial.md
 sed -i 's|badCommandToTriggerTestFailure|echo Hello|' goTutorial.md
-sed -i 's|compile should fail|compile should succeed|' goTutorial.md
-echo "  "
+```
+
+<!-- @observeDiffs -->
+```
 diff bustedGoTutorial.md goTutorial.md 
 ```
 
-Run the test again:
+Test the new file:
 
 <!-- @testAgain -->
 ```
 clear
-mdrip print --label lesson1 goTutorial.md | bash -e
+mdrip print goTutorial.md | bash -e
 echo $?
 ```
 
 The return code should be zero.
 
-So, adding a line like
+Run a block in your _current_ shell to, say, set
+current environment variables as specified in the markdown:
+
+<!-- @evalInShell -->
+```
+eval "$(mdrip print --label setEnv goTutorial.md)"
+echo $greeting
+```
+
+The upshot is that adding a line like
 
 > ```
 > mdrip print --label {someLabel} {filePath} | /bin/bash -e
@@ -225,17 +135,91 @@ to your CI/CD test framework covers
 the execution path determined by that label.
 
 
-## Tips for writing markdown tutorials
+The `{filepath}` argument can be
 
-[fenced code blocks]: https://help.github.com/articles/creating-and-highlighting-code-blocks/#fenced-code-blocks
-[block quote]: https://github.github.com/gfm/#block-quotes
+* a single local file,
+* a local directory,
+* a github URL in the style `gh:{user}/{repoName}`,
+* or a particular file or a directory in the 
+  repo, e.g. `gh:{user}/{repoName}/foo/bar`.
+
+
+### Labels
+
+One can _label_ a code block by preceding it with a
+one-line HTML comment, e.g:
+
+<blockquote>
+<pre>
+&lt;&#33;-- @sayHello @mississippi @tutorial01 --&gt;
+&#96;&#96;&#96;
+echo hello
+&#96;&#96;&#96;
+</pre>
+</blockquote>
+
+Labels are just words that start with an `@` in the comment.
+
+The first label on a block is slightly special, in
+that it's reported as the block's name for various
+purposes.  If no labels are present, a unique 
+name is generated for these purposes.
+
+
+## Demonstrations
+
+`mdrip` is a handy way to demonstrate command line procedures.
+
+Render a markdown web app like this:
+<!-- @serveTutorial -->
+```
+mdrip serve --port 8080 goTutorial.md
+```
+Visit it at http://localhost:8080.
+
+Hit the `n` key for navigation tools.
+Hit `?` to see all key controls.
+
+The handy aspect is provided by [tmux].
+The server will automatically detect a
+running instance of tmux, and send 
+code blocks to it when you hit `Enter`.
+
+Fire up `tmux`, then try this `README` directly:
+
+<!-- @serveMdripReadme -->
+```
+mdrip serve gh:monopole/mdrip/README.md
+```
+
+To see what using a full tree of markdown looks like, generate
+some content with:
+<!-- @createTestData -->
+```
+mdrip gentestdata /tmp/mdTestData 
+```
+then serve it:
+<!-- @serveTestData -->
+```
+mdrip serve /tmp/mdTestData
+```
+
+
+
+## Tips
+
+`mdrip` is an instance of [literate programming] in
+that code (shell commands in code blocks) is embedded in explanatory
+content (markdown).
+
+One can use [_here_ documents] to incorporate any programming language
+into tested markdown (as in the [busted Go tutorial] discussed above).
 
 Place commands that the reader would want to execute directly
-(with no edits) in
-[fenced code blocks].
+(with no edits) in [fenced code blocks].
 
-In contrast, code-style text that _isn't intended_ for copy/paste execution,
-e.g. alternative commands with fake arguments, or example code or output,
+In contrast, code-style text that is _not_ intended for copy/paste execution,
+e.g. alternative commands with fake arguments or example output,
 should be in a fenced code block indented via a
 [block quote]. Block quotes are ignored by `mdrip`.
 

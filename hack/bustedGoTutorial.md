@@ -2,7 +2,7 @@ Follow these instructions to write a `Go` program.
 
 Create a directory to work in:
 
-<!-- @createWorkDir @lesson1 -->
+<!-- @createWorkDir -->
 ```
 workDir=$(mktemp -d --tmpdir mdrip_example_XXXXX)
 pushd $workDir
@@ -10,7 +10,7 @@ pushd $workDir
 
 Make a file with an `add` function:
 
-<!-- @makeAdder @lesson1 -->
+<!-- @makeAdder -->
 ```
 cat - <<EOF >add.go
 package main
@@ -23,7 +23,7 @@ badCommandToTriggerTestFailure
 
 Write a _main program_ to call it:
 
-<!-- @makeMain @lesson1 -->
+<!-- @makeMain -->
 ```
 cat - <<EOF >main.go
 package main
@@ -37,20 +37,19 @@ func main() {
 EOF
 ```
 
-<!-- @defineGoMod @lesson1 -->
+<!-- @defineGoMod @goCommand -->
 ```
 go mod init myAdder
 go mod tidy
 ```
 
-<!-- @compileMain @lesson1 -->
+<!-- @compileMain @goCommand -->
 ```
-echo "The following compile should fail."
 go build .
 ```
 
 Now you can run main:
-<!-- @runMain @lesson1 -->
+<!-- @runMain -->
 ```
 ./myAdder
 ```
@@ -59,8 +58,13 @@ Copy/paste the above into a shell to build and run your program.
 
 Clean up with this command:
 
-<!-- @cleanup @lesson1 -->
+<!-- @cleanup -->
 ```
 popd
 /bin/rm -rf ${workDir}
+```
+
+<!-- @setEnv -->
+```
+greeting="Hello world!"
 ```

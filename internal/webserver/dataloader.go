@@ -12,7 +12,6 @@ import (
 	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/webapp/widget/appstate"
 	"github.com/monopole/mdrip/v2/internal/webapp/widget/mdrip"
-	"github.com/monopole/mdrip/v2/internal/webapp/widget/testutil"
 )
 
 // DataLoader is an embarrassment.
@@ -53,21 +52,7 @@ func (dl *DataLoader) FilteredBlocks() []*loader.CodeBlock {
 
 func (dl *DataLoader) LoadAndRender() (err error) {
 	if len(dl.paths) == 0 {
-		if dl.folder == nil {
-			slog.Info("Using in-memory test data.")
-			dl.folder = testutil.MakeFolderTreeOfMarkdown()
-		}
-		dl.pRen.Reset()
-		dl.navLeftRoot, dl.appState = mdrip.RenderFolder(
-			&mdrip.RenderingArgs{
-				Pr:         dl.pRen,
-				DataSource: dl.getDataSource(),
-				Folder:     dl.folder,
-				Title:      dl.title,
-			},
-		)
-		slog.Info("Rendered test data.")
-		return
+		return fmt.Errorf("specify some paths to load")
 	}
 	if time.Since(dl.loadTime) < maxAge {
 		slog.Info(
@@ -76,24 +61,20 @@ func (dl *DataLoader) LoadAndRender() (err error) {
 		return
 	}
 	dl.pRen.Reset()
-	slog.Info("Loading data", "paths", dl.paths)
+	slog.Info("Loading", "paths", dl.paths)
 	dl.folder, err = dl.ldr.LoadTrees(dl.paths)
 	if err != nil {
-		slog.Warn("Load failure", "err", err)
-		dl.folder = loader.NewFolder("Dir").
-			AddFile(loader.NewFile("error.md", dl.makeErrorContent(err)))
 		return
 	}
 	if dl.folder == nil {
-		err = fmt.Errorf("no markdown found at %s", dl.paths)
-		return
+		return fmt.Errorf("no markdown found at %s", dl.paths)
 	}
-	slog.Info("Load seemed to work", "top", dl.folder.Path())
 	dl.loadTime = time.Now()
 	{
 		vc := loader.NewVisitorCounter()
 		dl.folder.Accept(vc)
-		slog.Info("Finished loading data",
+		slog.Info("Loaded",
+			"top", dl.folder.Path(),
 			"numFolders", vc.NumFolders,
 			"numFiles", vc.NumFiles)
 	}
@@ -105,7 +86,6 @@ func (dl *DataLoader) LoadAndRender() (err error) {
 			Title:      dl.title,
 		},
 	)
-	slog.Info("Finished rendering data.")
 	return
 }
 
