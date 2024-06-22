@@ -12,10 +12,10 @@ import (
 
 func TestWidget(t *testing.T) {
 	item := struct {
-		common.ParamStructSession
+		common.ParamStructJsCss
 		AppState *appstate.AppState
 	}{
-		common.ParamDefaultSession,
+		common.ParamDefaultJsCss,
 		testutil.MakeAppStateTest0(),
 	}
 	testutil.RenderHtmlToFile(t, tmplTestBody, item)

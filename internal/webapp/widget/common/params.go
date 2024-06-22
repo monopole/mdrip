@@ -4,11 +4,14 @@ import (
 	"github.com/monopole/mdrip/v2/internal/webapp/widget/session"
 )
 
-type ParamStructSession struct {
+type ParamStructJsCss struct {
 	MdHost string
+
+	MaxNavWordLength int
 
 	PathRunBlock         string
 	PathSave             string
+	PathReload           string
 	PathGetHtmlForFile   string
 	PathGetLabelsForFile string
 
@@ -18,18 +21,18 @@ type ParamStructSession struct {
 	KeyIsTitleOn   string
 	KeyIsNavOn     string
 
-	MdSessID string
-}
-
-type ParamStructTransition struct {
+	MdSessID          string
 	TransitionSpeedMs int
 }
 
 var (
-	ParamDefaultSession = ParamStructSession{
+	ParamDefaultJsCss = ParamStructJsCss{
 		MdHost: "www.yourmom.com",
 
+		MaxNavWordLength: 43,
+
 		PathSave:             session.PathSave,
+		PathReload:           session.PathReload,
 		PathGetHtmlForFile:   session.PathGetHtmlForFile,
 		PathGetLabelsForFile: session.PathGetLabelsForFile,
 		PathRunBlock:         session.PathRunBlock,
@@ -40,9 +43,7 @@ var (
 		KeyIsNavOn:     session.KeyIsNavOn,
 		KeyMdSessID:    session.KeyMdSessID,
 
-		MdSessID: "notARealSessId",
-	}
-	ParamDefaultTransition = ParamStructTransition{
+		MdSessID:          "notARealSessId",
 		TransitionSpeedMs: 250,
 	}
 )

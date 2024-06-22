@@ -74,7 +74,7 @@ class MdRipController {
             switch (event.key) {
                 case 'r':
                     console.debug('reloading')
-                    window.location.href = "/";
+                    nac.appState.reload(() => {window.location.href = "/"});
                     break;
                 case 'x':
                     nac.mfc.scrollToActiveCodeBlock();

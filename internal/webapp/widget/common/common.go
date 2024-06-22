@@ -30,6 +30,10 @@ func MakeFuncMap() map[string]interface{} {
 				Label string
 			}{Id: i, Label: string(lab)}
 		},
+		// It seems like an "em" is about 2/3 of one average character.
+		"numCharsToEm": func(i int) string {
+			return fmt.Sprintf("%.1fem", 2.0*float32(i)/3.0)
+		},
 	}
 }
 

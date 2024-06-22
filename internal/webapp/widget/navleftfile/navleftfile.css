@@ -10,7 +10,9 @@
 }
 
 .navLeftFileActivated {
-    border-bottom-left-radius: 2rem;
-    border-top-left-radius: 2rem;
+    border-bottom-left-radius: var(--layout-md-corner-radius);
+    border-top-left-radius: var(--layout-md-corner-radius);
+    /* shift right, shift down, blur, uh */
+    /*box-shadow: var(--shadow-lr-shift) 0 var(--shadow-blur) 0 white inset;*/
     background-color: var(--color-md-background);
 }

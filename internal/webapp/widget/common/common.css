@@ -4,8 +4,11 @@
 
     --layout-nav-top-height: 6rem;
     --layout-nav-bottom-height: 3rem;
-    --layout-nav-lr-width: 14rem;
+    --layout-nav-lr-width: {{numCharsToEm .MaxNavWordLength}};
     --layout-md-corner-radius: 0.66em;
+    --layout-nav-pad-top: 1em;
+    --shadow-blur: 0.66em;
+    --shadow-lr-shift: 0em;
 
     /* handy https://htmlcolorcodes.com/color-chart */
 

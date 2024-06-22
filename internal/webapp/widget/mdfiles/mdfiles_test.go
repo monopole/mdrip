@@ -19,12 +19,10 @@ func TestWidget(t *testing.T) {
 
 func makeParams(as *appstate.AppState) any {
 	return struct {
-		common.ParamStructSession
-		common.ParamStructTransition
+		common.ParamStructJsCss
 		AppState *appstate.AppState
 	}{
-		common.ParamDefaultSession,
-		common.ParamDefaultTransition,
+		common.ParamDefaultJsCss,
 		as,
 	}
 }

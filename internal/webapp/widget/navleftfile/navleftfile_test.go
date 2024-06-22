@@ -18,10 +18,12 @@ func TestWidget(t *testing.T) {
 
 func makeParams(id string, f *loader.MyFile) any {
 	return struct {
+		common.ParamStructJsCss
 		ObjectId string
 		FileName string
 		FilePath loader.FilePath
 	}{
+		common.ParamDefaultJsCss,
 		id,
 		f.Name(),
 		f.Path(),

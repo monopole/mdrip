@@ -38,6 +38,10 @@ class AppState {
         console.debug("    orderedPaths = ",this.orderedPaths);
     }
 
+    reload(doneClosure) {
+        this.sessionController.reload(doneClosure);
+    }
+
     runCodeBlock() {
         let index = this.myCodeBlockIndex;
         this.sessionController.runBlock(

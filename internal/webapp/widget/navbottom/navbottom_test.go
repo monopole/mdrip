@@ -22,17 +22,15 @@ func TestWidget(t *testing.T) {
 
 func makeParams(tlId string, as *appstate.AppState) any {
 	atp := struct {
-		common.ParamStructSession
-		common.ParamStructTransition
+		common.ParamStructJsCss
 		AppState    *appstate.AppState
 		TimelineId  string
 		HelpButton  template.HTML
 		TimelineRow template.HTML
 	}{
-		ParamStructSession:    common.ParamDefaultSession,
-		ParamStructTransition: common.ParamDefaultTransition,
-		AppState:              as,
-		TimelineId:            tlId,
+		ParamStructJsCss: common.ParamDefaultJsCss,
+		AppState:         as,
+		TimelineId:       tlId,
 	}
 	atp.HelpButton = common.MustRenderHtml(
 		helpbutton.AsTmpl(), atp, helpbutton.TmplName)

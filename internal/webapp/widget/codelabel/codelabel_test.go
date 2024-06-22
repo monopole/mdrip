@@ -16,11 +16,11 @@ func TestWidget(t *testing.T) {
 
 func makeParams(id int) any {
 	return struct {
-		common.ParamStructTransition
+		common.ParamStructJsCss
 		Id    int
 		Label string
 	}{
-		common.ParamDefaultTransition,
+		common.ParamDefaultJsCss,
 		id,
 		"leetCode",
 	}

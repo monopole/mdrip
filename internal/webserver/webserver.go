@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	textTmpl "text/template"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -24,17 +22,13 @@ import (
 	"github.com/monopole/mdrip/v2/internal/webapp/widget/common"
 	"github.com/monopole/mdrip/v2/internal/webapp/widget/mdrip"
 	"github.com/monopole/mdrip/v2/internal/webapp/widget/session"
-	"github.com/tdewolff/minify/v2"
-	"github.com/tdewolff/minify/v2/css"
-	"github.com/tdewolff/minify/v2/js"
+	"github.com/monopole/mdrip/v2/internal/webserver/minify"
 )
 
 const (
 	maxConnectionIdleTime    = 30 * time.Minute
 	connectionScanWaitPeriod = 5 * time.Minute
 	cookieName               = utils.PgmName
-	minifyJs                 = true
-	minifyCss                = true
 )
 
 var (
@@ -45,15 +39,15 @@ var (
 
 // Server represents a webserver.
 type Server struct {
-	dLoader *DataLoader
-	store   sessions.Store
+	dLoader  *DataLoader
+	minifier *minify.Minifier
+	store    sessions.Store
 
 	// TODO: THE WEBSOCKET STUFF ABANDONED FOR NOW
 	//   THE USE CASE IS QUESTIONABLE.
 	upgrader         websocket.Upgrader
 	connections      map[session.TypeSessID]*myConn
 	connReaperQuitCh chan bool
-	minifier         *minify.M
 }
 
 // NewServer returns a new web server configured with the given DataLoader.
@@ -70,10 +64,8 @@ func NewServer(dl *DataLoader) (*Server, error) {
 		upgrader:         websocket.Upgrader{},
 		connections:      make(map[session.TypeSessID]*myConn),
 		connReaperQuitCh: make(chan bool),
-		minifier:         minify.New(),
+		minifier:         minify.MakeMinifier(),
 	}
-	result.minifier.AddFunc(webapp.MimeJs, js.Minify)
-	result.minifier.AddFunc(webapp.MimeCss, css.Minify)
 	go result.reapConnections()
 	return result, nil
 }
@@ -85,7 +77,7 @@ func (ws *Server) Serve(hostAndPort string) (err error) {
 	r.HandleFunc("/_/image", ws.handleImage)
 	r.HandleFunc("/_/q", ws.handleQuit)
 	r.HandleFunc("/_/d", ws.handleDebugPage)
-	r.HandleFunc("/_/r", ws.handleReload)
+	r.HandleFunc(session.PathReload, ws.handleReload)
 	//r.HandleFunc("/_/ws", ws.openWebSocket)
 	r.HandleFunc(session.PathGetJs, ws.handleGetJs)
 	r.HandleFunc(session.PathGetCss, ws.handleGetCss)
@@ -165,84 +157,29 @@ func (ws *Server) getRenderedMdFile(req *http.Request) (*parsren.RenderedMdFile,
 }
 
 func (ws *Server) handleGetJs(wr http.ResponseWriter, req *http.Request) {
-	slog.Info("handleGetJs ", "req", req.URL)
-	var (
-		err  error
-		tmpl *textTmpl.Template
-	)
-	// Parsing the javascript as 'html' replaces "i < 2" with "i &lt; 2" and you
-	// spend an hour tracking down why.  Parse as 'text' instead.  And no this isn't
-	// solvable with template.Js, because we're _inflating_ a template full of Js,
-	// not _injecting_ known Js into some template.
-	tmpl, err = common.ParseAsTextTemplate(mdrip.AsTmplJs())
-	if err != nil {
-		write500(wr, fmt.Errorf("tmpl js parse fail; %w", err))
-		return
-	}
-	wr.Header().Set("Content-Type", webapp.MimeJs)
-	if minifyJs {
-		if err = ws.minify(wr, webapp.MimeJs, tmpl, mdrip.TmplNameJs); err != nil {
-			write500(wr, err)
-			return
-		}
-		slog.Info("handleGetJs minified success")
-		return
-	}
-	err = tmpl.ExecuteTemplate(wr, mdrip.TmplNameJs, mdrip.MakeBaseParams())
-	if err != nil {
-		write500(wr, fmt.Errorf("tmpl js inflate fail; %w", err))
-		return
-	}
-	slog.Info("handleGetJs success")
+	slog.Info("handleGetJs", "req", req.URL)
+	ws.minifier.Write(wr, &minify.Args{
+		MimeType: webapp.MimeJs,
+		Tmpl: minify.TmplArgs{
+			Name: mdrip.TmplNameJs,
+			Body: mdrip.AsTmplJs(),
+			Params: mdrip.MakeBaseParams(
+				ws.dLoader.appState.Facts.MaxNavWordLength),
+		},
+	})
 }
 
 func (ws *Server) handleGetCss(wr http.ResponseWriter, req *http.Request) {
-	slog.Info("handleGetCss ", "req", req.URL)
-	var (
-		err  error
-		tmpl *textTmpl.Template
-	)
-	tmpl, err = common.ParseAsTextTemplate(mdrip.AsTmplCss())
-	if err != nil {
-		write500(wr, fmt.Errorf("tmpl css parse fail; %w", err))
-		return
-	}
-	wr.Header().Set("Content-Type", webapp.MimeCss)
-	if minifyCss {
-		if err = ws.minify(wr, webapp.MimeCss, tmpl, mdrip.TmplNameCss); err != nil {
-			write500(wr, err)
-			return
-		}
-		slog.Info("handleGetCss minified success")
-		return
-	}
-	err = tmpl.ExecuteTemplate(wr, mdrip.TmplNameCss, mdrip.MakeBaseParams())
-	if err != nil {
-		write500(wr, fmt.Errorf("tmpl css inflate fail; %w", err))
-		return
-	}
-	slog.Info("handleGetCss success")
-}
-
-func (ws *Server) minify(
-	wr http.ResponseWriter, mimeType string, tmpl *textTmpl.Template, tmplName string) error {
-	// There's probably some man-in-the-middle way to do this to skip using "buff" and "ugly".
-	var (
-		buff bytes.Buffer
-		ugly []byte
-	)
-	err := tmpl.ExecuteTemplate(&buff, tmplName, mdrip.MakeBaseParams())
-	if err != nil {
-		return fmt.Errorf("tmpl %s inflate fail; %w", mimeType, err)
-	}
-	ugly, err = ws.minifier.Bytes(mimeType, buff.Bytes())
-	if err != nil {
-		return fmt.Errorf("%s minification fail; %w", mimeType, err)
-	}
-	if _, err = wr.Write(ugly); err != nil {
-		return fmt.Errorf("write of %s failed; %w", mimeType, err)
-	}
-	return nil
+	slog.Info("handleGetCss", "req", req.URL)
+	ws.minifier.Write(wr, &minify.Args{
+		MimeType: webapp.MimeCss,
+		Tmpl: minify.TmplArgs{
+			Name: mdrip.TmplNameCss,
+			Body: mdrip.AsTmplCss(),
+			Params: mdrip.MakeBaseParams(
+				ws.dLoader.appState.Facts.MaxNavWordLength),
+		},
+	})
 }
 
 // reload performs a data reload.

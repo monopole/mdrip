@@ -17,15 +17,13 @@ func TestWidget(t *testing.T) {
 
 func makeParams() any {
 	return struct {
-		common.ParamStructSession
-		common.ParamStructTransition
+		common.ParamStructJsCss
 		CbPrompt template.HTML
 		Id       int
 		Title    string
 		Code     string
 	}{
-		common.ParamDefaultSession,
-		common.ParamDefaultTransition,
+		common.ParamDefaultJsCss,
 		codeblock.CbPrompt,
 		700,
 		"Your Mom",

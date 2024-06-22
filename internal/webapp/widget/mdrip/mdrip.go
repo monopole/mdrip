@@ -107,8 +107,7 @@ func AsTmplCss() string {
 }
 
 type TmplParams struct {
-	common.ParamStructSession
-	common.ParamStructTransition
+	common.ParamStructJsCss
 	TimelineIdTop string
 	TimelineIdBot string
 	navcontentrow.ParamStructContentRow
@@ -134,34 +133,48 @@ type RenderingArgs struct {
 func RenderFolder(rArgs *RenderingArgs) (
 	navLeftRoot template.HTML, appState *appstate.AppState) {
 	numFolders := 0
+	maxFileNameLen := 0
 	{
 		var b bytes.Buffer
 		v := navleftroot.NewRenderer(&b)
 		loader.NewTopFolder(rArgs.Folder).Accept(v)
 		numFolders = v.NumFolders()
 		navLeftRoot = template.HTML(b.String())
+		maxFileNameLen = v.MaxFileNameLength()
 	}
 	{
 		loader.NewTopFolder(rArgs.Folder).Accept(rArgs.Pr)
 		appState = appstate.New(
 			rArgs.DataSource, rArgs.Pr.RenderedMdFiles(), rArgs.Title)
+		maxLabelLen := 0
+		for _, b := range rArgs.Pr.FilteredBlocks(loader.WildCardLabel) {
+			if l := len(b.FirstLabel()); l > maxLabelLen {
+				maxLabelLen = l
+			}
+		}
+		if maxFileNameLen > maxLabelLen {
+			appState.Facts.MaxNavWordLength = maxFileNameLen
+		} else {
+			appState.Facts.MaxNavWordLength = maxLabelLen
+		}
 		appState.Facts.NumFolders = numFolders
 	}
 	return
 }
 
-func MakeBaseParams() *TmplParams {
-	return &TmplParams{
-		ParamStructSession:    common.ParamDefaultSession,
-		ParamStructTransition: common.ParamDefaultTransition,
-		TimelineIdTop:         timelineIdTop,
-		TimelineIdBot:         timelineIdBottom,
+func MakeBaseParams(maxWordLen int) *TmplParams {
+	res := &TmplParams{
+		ParamStructJsCss: common.ParamDefaultJsCss,
+		TimelineIdTop:    timelineIdTop,
+		TimelineIdBot:    timelineIdBottom,
 	}
+	res.MaxNavWordLength = maxWordLen
+	return res
 }
 
 func MakeParams(
 	lftNavRoot template.HTML, appState *appstate.AppState) *TmplParams {
-	tps := MakeBaseParams()
+	tps := MakeBaseParams(appState.Facts.MaxNavWordLength)
 	tps.NavLeftRoot = lftNavRoot
 	tps.AppState = appState
 	tps.ContentLeft = common.MustRenderHtml(

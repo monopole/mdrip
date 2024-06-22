@@ -21,16 +21,18 @@ func TestWidget(t *testing.T) {
 			})))
 }
 
+const maxWordLen = 50
+
 func TestJsRendering(t *testing.T) {
 	testutil.RenderTextToFile(
 		t, mdrip.AsTmplJs()+tmplTestBodyJsOnly,
-		mdrip.MakeBaseParams())
+		mdrip.MakeBaseParams(maxWordLen))
 }
 
 func TestCssRendering(t *testing.T) {
 	testutil.RenderTextToFile(
 		t, mdrip.AsTmplCss()+tmplTestBodyCssOnly,
-		mdrip.MakeBaseParams())
+		mdrip.MakeBaseParams(maxWordLen))
 }
 
 var (

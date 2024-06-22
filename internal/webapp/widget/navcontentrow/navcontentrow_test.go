@@ -17,13 +17,11 @@ func TestWidget(t *testing.T) {
 
 func makeParams() any {
 	return struct {
-		common.ParamStructSession
-		common.ParamStructTransition
+		common.ParamStructJsCss
 		AppState *appstate.AppState
 		navcontentrow.ParamStructContentRow
 	}{
-		common.ParamDefaultSession,
-		common.ParamDefaultTransition,
+		common.ParamDefaultJsCss,
 		testutil.MakeAppStateTest0(),
 		navcontentrow.ParamStructContentRow{
 			ContentTop:    testutil.FillerDiv("The Canopy"),

@@ -1,6 +1,6 @@
 .navLeftRoot {
     /* top rig bot lef */
-    padding: 1em 0 1em 0;
+    padding: var(--layout-nav-pad-top) 0 var(--layout-nav-pad-top) 0;
     /* negate parent's rtl setting that was used to place scroll-bar on left */
     direction:ltr;
 }

@@ -1,6 +1,7 @@
 .codeLabel {
     /* top rig bot lef */
-    padding: 0.5em 0 0.5em 1em;
+    padding: 0.5em 0 0.5em calc(1em + var(--shadow-lr-shift));
+    /*margin: 0 0 0 -2em;*/
     width: 90%;
 }
 
@@ -10,6 +11,9 @@
 }
 
 .codeLabelActivated {
-    border-radius: 0rem 2rem 2rem 0rem;
+    border-bottom-right-radius: var(--layout-md-corner-radius);
+    border-top-right-radius: var(--layout-md-corner-radius);
     background-color: var(--color-md-background);
+    /* shift right, shift down, fux, hoop */
+    /*box-shadow: calc(0em - var(--shadow-lr-shift)) 0 var(--shadow-blur) 0 white inset;*/
 }

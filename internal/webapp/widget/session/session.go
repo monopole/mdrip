@@ -30,6 +30,8 @@ const (
 	PathGetJs = "/_/js"
 	// PathGetCss is the GET endpoint for all the css needed by the webapps.
 	PathGetCss = "/_/css"
+	// PathReload tells the server to reload all data from the file system.
+	PathReload = "/_/r"
 	// PathGetLabelsForFile is the GET endpoint for code block labels of one markdown file.
 	PathGetLabelsForFile = "/_/getLabelsForFile"
 	// PathGetHtmlForFile is the GET endpoint for HTML of one markdown file.

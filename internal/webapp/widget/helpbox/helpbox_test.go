@@ -17,12 +17,10 @@ func TestWidget(t *testing.T) {
 
 func makeParams() any {
 	return struct {
-		common.ParamStructSession
-		common.ParamStructTransition
+		common.ParamStructJsCss
 		AppState *appstate.AppState
 	}{
-		common.ParamDefaultSession,
-		common.ParamDefaultTransition,
+		common.ParamDefaultJsCss,
 		&appstate.AppState{
 			InitialRender: appstate.InitialRender{
 				DataSource: "/the/root/of/all/markdown",

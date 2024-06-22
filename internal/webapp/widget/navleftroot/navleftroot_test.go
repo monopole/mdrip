@@ -40,11 +40,11 @@ func TestWidget2(t *testing.T) {
 
 func makeParams(folder loader.MyTreeNode) any {
 	atp := struct {
-		common.ParamStructSession
+		common.ParamStructJsCss
 		AppState    *appstate.AppState
 		NavLeftRoot template.HTML
 	}{
-		ParamStructSession: common.ParamDefaultSession,
+		ParamStructJsCss: common.ParamDefaultJsCss,
 	}
 	numFolders := 0
 	{

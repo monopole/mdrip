@@ -22,6 +22,7 @@ type Facts struct {
 	InitialCodeBlockIndex int
 	NumFolders            int
 	MaxCodeBlocksInAFile  int
+	MaxNavWordLength      int
 	IsNavVisible          bool
 	IsTitleVisible        bool
 }

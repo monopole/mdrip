@@ -57,7 +57,18 @@ class SessionController {
             })
     }
 
-    // A note on POSTs.
+    reload(doneClosure) {
+        console.debug('Session calling server to reaload all data');
+        fetch('{{.PathReload}}', {
+            // See nearby note regarding POST.
+            method: "POST",
+        }).then((r) => {
+            console.debug('reloaded data')
+            doneClosure();
+        })
+    }
+
+    // A note regarding POST.
     // In the fetch calls below we're telling the server to do a thing that
     // changes things on the server side - so we use a POST per HTTP
     // tradition.
@@ -82,7 +93,7 @@ class SessionController {
             + '&{{.KeyIsTitleOn}}=' + appState.isTitleVisible
             + '&{{.KeyIsNavOn}}=' + appState.isNavVisible;
         fetch(url, {
-            // See above for a note on POSTs.
+            // See nearby note regarding POST.
             method: "POST",
         }).then((r) => {
             console.debug('saved session')
@@ -105,7 +116,7 @@ class SessionController {
             + '&{{.KeyBlockIndex}}=' + codeBlockIndex
             + '&{{.KeyMdSessID}}={{.MdSessID}}';
         fetch(url, {
-            // See above for a note on POSTs.
+            // See nearby note regarding POST.
             method: "POST",
         }).then((r) => {
             me.isCodeRunning = false;

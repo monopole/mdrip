@@ -40,8 +40,8 @@ function onLoad() {
 
 func makeParams() any {
 	return struct {
-		common.ParamStructTransition
+		common.ParamStructJsCss
 	}{
-		common.ParamDefaultTransition,
+		common.ParamDefaultJsCss,
 	}
 }

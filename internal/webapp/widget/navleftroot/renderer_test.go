@@ -18,12 +18,14 @@ import (
 
 func TestRenderer(t *testing.T) {
 	type testCase struct {
-		input loader.MyTreeNode
-		want  string
+		input          loader.MyTreeNode
+		maxFileNameLen int
+		want           string
 	}
 	for n, tc := range map[string]testCase{
 		"t0": {
-			input: loader.NewFolder("DIR_0"),
+			input:          loader.NewFolder("DIR_0"),
+			maxFileNameLen: 0,
 			want: (`
 <div class='navLeftFolder' id='navLeftFolderId0'>
   <div class='navLeftFolderName'>
@@ -32,10 +34,19 @@ func TestRenderer(t *testing.T) {
   <div class='navLeftFolderChildren'></div>
 </div>`)[1:],
 		},
+		"t0.5": {
+			input:          loader.NewEmptyFile("B234567"),
+			maxFileNameLen: 7,
+			want: (`
+<div class='navLeftFile navLeftFileDeactivated' id='navLeftFileId0'>
+  B234567
+</div>`)[1:],
+		},
 		"t1": {
 			input: loader.NewFolder("DIR_0").
 				AddFile(loader.NewEmptyFile("FILE_0")).
 				AddFile(loader.NewEmptyFile("FILE_1")),
+			maxFileNameLen: 8, /* (depth * 2) + 6 */
 			want: (`
 <div class='navLeftFolder' id='navLeftFolderId0'>
   <div class='navLeftFolderName'>
@@ -55,6 +66,7 @@ func TestRenderer(t *testing.T) {
 			input: loader.NewTopFolder(loader.NewFolder("DIR_0").
 				AddFile(loader.NewEmptyFile("FILE_0")).
 				AddFile(loader.NewEmptyFile("FILE_1"))),
+			maxFileNameLen: 8,
 			want: (`
 <div class='navLeftTopFolder'>
   <div class='navLeftFile navLeftFileDeactivated' id='navLeftFileId0'>
@@ -66,7 +78,8 @@ func TestRenderer(t *testing.T) {
 </div>`)[1:],
 		},
 		"t3": {
-			input: testutil.MakeFolderTreeOfMarkdown(),
+			input:          testutil.MakeFolderTreeOfMarkdown(),
+			maxFileNameLen: 14, /* (depth==8 * 2) + 6 */
 			want: `
 <div class='navLeftFolder' id='navLeftFolderId0'>
   <div class='navLeftFolderName'>
@@ -172,11 +185,13 @@ func TestRenderer(t *testing.T) {
 	} {
 		t.Run(n, func(t *testing.T) {
 			var b bytes.Buffer
-			tc.input.Accept(NewRenderer(&b))
+			r := NewRenderer(&b)
+			tc.input.Accept(r)
 			got := gohtml.Format(b.String()) // Make tests easier to read.
+			assert.Equal(t, tc.maxFileNameLen, r.MaxFileNameLength())
 			if !assert.Equal(t, tc.want, got) {
 				fmt.Fprintln(os.Stderr, "--------------------")
-				fmt.Fprint(os.Stderr, got)
+				fmt.Fprintln(os.Stderr, got)
 				fmt.Fprintln(os.Stderr, "--------------------")
 			}
 		})

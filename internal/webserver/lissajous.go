@@ -15,7 +15,7 @@ import (
 var palette = []color.Color{
 	color.Black,
 	//	color.White,
-	color.RGBA{0x00, 0xff, 0x00, 0xff},
+	color.RGBA{G: 0xff, A: 0xff},
 }
 
 const (
@@ -25,17 +25,17 @@ const (
 
 // Lissajous returns an image.
 // image canvas covers [-size to +size]
-// nframes is number of animation frames
+// nFrames is number of animation frames
 // cycles is number of complete x oscillator revolutions
-func Lissajous(out io.Writer, size, cycles, nframes int) {
+func Lissajous(out io.Writer, size, cycles, nFrames int) {
 	const (
 		res   = 0.001 // angular resolution
 		delay = 8     // delay between frames in 10ms units
 	)
 	freq := rand.Float64() * 3.0 // relative frequency of y oscillator
-	anim := gif.GIF{LoopCount: nframes}
+	anim := gif.GIF{LoopCount: nFrames}
 	phase := 0.0 // phase difference
-	for i := 0; i < nframes; i++ {
+	for i := 0; i < nFrames; i++ {
 		rect := image.Rect(0, 0, 2*size+1, 2*size+1)
 		img := image.NewPaletted(rect, palette)
 		for t := 0.0; t < float64(cycles)*2*math.Pi; t += res {
