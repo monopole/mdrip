@@ -5,24 +5,17 @@ go 1.21
 require (
 	github.com/gomarkdown/markdown v0.0.0-20231115200524-a660076da3fd
 	github.com/gorilla/mux v1.8.1
-	github.com/gorilla/sessions v1.2.2
-	github.com/gorilla/websocket v1.5.1
-	github.com/monopole/shexec v0.1.8
+	github.com/gorilla/sessions v1.3.0
+	github.com/gorilla/websocket v1.5.3
+	github.com/monopole/shexec v0.1.9
 	github.com/spf13/afero v1.11.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.9.0
 	github.com/tdewolff/minify/v2 v2.20.34
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
 	github.com/yuin/goldmark v1.6.0
 	go.abhg.dev/goldmark/mermaid v0.5.0
-
 )
-
-// replace github.com/monopole/shexec => ../shexec
-// replace github.com/gomarkdown/markdown => ../../gomarkdown/markdown
-// replace github.com/yuin/goldmark => ../../yuin/goldmark
-
-exclude github.com/monopole/mdrip v1.0.3
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
