@@ -44,7 +44,7 @@ Assuming [Go](https://golang.org/dl) installed just:
 
 <!-- @installation -->
 ```
-go install github.com/monopole/mdrip/v2
+go install github.com/monopole/mdrip/v2@latest
 ```
 
 ## The Details
