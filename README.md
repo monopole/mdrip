@@ -39,7 +39,7 @@ Assuming [Go](https://golang.org/dl) installed just:
 
 <!-- @installation -->
 ```
-go install github.com/monopole/mdrip/v2@v2.0.0-rc07   # or @latest
+go install github.com/monopole/mdrip/v2@v2.0.0-rc08   # or @latest
 ```
 
 ## Testing
@@ -73,7 +73,7 @@ mdrip print --label goCommand bustedGoTutorial.md
 
 Test the code from the markdown in a subshell:
 
-<!-- @testTheBlocks -->
+<!-- @pipeTheBlocks -->
 ```
 clear
 mdrip print bustedGoTutorial.md | bash -e
@@ -83,7 +83,17 @@ echo $?
 The above command should show an error, and exit with non-zero status,
 because the tutorial has errors.
 
-Fix them:
+For quieter output, try the `test` command:
+
+<!-- @testTheBlocks -->
+```
+clear
+mdrip test bustedGoTutorial.md
+echo $?
+```
+
+
+Fix the errors:
 
 <!-- @copyTheTutorial -->
 ```
@@ -103,10 +113,18 @@ diff bustedGoTutorial.md goTutorial.md
 
 Test the new file:
 
-<!-- @testAgain -->
+<!-- @pipeAgain -->
 ```
 clear
 mdrip print goTutorial.md | bash -e
+echo $?
+```
+
+or to get quieter output:
+<!-- @testAgain -->
+```
+clear
+mdrip test goTutorial.md
 echo $?
 ```
 

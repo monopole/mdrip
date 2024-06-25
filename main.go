@@ -6,6 +6,7 @@ import (
 	"github.com/monopole/mdrip/v2/internal/commands/gentestdata"
 	"github.com/monopole/mdrip/v2/internal/commands/print"
 	"github.com/monopole/mdrip/v2/internal/commands/serve"
+	"github.com/monopole/mdrip/v2/internal/commands/test"
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren/usegold"
 	"github.com/monopole/mdrip/v2/internal/utils"
@@ -29,8 +30,7 @@ func newCommand() *cobra.Command {
 		serve.NewCommand(ldr, p),
 		gentestdata.NewCommand(),
 		print.NewCommand(ldr, p),
-		// "test" disabled until the UX improves - pipe "print" into "bash -e" instead.
-		// test.NewCommand(ldr, p),
+		test.NewCommand(ldr, p),
 		// "tmux" websocket service disabled until a reasonable use case found.
 		// the concept works fine on localhost without a websocket.
 		// tmux.NewCommand(ldr),

@@ -2,7 +2,7 @@ package test
 
 import (
 	"fmt"
-	"log/slog"
+	"os"
 	"time"
 
 	"github.com/monopole/mdrip/v2/internal/loader"
@@ -17,7 +17,7 @@ const (
 	cmdName          = "test"
 	durationStartup  = 10 * time.Second
 	durationShutdown = 3 * time.Second
-	debugging        = true
+	debugging        = false
 )
 
 type myFlags struct {
@@ -28,8 +28,12 @@ type myFlags struct {
 func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command {
 	flags := myFlags{}
 	c := &cobra.Command{
-		Use:     cmdName,
-		Short:   "Tests an extracted shell script",
+		Use:   cmdName,
+		Short: "Tests an extracted shell script",
+		Long: `Tests an extracted shell script.
+This is experimental, to see if we can get a better exerience
+than simply piping into "bash -e".
+`,
 		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fld, err := ldr.LoadTrees(args)
@@ -60,22 +64,20 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 }
 
 func runTheBlocks(blocks []*loader.CodeBlock, timeout time.Duration) error {
-	const unlikelyWord = "rumplestilskin"
+	const (
+		unlikelyWordOut = "rumplestilskinOut"
+		unlikelyWordErr = "rumplestilskinErr"
+	)
 	sh := shexec.NewShell(shexec.Parameters{
 		Params: channeler.Params{Path: "/bin/bash", Args: []string{"-e"}},
 		SentinelOut: shexec.Sentinel{
-			C: "echo " + unlikelyWord,
-			V: unlikelyWord,
+			C: "echo " + unlikelyWordOut,
+			V: unlikelyWordOut,
 		},
-		// TODO: try:
-		//  SentinelErr: shexec.Sentinel{
-		//	  C: unlikelyWord,
-		//	  V: `unrecognized command: "` + unlikelyWord + `"`,
-		//  },
-		//SentinelErr: shexec.Sentinel{
-		//	C: unlikelyWord + "Err",
-		//	V: unlikelyWord + `Err: command not found`,
-		//},
+		SentinelErr: shexec.Sentinel{
+			C: "echo " + unlikelyWordErr + " 1>&2",
+			V: unlikelyWordErr,
+		},
 	})
 	if err := sh.Start(durationStartup); err != nil {
 		return err
@@ -85,13 +87,6 @@ func runTheBlocks(blocks []*loader.CodeBlock, timeout time.Duration) error {
 			fmt.Println("==== running " + string(b.FirstLabel()))
 		}
 		c := shexec.NewRecallCommander(b.Code())
-		// TODO: there's a race condition in that when a bad command hits,
-		// and the process dies, the error from that bad command somehow
-		// slips in behind the error encountered when the shexec infra tries
-		// to write the next command.  This means that the error reported
-		// is the one from the infra, not the one from the process - and
-		// we want to see the latter.
-		// c := &shexec.PassThruCommander{C: b.Code()}
 		if debugging {
 			fmt.Println("------------------------------")
 			fmt.Print(b.Code())
@@ -100,17 +95,15 @@ func runTheBlocks(blocks []*loader.CodeBlock, timeout time.Duration) error {
 		if err := sh.Run(timeout, c); err != nil {
 			if debugging {
 				fmt.Println("returning from command with err = ", err.Error())
-				fmt.Println("stdErr=", c.DataErr())
 			}
-			return err
+			for _, line := range c.DataErr() {
+				fmt.Fprintln(os.Stderr, line)
+			}
+			return fmt.Errorf("failure in code block %q", b.FirstLabel())
 		}
 		if debugging {
 			fmt.Println("no error, going for next command")
 		}
 	}
-	if err := sh.Stop(durationShutdown, ""); err != nil {
-		return err
-	}
-	slog.Info("All done.")
-	return nil
+	return sh.Stop(durationShutdown, "")
 }
