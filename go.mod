@@ -3,6 +3,7 @@ module github.com/monopole/mdrip/v2
 go 1.21
 
 require (
+	github.com/TwiN/go-color v1.4.1
 	github.com/gomarkdown/markdown v0.0.0-20231115200524-a660076da3fd
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.3.0

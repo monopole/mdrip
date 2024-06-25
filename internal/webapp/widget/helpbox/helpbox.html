@@ -17,7 +17,7 @@
       </tr>
       <tr>
         <td class='desc'> activate (previous, next) code block</td>
-        <td class='keys'> w, s &nbsp; j, k </td>
+        <td class='keys'> &darr; &uarr; &nbsp; w s &nbsp; j k</td>
       </tr>
       <tr>
         <td class='desc'> scroll to active code block</td>
@@ -29,7 +29,7 @@
       </tr>
       <tr>
         <td class='desc'> (previous, next) file</td>
-        <td class='keys'> a, d &nbsp; h, l &nbsp; &larr;, &rarr; </td>
+        <td class='keys'>  &larr; &rarr; &nbsp;  a d &nbsp; h l </td>
       </tr>
       <tr>
         <td class='desc'> minimize header</td>
@@ -54,8 +54,8 @@
     </p>
 
     <pre>
-  GOBIN=$TMPDIR go install github.com/monopole/mdrip
-  $TMPDIR/mdrip demo {{.AppState.DataSource}}
+  GOBIN=$TMPDIR go install github.com/monopole/mdrip@latest
+  $TMPDIR/mdrip serve {{.AppState.DataSource}}
 </pre>
 
     <p>

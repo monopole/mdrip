@@ -39,7 +39,8 @@ EOF
 ```
 go mod init myAdder
 go mod tidy
-becho Ready to build.
+echo Dependencies defined.
+badecho Enter go build
 ```
 
 <!-- @compileMain @goCommand -->

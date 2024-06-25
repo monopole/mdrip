@@ -3,8 +3,10 @@ package test
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/TwiN/go-color"
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/utils"
@@ -17,7 +19,7 @@ const (
 	cmdName          = "test"
 	durationStartup  = 10 * time.Second
 	durationShutdown = 3 * time.Second
-	debugging        = false
+	rumple           = "rumpleStiltSkin"
 )
 
 type myFlags struct {
@@ -65,8 +67,8 @@ than simply piping into "bash -e".
 
 func runTheBlocks(blocks []*loader.CodeBlock, timeout time.Duration) error {
 	const (
-		unlikelyWordOut = "rumplestilskinOut"
-		unlikelyWordErr = "rumplestilskinErr"
+		unlikelyWordOut = rumple + "Out"
+		unlikelyWordErr = rumple + "Err"
 	)
 	sh := shexec.NewShell(shexec.Parameters{
 		Params: channeler.Params{Path: "/bin/bash", Args: []string{"-e"}},
@@ -83,27 +85,36 @@ func runTheBlocks(blocks []*loader.CodeBlock, timeout time.Duration) error {
 		return err
 	}
 	for _, b := range blocks {
-		if debugging {
-			fmt.Println("==== running " + string(b.FirstLabel()))
-		}
 		c := shexec.NewRecallCommander(b.Code())
-		if debugging {
-			fmt.Println("------------------------------")
-			fmt.Print(b.Code())
-			fmt.Println("------------------------------")
-		}
 		if err := sh.Run(timeout, c); err != nil {
-			if debugging {
-				fmt.Println("returning from command with err = ", err.Error())
-			}
-			for _, line := range c.DataErr() {
-				fmt.Fprintln(os.Stderr, line)
-			}
-			return fmt.Errorf("failure in code block %q", b.FirstLabel())
-		}
-		if debugging {
-			fmt.Println("no error, going for next command")
+			return reportError(err, b, c)
 		}
 	}
 	return sh.Stop(durationShutdown, "")
+}
+
+func reportError(
+	_ error, b *loader.CodeBlock, c *shexec.RecallCommander) error {
+	// TODO: Get a better error from the infrastructure for reporting.
+	//  Right now it's something like "sentinel not found".
+	//  Capture exit code from subprocess and report that instead.
+	_, _ = fmt.Fprintf(
+		os.Stderr, "Block '%s':\n", b.FirstLabel())
+	fmt.Fprint(os.Stderr, color.Cyan)
+	for _, line := range strings.Split(b.Code(), "\n") {
+		if len(line) > 0 {
+			_, _ = fmt.Fprintln(os.Stderr, " ", line)
+		}
+	}
+	fmt.Fprint(os.Stderr, color.Reset)
+	_, _ = fmt.Fprintln(os.Stderr, "Output streams:")
+	for _, line := range c.DataOut() {
+		_, _ = fmt.Fprintf(
+			os.Stderr, "  out: %s%s%s\n", color.White, line, color.Reset)
+	}
+	for _, line := range c.DataErr() {
+		_, _ = fmt.Fprintf(
+			os.Stderr, "  err: %s%s%s\n", color.Red, line, color.Reset)
+	}
+	return fmt.Errorf("code block %q failed", b.FirstLabel())
 }
