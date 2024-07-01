@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/utils"
-	"github.com/monopole/mdrip/v2/internal/webapp/widget/testutil"
+	"github.com/monopole/mdrip/v2/internal/web/app/widget/testutil"
 	"github.com/spf13/cobra"
 	"log"
 	"os"

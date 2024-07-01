@@ -5,6 +5,7 @@ import (
 
 	"github.com/monopole/mdrip/v2/internal/commands/gentestdata"
 	"github.com/monopole/mdrip/v2/internal/commands/print"
+	"github.com/monopole/mdrip/v2/internal/commands/raw"
 	"github.com/monopole/mdrip/v2/internal/commands/serve"
 	"github.com/monopole/mdrip/v2/internal/commands/test"
 	"github.com/monopole/mdrip/v2/internal/loader"
@@ -27,6 +28,7 @@ func newCommand() *cobra.Command {
 	ldr := loader.New(afero.NewOsFs())
 	p := usegold.NewGParser()
 	c.AddCommand(
+		raw.NewCommand(),
 		serve.NewCommand(ldr, p),
 		gentestdata.NewCommand(),
 		print.NewCommand(ldr, p),

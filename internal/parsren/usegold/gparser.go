@@ -11,7 +11,7 @@ import (
 
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren"
-	"github.com/monopole/mdrip/v2/internal/webapp/widget/codeblock"
+	"github.com/monopole/mdrip/v2/internal/web/app/widget/codeblock"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"

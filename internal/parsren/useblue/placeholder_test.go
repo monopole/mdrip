@@ -6,6 +6,6 @@
 //   below the directory in which the *_test.go files live.
 // To accommodate these assumptions, the following generate directive
 // creates a symlink to the test data.
-//go:generate ln -is ../usegold/testdata .
+// (disabledgo):generate ln -is ../usegold/testdata .
 
 package useblue_test

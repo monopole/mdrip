@@ -1,24 +1,21 @@
-package serve
+package raw
 
 import (
 	"fmt"
-	webserver2 "github.com/monopole/mdrip/v2/internal/web/server"
 	"log/slog"
+	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/monopole/mdrip/v2/internal/loader"
-	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/utils"
 	"github.com/spf13/cobra"
 )
 
-const cmdName = "serve"
+const cmdName = "raw"
 
 type myFlags struct {
 	port        int
-	title       string
 	useHostName bool
 }
 
@@ -35,22 +32,11 @@ func (fl *myFlags) hostAndPort() string {
 	return hostname + ":" + strconv.Itoa(fl.port)
 }
 
-func makeTitle(t string, args []string) string {
-	if len(t) > 0 {
-		return t
-	}
-	title := "markdown from "
-	if len(args) > 0 {
-		return title + strings.Join(args, ",")
-	}
-	return title + "test data"
-}
-
-func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command {
+func NewCommand() *cobra.Command {
 	flags := myFlags{}
 	c := &cobra.Command{
 		Use:     cmdName,
-		Short:   "Serves a markdown / code-running application at a particular port on localhost.",
+		Short:   "Serves raw files from the given path",
 		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
@@ -59,25 +45,9 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 			if len(args) == 0 {
 				args = []string{string(loader.CurrentDir)}
 			}
-			dl := webserver2.NewDataLoader(
-				ldr, args, p, makeTitle(flags.title, args))
-			// Heat up the cache, and see if the args are okay.
-			if err := dl.LoadAndRender(); err != nil {
-				return fmt.Errorf("data loader fail; %w", err)
-			}
-			s, err := webserver2.NewServer(dl)
-			if err != nil {
-				return err
-			}
-			return s.Serve(flags.hostAndPort())
+			return doIt(args[0], flags.hostAndPort())
 		},
 	}
-	// TODO: pull title from the first header of the first markdown file?
-	c.Flags().StringVar(
-		&flags.title,
-		"title",
-		"",
-		"Text to use as a title for the webpage.")
 	c.Flags().IntVar(
 		&flags.port,
 		"port",
@@ -89,4 +59,16 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 		false,
 		"Use the 'hostname' utility to specify where to serve, else implicitly use 'localhost'.")
 	return c
+}
+
+func doIt(dir string, hostAndPort string) error {
+	fmt.Println("Serving from ", dir)
+	return http.ListenAndServe(hostAndPort, logUrl(http.FileServer(http.Dir(dir))))
+}
+
+func logUrl(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		fmt.Println(req.URL)
+		next.ServeHTTP(w, req)
+	})
 }

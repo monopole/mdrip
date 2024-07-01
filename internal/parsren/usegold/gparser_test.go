@@ -8,7 +8,7 @@ import (
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren"
 	. "github.com/monopole/mdrip/v2/internal/parsren/usegold"
-	"github.com/monopole/mdrip/v2/internal/webapp/widget/codeblock"
+	"github.com/monopole/mdrip/v2/internal/web/app/widget/codeblock"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 )
