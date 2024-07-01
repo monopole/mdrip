@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TwiN/go-color"
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/utils"
@@ -20,6 +19,11 @@ const (
 	durationStartup  = 10 * time.Second
 	durationShutdown = 3 * time.Second
 	rumple           = "rumpleStiltSkin"
+
+	colReset = "\033[0m"
+	colRed   = "\033[31m"
+	colCyan  = "\033[36m"
+	colWhite = "\033[97m"
 )
 
 type myFlags struct {
@@ -98,23 +102,30 @@ func reportError(
 	// TODO: Get a better error from the infrastructure for reporting.
 	//  Right now it's something like "sentinel not found".
 	//  Capture exit code from subprocess and report that instead.
-	_, _ = fmt.Fprintf(
-		os.Stderr, "Block '%s':\n", b.FirstLabel())
-	fmt.Fprint(os.Stderr, color.Cyan)
+
+	_, _ = fmt.Fprintf(os.Stderr, "Block '%s':\n", b.FirstLabel())
+	_, _ = fmt.Fprint(os.Stderr, colCyan)
 	for _, line := range strings.Split(b.Code(), "\n") {
 		if len(line) > 0 {
 			_, _ = fmt.Fprintln(os.Stderr, " ", line)
 		}
 	}
-	fmt.Fprint(os.Stderr, color.Reset)
-	_, _ = fmt.Fprintln(os.Stderr, "Output streams:")
-	for _, line := range c.DataOut() {
-		_, _ = fmt.Fprintf(
-			os.Stderr, "  out: %s%s%s\n", color.White, line, color.Reset)
-	}
-	for _, line := range c.DataErr() {
-		_, _ = fmt.Fprintf(
-			os.Stderr, "  err: %s%s%s\n", color.Red, line, color.Reset)
-	}
+	_, _ = fmt.Fprint(os.Stderr, colReset)
+	printStream("stdout", c.DataOut(), colWhite)
+	printStream("stderr", c.DataErr(), colRed)
 	return fmt.Errorf("code block %q failed", b.FirstLabel())
+}
+
+func printStream(kind string, lines []string, color string) {
+	_, _ = fmt.Fprint(os.Stderr, kind, ":")
+	if len(lines) == 0 {
+		_, _ = fmt.Fprintln(os.Stderr, " <empty>")
+		return
+	}
+	_, _ = fmt.Fprintln(os.Stderr)
+	_, _ = fmt.Fprint(os.Stderr, color)
+	for _, line := range lines {
+		_, _ = fmt.Fprintf(os.Stderr, "  %s\n", line)
+	}
+	_, _ = fmt.Fprint(os.Stderr, colReset)
 }
