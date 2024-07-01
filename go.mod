@@ -4,7 +4,6 @@ go 1.21
 
 require (
 	github.com/gomarkdown/markdown v0.0.0-20231115200524-a660076da3fd
-	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/sessions v1.3.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/monopole/shexec v0.2.0

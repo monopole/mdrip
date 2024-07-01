@@ -23,23 +23,51 @@ func init() {
 	gob.Register(forRegistration)
 }
 
-// These must all be unique, and preferably short.
-// These are URL query parameter and cookie field names.
+//go:generate stringer -type=Route -linecomment
+type Route int
+
 const (
-	// PathGetJs is the GET endpoint for most of the javascript needed by the webapps.
-	PathGetJs = "/_/js"
-	// PathGetCss is the GET endpoint for all the css needed by the webapps.
-	PathGetCss = "/_/css"
-	// PathReload tells the server to reload all data from the file system.
-	PathReload = "/_/r"
-	// PathGetLabelsForFile is the GET endpoint for code block labels of one markdown file.
-	PathGetLabelsForFile = "/_/getLabelsForFile"
-	// PathGetHtmlForFile is the GET endpoint for HTML of one markdown file.
-	PathGetHtmlForFile = "/_/getHtmlForFile"
-	// PathRunBlock is the POST endpoint to trigger code block execution.
-	PathRunBlock = "/_/runCodeBlock"
-	// PathSave is the POST endpoint to save application state.
-	PathSave = "/_/save"
+	RouteUnknown Route = iota
+	// RouteJs is the GET endpoint for most of the javascript needed by the webapps.
+	RouteJs // js
+	// RouteCss is the GET endpoint for all the css needed by the webapps.
+	RouteCss // css
+	// RouteReload tells the server to reload all data from the file system.
+	RouteReload // reload
+	// RouteLabelsForFile is the GET endpoint for code block labels of one markdown file.
+	RouteLabelsForFile // labelsForFile
+	// RouteHtmlForFile is the GET endpoint for HTML of one markdown file.
+	RouteHtmlForFile // htmlForFile
+	// RouteRunBlock is the POST endpoint to trigger code block execution.
+	RouteRunBlock // runCodeBlock
+	// RouteSave is the POST endpoint to save application state.
+	RouteSave // save
+	// RouteImage returns an image.
+	RouteImage // image
+	// RouteQuit tells the server to quit.
+	RouteQuit // quit
+	// RouteDebug tells the server to render a debug page.
+	RouteDebug // debug
+	// RouteWebSocket sets up a socket.
+	RouteWebSocket // debug
+)
+
+const (
+	// dynamicPrefix is the prefix for dynamic, rendering required
+	// requests, POST requests and special requests like
+	// telling the server to quit.  This distinguishes
+	// such paths from paths to static content like images.
+	// TODO: put up distinct ports for static vs dynamic?
+	dynamicPrefix = "/_/"
+)
+
+func Dynamic(r Route) string {
+	return dynamicPrefix + r.String()
+}
+
+// These URL query parameter and cookie field names
+// should all be unique and preferably short.
+const (
 
 	// KeyMdSessID is the param name for session ID.
 	KeyMdSessID = "sid"

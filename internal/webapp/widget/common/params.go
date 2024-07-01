@@ -31,11 +31,11 @@ var (
 
 		MaxNavWordLength: 43,
 
-		PathSave:             session.PathSave,
-		PathReload:           session.PathReload,
-		PathGetHtmlForFile:   session.PathGetHtmlForFile,
-		PathGetLabelsForFile: session.PathGetLabelsForFile,
-		PathRunBlock:         session.PathRunBlock,
+		PathSave:             session.Dynamic(session.RouteSave),
+		PathReload:           session.Dynamic(session.RouteReload),
+		PathGetHtmlForFile:   session.Dynamic(session.RouteHtmlForFile),
+		PathGetLabelsForFile: session.Dynamic(session.RouteLabelsForFile),
+		PathRunBlock:         session.Dynamic(session.RouteRunBlock),
 
 		KeyMdFileIndex: session.KeyMdFileIndex,
 		KeyBlockIndex:  session.KeyBlockIndex,

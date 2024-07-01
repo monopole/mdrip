@@ -13,9 +13,6 @@ const (
 	MimeJs  = "application/javascript"
 	MimeCss = "text/css"
 
-	// Don't forget to set the content-type header if you use this.
-	cssViaLink = `<link rel='stylesheet' type='` + MimeCss + `' href='` + session.PathGetCss + `' />`
-
 	// classlessCss = "https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css"
 	// classlessCss = "https://raw.githubusercontent.com/raj457036/attriCSS/master/themes/darkforest-green.css"
 	//
@@ -28,6 +25,10 @@ const (
 )
 
 var (
+	// Don't forget to set the content-type header if you use this.
+	cssViaLink = `<link rel='stylesheet' type='` + MimeCss +
+		`' href='` + session.Dynamic(session.RouteCss) + `' />`
+
 	// Use this instead of cssViaLink to inject directly into the html response.
 	cssInjected = `<style> ` + mdrip.AllCss + ` </style>`
 )
@@ -39,7 +40,7 @@ var (
   <head>
     <title>{{.AppState.Title}}</title>
     ` + cssViaLink + `
-    <script type='` + MimeJs + `' src='` + session.PathGetJs + `'></script>
+    <script type='` + MimeJs + `' src='` + session.Dynamic(session.RouteJs) + `'></script>
     <script type='` + MimeJs + `'>
       function makeEmptyCache() {
         let c = new Array({{len .AppState.RenderedFiles}});
