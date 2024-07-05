@@ -163,7 +163,6 @@ func (ws *Server) handleDebugPage(wr http.ResponseWriter, req *http.Request) {
 
 func (ws *Server) handleQuit(w http.ResponseWriter, _ *http.Request) {
 	slog.Info("Received quit.")
-	close(ws.connReaperQuitCh)
 	_, _ = fmt.Fprint(w, "\nbye bye\n")
 	go func() {
 		time.Sleep(2 * time.Second)
@@ -202,28 +201,10 @@ func (ws *Server) handleRunCodeBlock(wr http.ResponseWriter, req *http.Request) 
 	slog.Info("Will attempt to run", "codeSnip",
 		utils.SampleString(block.Code(), 80))
 
-	var err error
-
-	// TODO: THE WEBSOCKET STUFF ABANDONED FOR NOW
-	//   THE USE CASE IS QUESTIONABLE.
-	//   FAILING OVER TO DIRECT TMUX WRITE
-
-	c := ws.connections[sessID]
-	if c == nil {
-		slog.Info("no socket for", "sessID", sessID)
-	} else {
-		_, err = c.Write([]byte(block.Code()))
-		if err != nil {
-			slog.Warn("socket write failed", "err", err)
-			delete(ws.connections, sessID)
-		}
-	}
-	if c == nil || err != nil {
-		slog.Info("no socket, attempting direct tmux paste")
-		err = ws.attemptTmuxWrite(block)
-		if err != nil {
-			slog.Warn("tmux write failed", "err", err)
-		}
+	// TODO: set some kind of isTmuxAvailable flag at startup, instead
+	//  of continually hoping that tmux was installed.
+	if err := ws.attemptTmuxWrite(block); err != nil {
+		slog.Warn("tmux write failed", "err", err)
 	}
 	_, _ = fmt.Fprintln(wr, "Ok")
 }

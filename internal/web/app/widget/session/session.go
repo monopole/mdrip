@@ -1,3 +1,12 @@
+// Package session holds code to manage state in a cookie.
+// TODO: continue this?  If the only use case is to start the
+//
+//	server locally and run one session, then there's no case
+//	for storing a cookie and quickly putting the user back
+//	to the same codeblock in the same markdown.  OTOH, if there's
+//	a development cycle here where the markdown is being editted
+//	and reloaded, using a cookie to get back to the same spot
+//	in the same markdown file could be nice.
 package session
 
 import (

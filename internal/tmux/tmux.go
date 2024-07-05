@@ -1,13 +1,10 @@
 package tmux
 
 import (
+	"github.com/monopole/mdrip/v2/internal/utils"
 	"log/slog"
 	"os"
 	"os/exec"
-	"time"
-
-	"github.com/gorilla/websocket"
-	"github.com/monopole/mdrip/v2/internal/utils"
 )
 
 // Tmux holds information about a tmux process (https://github.com/tmux/tmux).
@@ -53,85 +50,6 @@ func (tx Tmux) IsUp() bool {
 		return false
 	}
 	return true
-}
-
-func closeSocket(c *websocket.Conn, done chan struct{}) {
-	defer c.Close()
-	// Send a close frame, wait for the other side to close the connection.
-	err := c.WriteMessage(
-		websocket.CloseMessage,
-		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	if err != nil {
-		slog.Error("write close:", err)
-		return
-	}
-	select {
-	case <-done:
-		slog.Info("closing socket per done signal")
-	case <-time.After(60 * time.Second):
-		slog.Info("closing socket per timeout")
-	}
-}
-
-// Adapt opens a websocket to the given address, and sends what it gets to tmux.
-// TODO: THIS STUFF ABANDONED FOR NOW AS THE USE CASE IS QUESTIONABLE.
-func (tx Tmux) Adapt(addr string) {
-	done := make(chan struct{})
-
-	slog.Info("connecting", "addr", addr)
-
-	c, _, err := websocket.DefaultDialer.Dial(addr, nil)
-	if err != nil {
-		slog.Error("dial: ", err)
-		panic(err)
-	}
-	slog.Info("dial succeeded")
-	defer closeSocket(c, done)
-
-	messages := make(chan []byte)
-
-	go func() {
-		defer close(done)
-		for {
-			_, message, err := c.ReadMessage()
-			if err != nil {
-				slog.Info("error on read", "err", err)
-				slog.Info("message with error", "message", message)
-				return
-			}
-			slog.Info("message received")
-			messages <- message
-		}
-	}()
-
-	err = c.WriteMessage(
-		websocket.TextMessage,
-		[]byte("greetings from "+SessionName+" --mode tmux"))
-	if err != nil {
-		slog.Error("trouble saying hello:", err)
-		return
-	}
-	slog.Info("sent hello message")
-
-	for {
-		select {
-		case m := <-messages:
-			n := string(m)
-			if len(n) > 40 {
-				n = n[:40] + "..."
-			}
-			slog.Info("received for execution", "n", n)
-			tx.Write(m)
-			slog.Info("sent for execution")
-			// TODO: Cancel previous timeout, start new one ??
-		case <-done:
-			slog.Info("done signal found")
-			return
-		case <-time.After(10 * time.Minute):
-			slog.Info("backstop timeout expired")
-			return
-		}
-	}
 }
 
 // Write bytes to a tmux session for interpretation as shell commands.
