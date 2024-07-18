@@ -2,13 +2,15 @@ package server
 
 import (
 	"fmt"
+	"io"
+	"log/slog"
+	"net/http"
+	"strings"
+
 	"github.com/gorilla/sessions"
 	"github.com/monopole/mdrip/v2/internal/utils"
 	"github.com/monopole/mdrip/v2/internal/web/config"
 	"github.com/monopole/mdrip/v2/internal/web/server/minify"
-	"log/slog"
-	"net/http"
-	"strings"
 )
 
 const (
@@ -26,10 +28,11 @@ type Server struct {
 	dLoader  *DataLoader
 	minifier *minify.Minifier
 	store    sessions.Store
+	runner   io.Writer
 }
 
 // NewServer returns a new web server configured with the given DataLoader.
-func NewServer(dl *DataLoader) (*Server, error) {
+func NewServer(dl *DataLoader, r io.Writer) (*Server, error) {
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
 		Path:     "/",
@@ -40,6 +43,7 @@ func NewServer(dl *DataLoader) (*Server, error) {
 		dLoader:  dl,
 		store:    s,
 		minifier: minify.MakeMinifier(),
+		runner:   r,
 	}, nil
 }
 

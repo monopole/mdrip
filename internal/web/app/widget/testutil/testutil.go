@@ -32,7 +32,7 @@ var (
 	Js string
 
 	// For use in the path when writing HTML to a file.
-	windBlowsUsers = []string{os.Getenv("USER"), "Jeffrey"}
+	windBlowsUsers = []string{os.Getenv("USER"), "Jeffrey", "jeffr"}
 )
 
 // For testing.

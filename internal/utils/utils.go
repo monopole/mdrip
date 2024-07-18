@@ -2,7 +2,6 @@ package utils
 
 import (
 	"bytes"
-	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -69,11 +68,4 @@ func Spaces(n int) string {
 	}
 	// return fmt.Sprintf("%"+strconv.Itoa(n)+"s", " ")
 	return blanks[:n]
-}
-
-// Check reports the error fatally if it's non-nil.
-func Check(msg string, err error) {
-	if err != nil {
-		panic(fmt.Errorf("%s; %w", msg, err))
-	}
 }

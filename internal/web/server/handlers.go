@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/monopole/mdrip/v2/internal/utils"
 	"github.com/monopole/mdrip/v2/internal/web/config"
 	"github.com/monopole/mdrip/v2/internal/web/server/minify"
 	htmlTmpl "html/template"
@@ -198,13 +197,9 @@ func (ws *Server) handleRunCodeBlock(wr http.ResponseWriter, req *http.Request) 
 		return
 	}
 	block := mdFile.Blocks[blockIndex]
-	slog.Info("Will attempt to run", "codeSnip",
-		utils.SampleString(block.Code(), 80))
 
-	// TODO: set some kind of isTmuxAvailable flag at startup, instead
-	//  of continually hoping that tmux was installed.
-	if err := ws.attemptTmuxWrite(block); err != nil {
-		slog.Warn("tmux write failed", "err", err)
+	if _, err := ws.runner.Write([]byte(block.Code())); err != nil {
+		slog.Warn("runner failed", "err", err)
 	}
 	_, _ = fmt.Fprintln(wr, "Ok")
 }

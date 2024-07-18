@@ -1,16 +1,12 @@
 package server
 
 import (
-	"errors"
 	"fmt"
-	"github.com/monopole/mdrip/v2/internal/loader"
-	"github.com/monopole/mdrip/v2/internal/tmux"
+	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/web/config"
 	"log/slog"
 	"net/http"
 	"strconv"
-
-	"github.com/monopole/mdrip/v2/internal/parsren"
 )
 
 func (ws *Server) getRenderedMdFile(req *http.Request) (*parsren.RenderedMdFile, error) {
@@ -60,14 +56,4 @@ func inRange(wr http.ResponseWriter, name string, arg, n int) bool {
 		fmt.Sprintf("%s %d out of range 0-%d",
 			name, arg, n-1), http.StatusBadRequest)
 	return false
-}
-
-func (ws *Server) attemptTmuxWrite(b *loader.CodeBlock) error {
-	// For debugging add: b.Dump(os.Stderr)
-	tx := tmux.NewTmux(tmux.Path)
-	if !tx.IsUp() {
-		return errors.New("no local tmux to write to")
-	}
-	_, err := tx.Write([]byte(b.Code()))
-	return err
 }

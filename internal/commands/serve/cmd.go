@@ -2,7 +2,8 @@ package serve
 
 import (
 	"fmt"
-	webserver2 "github.com/monopole/mdrip/v2/internal/web/server"
+	"github.com/monopole/mdrip/v2/internal/tmux"
+	"io"
 	"log/slog"
 	"os"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/utils"
+	"github.com/monopole/mdrip/v2/internal/web/server"
 	"github.com/spf13/cobra"
 )
 
@@ -59,13 +61,14 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 			if len(args) == 0 {
 				args = []string{string(loader.CurrentDir)}
 			}
-			dl := webserver2.NewDataLoader(
+
+			dl := server.NewDataLoader(
 				ldr, args, p, makeTitle(flags.title, args))
 			// Heat up the cache, and see if the args are okay.
 			if err := dl.LoadAndRender(); err != nil {
 				return fmt.Errorf("data loader fail; %w", err)
 			}
-			s, err := webserver2.NewServer(dl)
+			s, err := server.NewServer(dl, getCommandRunner())
 			if err != nil {
 				return err
 			}
@@ -89,4 +92,24 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 		false,
 		"Use the 'hostname' utility to specify where to serve, else implicitly use 'localhost'.")
 	return c
+}
+
+func getCommandRunner() io.Writer {
+	tx, err := tmux.NewTmux(tmux.PgmName)
+	if err != nil || tx == nil {
+		slog.Warn(tmux.PgmName+" not available", "err", err)
+		return &fakeTmux{}
+	}
+	if !tx.IsUp() {
+		slog.Warn(tmux.PgmName + " executable present, but not running")
+		return &fakeTmux{}
+	}
+	return tx
+}
+
+type fakeTmux struct{}
+
+func (tx *fakeTmux) Write(bytes []byte) (int, error) {
+	slog.Info("Would run", "codeSnip", utils.Summarize(bytes))
+	return 0, nil
 }
