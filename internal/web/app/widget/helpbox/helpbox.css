@@ -7,7 +7,7 @@
     z-index: 3; /* on top of other stuff */
     background-color: var(--color-help-background);
     color: var(--color-help-text);
-    height: 0px;
+    height: 0;
     transition: height {{.TransitionSpeedMs}}ms;
     overflow: scroll;
     scrollbar-width: none;

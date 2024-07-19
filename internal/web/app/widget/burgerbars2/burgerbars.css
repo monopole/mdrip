@@ -42,12 +42,12 @@
 }
 
 #burgerBars span:nth-child(odd) {
-    left:0px;
+    left:0;
     border-radius: 9px 0 0 9px;
 }
 
 #burgerBars span:nth-child(1), #burgerBars span:nth-child(2) {
-    top: 0px;
+    top: 0;
 }
 
 #burgerBars span:nth-child(3), #burgerBars span:nth-child(4) {

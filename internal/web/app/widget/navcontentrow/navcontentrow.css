@@ -130,9 +130,9 @@ them will also disappear as needed to let the content get bigger.
 }
 
 .ncrOnShadow {
-    box-shadow: 1rem 1rem 1rem 0rem rgba(0,0,0,.2) inset;
+    box-shadow: 1rem 1rem 1rem 0 rgba(0,0,0,.2) inset;
 }
 
 .ncrOffShadow {
-    box-shadow: 0 1rem 1rem 0rem rgba(0,0,0,.2) inset;
+    box-shadow: 0 1rem 1rem 0 rgba(0,0,0,.2) inset;
 }

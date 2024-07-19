@@ -45,7 +45,7 @@ blockquote {
     border-left: 0.3em solid var(--color-header-background);
 
     /* top|bottom left|right */
-    margin: 0em 10px;
+    margin: 0 10px;
 
     /* top|bottom left|right */
     padding: 0.5em 10px;

@@ -13,7 +13,7 @@
 //               to indicate that it ran.
 //
 //  In practice, since only one block can run at a time, the entire app is either
-//  running the active codeblock or not.
+//  running the active codeBlock or not.
 class CodeBlockController {
     constructor(id) {
         this.id = id;
@@ -109,7 +109,7 @@ class CodeBlockController {
     // ---------------------------------------------
 
     attemptCopyToBuffer() {
-        // The [3] seems fragile, but it works. See codeblock.html
+        // The [3] seems fragile, but it works. See codeBlock.html
         // childNodes[1] is codeBlockControl
         // childNodes[3] is codeBlockArea
         let text = this.codeArea.firstChild.textContent
@@ -133,8 +133,8 @@ class CodeBlockController {
         tA.select();
         try {
             let successful = document.execCommand('copy');
-            // let msg = successful ? 'successful' : 'unsuccessful';
-            // console.log('Fallback: Copying text command was ' + msg);
+            let msg = successful ? 'successful' : 'unsuccessful';
+            console.log('Fallback: Copying text command was ' + msg);
         } catch (err) {
             console.error('Oops2, unable to copy to paste buffer');
         }

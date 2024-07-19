@@ -13,20 +13,20 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 )
 
-type gomark struct {
+type goMark struct {
 	doMyStuff bool
 	p         *parser.Parser
 	doc       ast.Node
 }
 
-func (gm *gomark) Load(_ []byte) error {
+func (gm *goMark) Load(_ []byte) error {
 	// panic("TODO: get this to work")
 	gm.doc = gm.p.Parse(nil)
 	myWalk(gm.doc)
 	return nil
 }
 
-func (gm *gomark) Render() (string, error) {
+func (gm *goMark) Render() (string, error) {
 	opts := html.RendererOptions{
 		Flags: html.CommonFlags | html.HrefTargetBlank,
 	}
@@ -37,11 +37,11 @@ func (gm *gomark) Render() (string, error) {
 	return string(markdown.Render(gm.doc, renderer)), nil
 }
 
-func (gm *gomark) Dump() {
+func (gm *goMark) Dump() {
 	ast.PrintWithPrefix(os.Stdout, gm.doc, "  ")
 }
 
-func NewMarker(doMyStuff bool) *gomark {
+func NewMarker(doMyStuff bool) *goMark {
 	p := parser.NewWithExtensions(parser.CommonExtensions |
 		parser.AutoHeadingIDs |
 		parser.NoEmptyLineBeforeBlock |
@@ -49,7 +49,7 @@ func NewMarker(doMyStuff bool) *gomark {
 	if doMyStuff {
 		p.Opts.ParserHook = parserHook
 	}
-	return &gomark{p: p}
+	return &goMark{p: p}
 }
 
 // parserHook is a custom parsren.

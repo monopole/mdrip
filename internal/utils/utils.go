@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"regexp"
-	"strings"
 	"unicode"
 )
 
@@ -23,16 +22,7 @@ func DropLeadingNumbers(s string) string {
 	return s[r[1]:]
 }
 
-// SampleString converts a long multi-line string to a short one-line sample.
-func SampleString(incoming string, max int) string {
-	s := len(incoming)
-	if s > max {
-		s = max
-	}
-	return convertBadWhiteSpaceToBlanks(strings.TrimSpace(incoming[:s]))
-}
-
-// Summarize is better than SampleString?
+// Summarize a code block in one line.
 func Summarize(c []byte) string {
 	const mx = 60
 	if len(c) > mx {
@@ -47,25 +37,17 @@ func Summarize(c []byte) string {
 	return string(c)
 }
 
-// Convert tabs, newlines, etc. to normal blanks.
-func convertBadWhiteSpaceToBlanks(s string) string {
-	return strings.Map(func(r rune) rune {
-		switch r {
-		case 0x000A, 0x000B, 0x000C, 0x000D, 0x0085, 0x2028, 0x2029:
-			return ' '
-		default:
-			return r
-		}
-	}, s)
-}
-
-const blanks = "                                                                "
+// const blanks = "                                                                "
+const blanks = "                                               " +
+	"                                               "
 
 // Spaces returns a string of length n with only spaces.
 func Spaces(n int) string {
 	if n < 1 {
 		return ""
 	}
-	// return fmt.Sprintf("%"+strconv.Itoa(n)+"s", " ")
+	if n > len(blanks) {
+		panic("too many blanks")
+	}
 	return blanks[:n]
 }
