@@ -19,7 +19,7 @@ func (v *VisitorCounter) VisitFolder(fl *MyFolder) {
 	fl.VisitChildren(v)
 }
 
-func (v *VisitorCounter) VisitFile(fi *MyFile) {
+func (v *VisitorCounter) VisitFile(_ *MyFile) {
 	v.NumFiles++
 }
 

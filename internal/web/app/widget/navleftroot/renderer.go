@@ -28,8 +28,6 @@ var (
 	tmplTopFolder = common.MustHtmlTemplate(navlefttopfolder.AsTmpl())
 )
 
-const tryTopFolderHack = false
-
 const indentPerDepth = 2
 
 // Renderer renders left nav HTML to a Writer.

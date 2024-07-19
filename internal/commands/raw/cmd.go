@@ -62,13 +62,14 @@ func NewCommand() *cobra.Command {
 }
 
 func doIt(dir string, hostAndPort string) error {
-	fmt.Println("Serving from ", dir)
-	return http.ListenAndServe(hostAndPort, logUrl(http.FileServer(http.Dir(dir))))
+	slog.Info("Serving from " + dir)
+	return http.ListenAndServe(
+		hostAndPort, logUrl(http.FileServer(http.Dir(dir))))
 }
 
 func logUrl(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		fmt.Println(req.URL)
+		slog.Info(req.URL.String())
 		next.ServeHTTP(w, req)
 	})
 }

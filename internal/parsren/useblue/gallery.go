@@ -2,7 +2,7 @@ package useblue
 
 import (
 	"bytes"
-	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/gomarkdown/markdown/ast"
@@ -21,7 +21,7 @@ func attemptToParseGallery(data []byte) (*Gallery, []byte, int) {
 	if !bytes.HasPrefix(data, gallery) {
 		return nil, nil, 0
 	}
-	fmt.Printf("Found a gallery!\n\n")
+	slog.Info("Found a gallery!")
 	i := len(gallery)
 	// find empty line
 	// TODO: should also consider end of document

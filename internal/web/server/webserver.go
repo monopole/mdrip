@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -25,13 +24,19 @@ var (
 
 // Server represents a webserver.
 type Server struct {
-	dLoader  *DataLoader
+	// dLoader loads markdown to serve.
+	dLoader *DataLoader
+	// minifier minifies generates html, js and css before serving it.
 	minifier *minify.Minifier
-	store    sessions.Store
-	runner   io.Writer
+	// store manages cookie state - experimental, not sure that
+	// it's useful to store app state.  FWIW, it attempts to put you on the same
+	// codeblock if you reload (start a new session).
+	store sessions.Store
+	// codeWriter accepts codeblocks for execution or simply printing.
+	codeWriter io.Writer
 }
 
-// NewServer returns a new web server configured with the given DataLoader.
+// NewServer returns a new web server.
 func NewServer(dl *DataLoader, r io.Writer) (*Server, error) {
 	s := sessions.NewCookieStore(keyAuth, keyEncrypt)
 	s.Options = &sessions.Options{
@@ -40,10 +45,10 @@ func NewServer(dl *DataLoader, r io.Writer) (*Server, error) {
 		HttpOnly: true,
 	}
 	return &Server{
-		dLoader:  dl,
-		store:    s,
-		minifier: minify.MakeMinifier(),
-		runner:   r,
+		dLoader:    dl,
+		store:      s,
+		minifier:   minify.MakeMinifier(),
+		codeWriter: r,
 	}, nil
 }
 
@@ -64,10 +69,10 @@ func (ws *Server) Serve(hostAndPort string) (err error) {
 
 	// In server mode, the dLoader.paths slice has exactly one entry.
 	dir := strings.TrimSuffix(ws.dLoader.paths[0], "/")
-	fmt.Printf("Serving static content from %q\n", dir)
+	slog.Info("Serving static content from ", "dir", dir)
 	http.Handle("/", ws.makeMetaHandler(http.FileServer(http.Dir(dir))))
 
-	fmt.Println("Serving at " + hostAndPort)
+	slog.Info("Serving at " + hostAndPort)
 	if err = http.ListenAndServe(hostAndPort, nil); err != nil {
 		slog.Error("unable to start server", err)
 	}

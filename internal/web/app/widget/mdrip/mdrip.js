@@ -44,8 +44,8 @@
 class MdRipController {
     constructor(as) {
         this.appState = as;
-        let tlcBottom = new TimelineController(as,{{.TimelineIdBot}});
-        let tlcTop = new TimelineController(as, {{.TimelineIdTop}});
+        let tlcBottom = new TimelineController(as,{{.TimelineIdBot}})
+        let tlcTop = new TimelineController(as, {{.TimelineIdTop}})
         this.ntc = new NavTopController(as, tlcTop);
         this.hbc = new HelpBoxController(this.ntc);
 

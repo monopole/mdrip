@@ -10,7 +10,7 @@ class NavTopController {
         as.addFileChangeReactor(this);
         as.addLayoutReactor(this);
         // If the incoming state doesn't look like the OOTB HTML layout...
-        if (this.isTitleViz != true) {
+        if (this.isTitleViz !== true) {
             this.reactLayoutChange()
         }
     }

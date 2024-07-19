@@ -3,6 +3,7 @@ package useblue
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -19,11 +20,9 @@ type gomark struct {
 }
 
 func (gm *gomark) Load(_ []byte) error {
-	panic("TODO: get this to wprk")
+	// panic("TODO: get this to work")
 	gm.doc = gm.p.Parse(nil)
-
 	myWalk(gm.doc)
-	//	_, err = fmt.Printf("--- Markdown:\n%s\n\n", md)
 	return nil
 }
 
@@ -70,9 +69,9 @@ func parserHook(data []byte) (ast.Node, []byte, int) {
 }
 
 func myWalk(doc ast.Node) {
-	fmt.Println("Walking...")
+	slog.Info("Walking...")
 	ast.Walk(doc, &nodeVisitor{})
-	fmt.Println("Done Walking.")
+	slog.Info("Done Walking.")
 }
 
 type nodeVisitor struct {
@@ -90,7 +89,7 @@ func (v *nodeVisitor) Visit(n ast.Node, entering bool) ast.WalkStatus {
 	if n.AsLeaf() != nil {
 		leafLiteral = string(n.AsLeaf().Literal)
 	}
-	fmt.Printf("%s %s \n", nodeType(n), leafLiteral)
+	slog.Info("visit", "nodeType", nodeType(n), "literal", leafLiteral)
 	return ast.GoToNext
 }
 

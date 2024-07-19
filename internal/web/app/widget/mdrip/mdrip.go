@@ -3,6 +3,7 @@ package mdrip
 import (
 	"bytes"
 	_ "embed"
+	"github.com/monopole/mdrip/v2/internal/web/app/widget/navlefttopfolder"
 	"html/template"
 	"strings"
 
@@ -61,6 +62,7 @@ var (
 			timeline.Css,
 			navtop.Css,
 			navleftfile.Css,
+			navlefttopfolder.Css,
 			navleftfolder.Css,
 			navleftroot.Css,
 			navbottom.Css,

@@ -174,7 +174,7 @@ func (ws *Server) handleRunCodeBlock(wr http.ResponseWriter, req *http.Request) 
 	slog.Info("Running code block", "url", req.URL)
 	arg := req.URL.Query().Get(config.KeyMdSessID)
 	if len(arg) == 0 {
-		http.Error(wr, "No session id for block runner", http.StatusBadRequest)
+		http.Error(wr, "No session id for block codeWriter", http.StatusBadRequest)
 		return
 	}
 	sessID := session.TypeSessID(arg)
@@ -198,8 +198,8 @@ func (ws *Server) handleRunCodeBlock(wr http.ResponseWriter, req *http.Request) 
 	}
 	block := mdFile.Blocks[blockIndex]
 
-	if _, err := ws.runner.Write([]byte(block.Code())); err != nil {
-		slog.Warn("runner failed", "err", err)
+	if _, err := ws.codeWriter.Write([]byte(block.Code())); err != nil {
+		slog.Error("codeWriter failed", "err", err)
 	}
 	_, _ = fmt.Fprintln(wr, "Ok")
 }

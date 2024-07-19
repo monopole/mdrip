@@ -8,7 +8,7 @@ import (
 
 const cmdName = "tmux"
 
-func NewCommand(ldr *loader.FsLoader) *cobra.Command {
+func NewCommand(_ *loader.FsLoader) *cobra.Command {
 	return &cobra.Command{
 		Use:     cmdName,
 		Short:   "Opens a websocket to a given URI, and forwards incoming messages to a local tmux instance.",

@@ -20,7 +20,7 @@ class HelpBoxController {
         this.style.boxShadow = '0px 2px 2px 1px rgba(0,0,0,.3), 2px 0px 2px 1px rgba(0,0,0,.3)';
     }
     get isViz() {
-        return (this.style.height != '0px')
+        return (this.style.height !== '0px')
     }
     toggle() {
         if (this.isViz) {

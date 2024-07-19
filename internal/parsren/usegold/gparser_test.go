@@ -239,6 +239,7 @@ func TestParsingTree(t *testing.T) {
 	if !assert.Equal(t, 6, len(p.FilteredBlocks(loader.WildCardLabel))) {
 		t.FailNow()
 	}
+	// For debugging.
 	if printTheHtml := false; printTheHtml {
 		fmt.Println("<html><body>")
 		for _, f := range p.RenderedMdFiles() {

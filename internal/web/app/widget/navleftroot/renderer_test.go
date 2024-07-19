@@ -190,9 +190,9 @@ func TestRenderer(t *testing.T) {
 			got := gohtml.Format(b.String()) // Make tests easier to read.
 			assert.Equal(t, tc.maxFileNameLen, r.MaxFileNameLength())
 			if !assert.Equal(t, tc.want, got) {
-				fmt.Fprintln(os.Stderr, "--------------------")
-				fmt.Fprintln(os.Stderr, got)
-				fmt.Fprintln(os.Stderr, "--------------------")
+				_, _ = fmt.Fprintln(os.Stderr, "--------------------")
+				_, _ = fmt.Fprintln(os.Stderr, got)
+				_, _ = fmt.Fprintln(os.Stderr, "--------------------")
 			}
 		})
 	}

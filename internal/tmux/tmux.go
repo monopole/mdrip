@@ -59,20 +59,26 @@ func (tx Tmux) IsUp() bool {
 func (tx Tmux) Write(bytes []byte) (n int, err error) {
 	var tmpFile *os.File
 	tmpFile, err = os.CreateTemp("", SessionName+"-block-")
-	check("create temp file", err)
-	check("chmod temp file", os.Chmod(tmpFile.Name(), 0644))
+	if err != nil {
+		return 0, fmt.Errorf("unable to create temp file; %w", err)
+	}
+	err = os.Chmod(tmpFile.Name(), 0644)
+	if err != nil {
+		return 0, fmt.Errorf("unable to chmod %s; %w", tmpFile.Name(), err)
+	}
 	defer func() {
-		slog.Info("Using", "tmpFile", tmpFile.Name())
-		check("delete temp file", os.Remove(tmpFile.Name()))
+		if err = os.Remove(tmpFile.Name()); err != nil {
+			slog.Error(
+				"unable to remove", "tmpFie", tmpFile.Name(), "err", err.Error())
+		}
 	}()
 
 	n, err = tmpFile.Write(bytes)
 	if err != nil {
-		slog.Error("Could not write tmp file", "err", err)
+		return n, fmt.Errorf("could not write tmp file; %w", err)
 	}
 	if n != len(bytes) {
-		slog.Error(
-			"Could not write bytes", "n", n, "len(bytes)", len(bytes))
+		return n, fmt.Errorf("incorrect byte count n=%d, len(bytes)=%d", n, len(bytes))
 	}
 	var out []byte
 
@@ -83,9 +89,10 @@ func (tx Tmux) Write(bytes []byte) (n int, err error) {
 		out, err = cmd.Output()
 	}
 	if err != nil {
-		slog.Error("failed cmd", "args", cmd.Args, "out", out)
+		return 0, fmt.Errorf(
+			"tmux cmd failed; cmd=%s, out=%q", strings.Join(cmd.Args, ","), out)
 	}
-	return len(bytes), err
+	return len(bytes), nil
 }
 
 func (tx Tmux) Start() error {
@@ -108,11 +115,4 @@ func (tx Tmux) ListSessions() (string, error) {
 	raw, err := cmd.Output()
 	slog.Info("List", "raw", string(raw))
 	return string(raw), err
-}
-
-// check reports the error fatally if it's non-nil.
-func check(msg string, err error) {
-	if err != nil {
-		panic(fmt.Errorf("%s; %w", msg, err))
-	}
 }

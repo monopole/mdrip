@@ -1,7 +1,7 @@
 function tstMakeAppState() {
     // Cannot fetch without a server, so send a full cache.
-    let sc = new SessionController({{.AppState.RenderedFiles}});
-    let as = new AppState(sc, {{.AppState.InitialRender}});
+    let sc = new SessionController({{.AppState.RenderedFiles}})
+    let as = new AppState(sc, {{.AppState.InitialRender}})
     tstWireArrowKeys(as);
     return as;
 }

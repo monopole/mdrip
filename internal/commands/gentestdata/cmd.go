@@ -8,6 +8,7 @@ import (
 	"github.com/monopole/mdrip/v2/internal/web/app/widget/testutil"
 	"github.com/spf13/cobra"
 	"log"
+	"log/slog"
 	"os"
 )
 
@@ -58,7 +59,7 @@ to an empty folder to create known state for testing.
 			// and write files into it.
 			f := testutil.MakeNamedFolderTreeOfMarkdown(loader.NewFolder(path))
 			f.Accept(&treeWriter{})
-			fmt.Printf("Created folder %q.\n", path)
+			slog.Info("Created folder " + path)
 			return nil
 		},
 	}
@@ -102,8 +103,7 @@ type myFlags struct {
 type treeWriter struct{}
 
 func mkDirOrDie(fp loader.FilePath) {
-	err := os.MkdirAll(string(fp), os.ModePerm)
-	if err != nil {
+	if err := os.MkdirAll(string(fp), os.ModePerm); err != nil {
 		log.Fatal(err)
 	}
 }

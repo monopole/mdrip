@@ -26,4 +26,7 @@ the two packages.
 
 Work began on adapting `gomarkdown/markdown` to the interface,
 but paused when it became clear that `yuin/goldmark` was working fine.
+Keeping this arrangement for a while, just in case it becomes
+desirable to try gomarkdown again.
+
 

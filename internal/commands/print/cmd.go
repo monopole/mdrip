@@ -1,7 +1,7 @@
 package print
 
 import (
-	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/monopole/mdrip/v2/internal/loader"
@@ -31,7 +31,7 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 				return err
 			}
 			if fld == nil {
-				fmt.Println("No markdown found.")
+				slog.Warn("No markdown found.")
 				return nil
 			}
 			if flags.debug {

@@ -19,7 +19,7 @@ class NavLeftRootController {
         if (this.myFileIndex === this.appState.fileIndex) {
             return;
         }
-        if (this.myFileIndex != BadId) {
+        if (this.myFileIndex !== BadId) {
             this.fileController[this.myFileIndex].deActivate();
         }
         this.myFileIndex = this.appState.fileIndex

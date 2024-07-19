@@ -23,10 +23,6 @@ func NewCodeBlock(
 	return b
 }
 
-func (cb *CodeBlock) printHeader(wr io.Writer, i int, content []byte) {
-	_, _ = fmt.Fprintf(wr, "%3d. %v\n", i, cb.labels)
-}
-
 // Equals is true if the block have the same content,
 // ignoring the parent.
 func (cb *CodeBlock) Equals(other *CodeBlock) bool {
