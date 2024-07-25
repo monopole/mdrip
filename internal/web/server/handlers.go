@@ -131,7 +131,7 @@ func (ws *Server) handleFavicon(w http.ResponseWriter, _ *http.Request) {
 	Lissajous(w, 7, 3, 1)
 }
 
-func (ws *Server) handleImage(w http.ResponseWriter, r *http.Request) {
+func (ws *Server) handleLissajous(w http.ResponseWriter, r *http.Request) {
 	mySess, _ := ws.store.Get(r, cookieName)
 	_ = mySess.Save(r, w)
 	Lissajous(w,

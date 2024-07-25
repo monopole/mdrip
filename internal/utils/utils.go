@@ -2,6 +2,8 @@ package utils
 
 import (
 	"bytes"
+	"errors"
+	"os"
 	"regexp"
 	"unicode"
 )
@@ -50,4 +52,29 @@ func Spaces(n int) string {
 		panic("too many blanks")
 	}
 	return blanks[:n]
+}
+
+type PathCase int
+
+const (
+	PathInUnknownState PathCase = iota
+	PathIsAFile
+	PathIsAFolder
+	PathDoesNotExist
+)
+
+func PathStatus(path string) (PathCase, error) {
+	fi, err := os.Stat(path)
+	if err == nil {
+		// path exists!
+		if fi.IsDir() {
+			return PathIsAFolder, nil
+		}
+		return PathIsAFile, nil
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return PathDoesNotExist, nil
+	}
+	// File may or may not exist, depends on the error.
+	return PathInUnknownState, err
 }

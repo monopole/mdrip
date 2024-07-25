@@ -12,7 +12,7 @@
 
 
 <!-- [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip) -->
-[![Go Report Card](https://goreportcard.com/badge/github.com/monopole/mdrip)](https://goreportcard.com/report/github.com/monopole/mdrip)
+[![Go Report Card](https://goreportcard.com/badge/github.com/monopole/mdrip/v2)](https://goreportcard.com/report/github.com/monopole/mdrip/v2)
 
 Extract and run all markdown code blocks in your current directory:
 > ```
@@ -20,8 +20,7 @@ Extract and run all markdown code blocks in your current directory:
 > ```
 
 This exits with the error code of the first failed command.
-It's unlikely that you'll want to run every block;
-use a [label] to be selective.
+Use a [label] to be selective about which blocks to run.
 
 Convert your markdown into a web app that works with [`tmux`]:
 
@@ -33,13 +32,19 @@ While focused on a code block, hit the `Enter` key.
 The app posts the block's ID to the server, and the server sends
 the corresponding code block to `tmux` via its api.
 
+<a href="hack/mdripDemo.png" target="_blank">
+<img src="hack/mdripDemo.png"
+  alt="mdrip screenshot" width="95%" height="auto">
+</a>
+
+
 ## Installation
 
 Assuming [Go](https://golang.org/dl) installed just:
 
 <!-- @installation -->
 ```
-go install github.com/monopole/mdrip/v2@v2.0.0-rc08   # or @latest
+go install github.com/monopole/mdrip/v2@latest
 ```
 
 ## Testing
@@ -60,14 +65,14 @@ Extract blocks to `stdout`:
 
 <!-- @lookAtBlocks -->
 ```
-clear
+echo " "
 mdrip print bustedGoTutorial.md
 ```
 
 Extract a subset of blocks by using a [label]:
 <!-- @useLabel -->
 ```
-clear
+echo " "
 mdrip print --label goCommand bustedGoTutorial.md
 ```
 
@@ -75,7 +80,7 @@ Test the code from the markdown in a subshell:
 
 <!-- @pipeTheBlocks -->
 ```
-clear
+echo " "
 mdrip print bustedGoTutorial.md | bash -e
 echo $?
 ```
@@ -87,7 +92,7 @@ For a clearer description of the error, try the `test` command:
 
 <!-- @testTheBlocks -->
 ```
-clear
+echo " "
 mdrip test bustedGoTutorial.md
 echo $?
 ```
@@ -115,7 +120,7 @@ Test the new file:
 
 <!-- @pipeAgain -->
 ```
-clear
+echo " "
 mdrip print goTutorial.md | bash -e
 echo $?
 ```
@@ -123,7 +128,7 @@ echo $?
 or to get quieter output:
 <!-- @testAgain -->
 ```
-clear
+echo " "
 mdrip test goTutorial.md
 echo $?
 ```
@@ -174,11 +179,10 @@ echo hello
 
 Labels are just words beginning with `@` in the comment.
 
-The first label on a block is slightly special, in
-that it's reported as the block's name for various
-purposes.  If no labels are present, a unique
-name is generated for these purposes.
-
+The first label on a block is slightly special in
+that it is reported as the block's name for various
+purposes. If no labels are present, a unique label
+will be generated for these purposes.
 
 ## Demonstrations
 

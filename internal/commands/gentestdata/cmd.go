@@ -1,7 +1,6 @@
 package gentestdata
 
 import (
-	"errors"
 	"fmt"
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/utils"
@@ -36,18 +35,18 @@ to an empty folder to create known state for testing.
 			if len(args) == 1 {
 				path = args[0]
 			}
-			stat, err := pathStatus(path)
+			stat, err := utils.PathStatus(path)
 			if err != nil {
 				return fmt.Errorf("path %q has a problem; %w", path, err)
 			}
-			if stat == pathIsAFile {
+			if stat == utils.PathIsAFile {
 				return fmt.Errorf("%q is a file; not removing", path)
 			}
 			// TODO: Be paranoid?
 			//  if filepath.IsAbs(path) {
 			// 	  return fmt.Errorf("not allowing absolute paths at this time")
 			//  }
-			if stat == pathIsAFolder {
+			if stat == utils.PathIsAFolder {
 				if !flags.overwrite {
 					return fmt.Errorf("folder %q exists; not overwriting", path)
 				}
@@ -69,31 +68,6 @@ to an empty folder to create known state for testing.
 		false,
 		"Overwrite the given folder if it exists.")
 	return c
-}
-
-type pathCase int
-
-const (
-	pathInUnknownState pathCase = iota
-	pathIsAFile
-	pathIsAFolder
-	pathDoesNotExist
-)
-
-func pathStatus(path string) (pathCase, error) {
-	fi, err := os.Stat(path)
-	if err == nil {
-		// path exists!
-		if fi.IsDir() {
-			return pathIsAFolder, nil
-		}
-		return pathIsAFile, nil
-	}
-	if errors.Is(err, os.ErrNotExist) {
-		return pathDoesNotExist, nil
-	}
-	// File may or may not exist, depends on the error.
-	return pathInUnknownState, err
 }
 
 type myFlags struct {

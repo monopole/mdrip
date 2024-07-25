@@ -16,7 +16,7 @@ func _() {
 	_ = x[RouteHtmlForFile-5]
 	_ = x[RouteRunBlock-6]
 	_ = x[RouteSave-7]
-	_ = x[RouteImage-8]
+	_ = x[RouteLissajous-8]
 	_ = x[RouteQuit-9]
 	_ = x[RouteDebug-10]
 	_ = x[RouteWebSocket-11]

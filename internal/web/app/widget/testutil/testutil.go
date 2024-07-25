@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/monopole/mdrip/v2/internal/utils"
+
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren/usegold"
 	"github.com/monopole/mdrip/v2/internal/web/app/widget/appstate"
@@ -30,9 +32,6 @@ var (
 
 	//go:embed testutil.js
 	Js string
-
-	// For use in the path when writing HTML to a file.
-	windBlowsUsers = []string{os.Getenv("USER"), "Jeffrey", "jeffr"}
 )
 
 // For testing.
@@ -46,8 +45,12 @@ const (
 	// into the same path under Documents.
 	useLocalFile = false
 
-	// Where rendered widgets are written.
+	// File name to use when writing a widget's HTML for testing it.
 	widgetFileName = "widget.html"
+
+	// The name of the env var holding the directory into which these
+	// tests should write widgetFileName when useLocalFile == false.
+	envVarWidgetDir = "MDRIP_TEST_DIR"
 
 	TmplTestName = "testableTemplate"
 )
@@ -67,33 +70,39 @@ func getWriteCloser(t *testing.T) io.WriteCloser {
 	if !sendWidgetToFile {
 		return &fakeFile{}
 	}
-	for _, n := range windBlowsUsers {
-		var (
-			f   *os.File
-			err error
-		)
-		dir := directoryForWritingRenderedMarkdown(n)
-		if _, err = os.Stat(dir); err == nil {
-			p := filepath.Join(dir, widgetFileName)
-			f, err = os.Create(p)
-			if err != nil {
-				t.Log(err)
-				t.FailNow()
-			}
-			t.Logf("Writing to %s", p)
-			return f
-		}
+	var (
+		f   *os.File
+		err error
+	)
+	dir := directoryForWritingRenderedMarkdown(t)
+	if _, err = os.Stat(dir); err != nil {
+		t.FailNow()
 	}
-	t.Logf("Unable to find Documents for users %v", windBlowsUsers)
-	t.FailNow()
-	return nil
+	p := filepath.Join(dir, widgetFileName)
+	f, err = os.Create(p)
+	if err != nil {
+		t.Log(err)
+		t.FailNow()
+	}
+	t.Logf("Writing to %s", p)
+	return f
 }
 
-func directoryForWritingRenderedMarkdown(n string) string {
+func directoryForWritingRenderedMarkdown(t *testing.T) string {
 	if useLocalFile {
 		return "."
 	}
-	return fmt.Sprintf("/mnt/c/Users/%s/Documents", n)
+	tmp := os.Getenv(envVarWidgetDir)
+	if tmp == "" {
+		t.Fatalf(
+			"to use non-local html files, define env var %q", envVarWidgetDir)
+	}
+	stat, err := utils.PathStatus(tmp)
+	if err != nil || stat != utils.PathIsAFolder {
+		t.Fatalf(
+			"value of env var %q doesn't resolve to a folder", envVarWidgetDir)
+	}
+	return tmp
 }
 
 func RenderHtmlToFile(t *testing.T, tmplBare string, values any) {

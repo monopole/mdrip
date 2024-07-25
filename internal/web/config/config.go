@@ -28,8 +28,8 @@ const (
 	RouteRunBlock // runCodeBlock
 	// RouteSave is the POST endpoint to save application state.
 	RouteSave // save
-	// RouteImage returns an image.
-	RouteImage // image
+	// RouteLissajous returns a big Lissajous image because of course it does.
+	RouteLissajous // image
 	// RouteQuit tells the server to quit.
 	RouteQuit // quit
 	// RouteDebug tells the server to render a debug page.

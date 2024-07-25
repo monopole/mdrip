@@ -55,7 +55,7 @@ func NewServer(dl *DataLoader, r io.Writer) (*Server, error) {
 // Serve offers an HTTP service.
 func (ws *Server) Serve(hostAndPort string) (err error) {
 	http.HandleFunc("/favicon.ico", ws.handleFavicon)
-	http.HandleFunc(config.Dynamic(config.RouteImage), ws.handleImage)
+	http.HandleFunc(config.Dynamic(config.RouteLissajous), ws.handleLissajous)
 	http.HandleFunc(config.Dynamic(config.RouteQuit), ws.handleQuit)
 	http.HandleFunc(config.Dynamic(config.RouteDebug), ws.handleDebugPage)
 	http.HandleFunc(config.Dynamic(config.RouteReload), ws.handleReload)
@@ -67,7 +67,8 @@ func (ws *Server) Serve(hostAndPort string) (err error) {
 	http.HandleFunc(config.Dynamic(config.RouteRunBlock), ws.handleRunCodeBlock)
 	http.HandleFunc(config.Dynamic(config.RouteSave), ws.handleSaveSession)
 
-	// In server mode, the dLoader.paths slice has exactly one entry.
+	// In server mode, the dLoader.paths slice has exactly one entry,
+	// so we only need the [0] entry and we know it is there.
 	dir := strings.TrimSuffix(ws.dLoader.paths[0], "/")
 	slog.Info("Serving static content from ", "dir", dir)
 	http.Handle("/", ws.makeMetaHandler(http.FileServer(http.Dir(dir))))
@@ -81,6 +82,7 @@ func (ws *Server) Serve(hostAndPort string) (err error) {
 
 func (ws *Server) makeMetaHandler(fsHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		slog.Info("got request for", "url", req.URL)
 		if strings.HasSuffix(req.URL.Path, "/") ||
 			// trigger markdown rendering
 			strings.HasSuffix(req.URL.Path, ".md") {
