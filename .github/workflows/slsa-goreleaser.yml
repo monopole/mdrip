@@ -62,5 +62,5 @@ jobs:
     with:
       go-version: 1.22
       # See https://github.com/slsa-framework/slsa-github-generator/blob/main/internal/builders/go/README.md#configuration-file
-      config-file: hack/${{matrix.os}}-${{matrix.arch}}.yml
+      config-file: assets/${{matrix.os}}-${{matrix.arch}}.yml
       evaluated-envs: "COMMIT_DATE:${{needs.get_ld_args.outputs.commit-date}}, COMMIT:${{needs.get_ld_args.outputs.commit-sha}}, VERSION:${{needs.get_ld_args.outputs.version}}, TREE_STATE:${{needs.get_ld_args.outputs.tree-state}}"
