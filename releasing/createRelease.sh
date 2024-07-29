@@ -1,27 +1,7 @@
 #!/bin/bash
-# Copyright 2023 The Kubernetes Authors.
-# SPDX-License-Identifier: Apache-2.0
 
-#
-# This script is called by Kustomize's release pipeline.
-# It needs jq (required for release note construction) and [GitHub CLI](https://cli.github.com/).
-#
-# To test it locally:
-#
-#   # Please install jq and GitHub CLI. (e.g. macOS)
-#   brew install jq gh
-#
-#   # Setup GitHub CLI
-#   gh auth login
-#
-#   # Run this script, where $TAG is the tag to "release" (e.g. kyaml/v0.13.4)
-#   ./releasing/create-release.sh $TAG
-#
-#   # Please remove Draft Release created by this script.
-
-set -o errexit
-set -o nounset
-set -o pipefail
+# Always declare vars.
+set -u
 
 #if [[ -z "${1-}" ]]; then
 #  echo "Usage: $0 {tag}"
@@ -64,7 +44,7 @@ function buildBinaries {
       if [ "$os" == "windows" ]; then
         zip -j ${artifact}.zip ${workDir}/$binaryName
       else
-        tar cvfz ${artifact}.tar.gz -C ${workDir} $binaryName
+        tar cvfz ${artifact}.tar.gz --directory ${workDir} $binaryName
       fi
       rm ${workDir}/$binaryName
     done
@@ -86,40 +66,39 @@ function buildBinaries {
 function createChangeLog {
   local changeLogFile=$1
 cat <<EOF >$changeLogFile
-Hi, I am placeholder content
-for a TBD changelog.
+
+Release notes placeholder.
+
 EOF
 }
 
 
 function getReleaseTagOrDie {
-  echo "hey0"
   local discard=$(git diff-index --quiet HEAD --)
-  echo "hey1"
-  if [[ $? != 0 ]]; then
-    echo "The repo has open files; cannot release."
-    exit 1
+  if [ $? -ne 0 ]; then
+    echo "ERR: The repo has open files; cannot release."
+    return
   fi
-  echo "hey1a"
   local tagLatest=$(git describe --tags --abbrev=0)
-  if [[ ! "$tagLatest" =~ "^v[0-9]" ]]; then
-    echo "Invalid tag: $tagLatest"
-    exit 1
+  echo "wut $?"
+  if [ $? -ne 0 ]; then
+    echo "ERR: The are no tags in this repo.  Apply a tag to release."
+    return
   fi
-  echo "hey2"
+  if [[ ! "$tagLatest" =~ ^v[0-9]\. ]]; then
+    echo "ERR: Invalid tag pattern: $tagLatest"
+    return
+  fi
   local commitAtTag=$(git show-ref -s refs/tags/$tagLatest)
-  echo "hey3"
   local commitLatest=$(git rev-parse --verify HEAD)
-  echo "hey4"
   if [[ "$commitAtTag" != "$commitLatest" ]]; then
-    echo "   tagLatest = $tagLatest"
-    echo " commitAtTag = $commitAtTag"
-    echo "commitLatest = $commitLatest"
-    echo "Commit mismatch; release at $tagLatest aborted."
-    exit 1
+    echo "ERR: This repo changed after application of tag: $tagLatest"
+    echo "               commit at that tag: $commitAtTag"
+    echo "     does not match latest commit: $commitLatest"
+    echo "You probably want to apply a new tag."
+    return
   fi
-  echo "hey5"
-  return $tagLatest
+  echo "$tagLatest"
 }
 
 
@@ -143,8 +122,18 @@ function createRelease {
       "${artifacts[@]}"
 }
 
+
+# set -x
+# set -o errexit
+# set -o nounset
+# set -o pipefail
+# set +e
 tag=$(getReleaseTagOrDie)
 
-echo "tag = $tag"
+if [[ "$tag" =~ ^ERR: ]]; then
+  echo "$tag"
+  exit 1
+fi
 
+echo "The tag is $tag"
 # createRelease "$gitTag"
