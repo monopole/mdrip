@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/monopole/mdrip/v2/internal/commands/version"
 	"os"
 
 	"github.com/monopole/mdrip/v2/internal/commands/gentestdata"
@@ -29,6 +30,7 @@ func newCommand() *cobra.Command {
 	p := usegold.NewGParser()
 	c.AddCommand(
 		raw.NewCommand(),
+		version.NewCommand(),
 		serve.NewCommand(ldr, p),
 		gentestdata.NewCommand(),
 		print.NewCommand(ldr, p),

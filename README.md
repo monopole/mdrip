@@ -2,7 +2,7 @@
 
 [literate programming]: http://en.wikipedia.org/wiki/Literate_programming
 [_here_ documents]: http://tldp.org/LDP/abs/html/here-docs.html
-[busted Go tutorial]: ./hack/bustedGoTutorial.md
+[busted Go tutorial]: assets/bustedGoTutorial.md
 [raw]: https://raw.githubusercontent.com/monopole/mdrip/master/hack/bustedGoTutorial.md
 [travis-mdrip]: https://travis-ci.org/monopole/mdrip
 [`tmux`]: https://github.com/tmux/tmux/wiki
@@ -32,15 +32,18 @@ While focused on a code block, hit the `Enter` key.
 The app posts the block's ID to the server, and the server sends
 the corresponding code block to `tmux` via its api.
 
-<a href="hack/mdripDemo.png" target="_blank">
-<img src="hack/mdripDemo.png"
+<a href="assets/mdripDemo.png" target="_blank">
+<img src="assets/mdripDemo.png"
   alt="mdrip screenshot" width="95%" height="auto">
 </a>
 
 
 ## Installation
 
-Assuming [Go](https://golang.org/dl) installed just:
+Visit the [release page](https://github.com/monopole/mdrip/releases)
+and download the executable for your OS and architecture.
+
+If you have [Go](https://golang.org/dl) installed you can try:
 
 <!-- @installation -->
 ```

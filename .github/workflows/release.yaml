@@ -1,0 +1,24 @@
+name: release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.work
+      id: go
+    - run: ./releasing/create-release.sh "${tag}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ github.ref_name }}

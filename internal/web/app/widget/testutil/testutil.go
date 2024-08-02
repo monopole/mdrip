@@ -36,20 +36,20 @@ var (
 
 // For testing.
 const (
-	// Set true to save the renders to a file, set false to merely execute
-	// templates and triggers any field errors.
-	sendWidgetToFile = true
-
-	// Set to true to write the file to the same directory as the test
-	// (making it easy to render it in the IDE), set false to render test runs
-	// into the same path under Documents.
-	useLocalFile = false
-
 	// File name to use when writing a widget's HTML for testing it.
 	widgetFileName = "widget.html"
 
 	// The name of the env var holding the directory into which these
-	// tests should write widgetFileName when useLocalFile == false.
+	// tests should write widgetFileName.  If this is undefined, then
+	// the tests won't attempt to write a file - they just expand
+	// the template in memory and look for expansion errors.
+	//
+	// To create HTML in the same directory as the test (for each test), use:
+	//    export MDRIP_TEST_DIR .
+	//
+	// For use with WSL and a Windows-based browser, use something like
+	//    export MDRIP_TEST_DIR /mnt/c/Users/$USER/Documents
+	//
 	envVarWidgetDir = "MDRIP_TEST_DIR"
 
 	TmplTestName = "testableTemplate"
@@ -67,14 +67,14 @@ func (f *fakeFile) Close() error {
 
 // getWriteCloser is for testing.
 func getWriteCloser(t *testing.T) io.WriteCloser {
-	if !sendWidgetToFile {
+	dir := directoryForWritingRenderedMarkdown(t)
+	if dir == "" {
 		return &fakeFile{}
 	}
 	var (
 		f   *os.File
 		err error
 	)
-	dir := directoryForWritingRenderedMarkdown(t)
 	if _, err = os.Stat(dir); err != nil {
 		t.FailNow()
 	}
@@ -89,18 +89,17 @@ func getWriteCloser(t *testing.T) io.WriteCloser {
 }
 
 func directoryForWritingRenderedMarkdown(t *testing.T) string {
-	if useLocalFile {
-		return "."
-	}
 	tmp := os.Getenv(envVarWidgetDir)
 	if tmp == "" {
-		t.Fatalf(
+		t.Logf(
 			"to use non-local html files, define env var %q", envVarWidgetDir)
+		return ""
 	}
 	stat, err := utils.PathStatus(tmp)
 	if err != nil || stat != utils.PathIsAFolder {
-		t.Fatalf(
+		t.Logf(
 			"value of env var %q doesn't resolve to a folder", envVarWidgetDir)
+		return ""
 	}
 	return tmp
 }
