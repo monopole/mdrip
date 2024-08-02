@@ -23,7 +23,7 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 	flags := myFlags{}
 	c := &cobra.Command{
 		Use:     cmdName,
-		Short:   "Prints an extracted shell script",
+		Short:   "Prints extracted, annotated code blocks as a shell script",
 		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fld, err := ldr.LoadTrees(args)

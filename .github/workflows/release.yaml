@@ -1,6 +1,7 @@
-name: release
+name: Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - v*
@@ -9,16 +10,16 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code into the Go module directory
+    - name: Check out code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Set up Go 1.x
+    - name: Set up Go
       uses: actions/setup-go@v5
-      with:
-        go-version-file: go.work
       id: go
-    - run: ./releasing/create-release.sh "${tag}"
+    - name: Release
       env:
+        GH_TOKEN: ${{ github.token }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         tag: ${{ github.ref_name }}
+      run: make release

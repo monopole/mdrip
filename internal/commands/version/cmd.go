@@ -13,7 +13,7 @@ const cmdName = "version"
 func NewCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:     cmdName,
-		Short:   "Shows the version of the program.",
+		Short:   "Print program version",
 		Example: utils.PgmName + " " + cmdName,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Printf("%v\n", provenance.GetProvenance())

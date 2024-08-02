@@ -52,7 +52,7 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 	flags := myFlags{}
 	c := &cobra.Command{
 		Use:     cmdName,
-		Short:   "Serves a markdown / code-running application at a particular port on localhost.",
+		Short:   "Serve a markdown / code-running application",
 		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {

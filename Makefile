@@ -8,12 +8,19 @@ endif
 $(MYGOBIN)/mdrip:
 	releasing/buildWorkspace.sh
 
+# Create a draft release and push it to github.
+# Requires go, git, zip, tar, gh (github cli) and env var GH_TOKEN.
+# Complains if workspace is dirty, tests fail, tags don't make sense, etc.
 .PHONY: release
-release: test
+release: testClean
 	(cd releasing; go run . `realpath ..`)
 
+.PHONY: testClean
+testClean: clean
+	go test ./...
+
 .PHONY: test
-test: clean
+test:
 	go test ./...
 
 .PHONY: generate

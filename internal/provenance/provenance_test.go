@@ -9,9 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const expectedBuildDateFromLdFlag = "2023-01-31T23:38:41Z"
-const expectedVersionFromLdFlag = "(test)"
-
 func TestGetProvenance(t *testing.T) {
 	p := GetProvenance()
 	assert.Equal(t, DefaultVersion, p.Version)
