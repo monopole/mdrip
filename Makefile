@@ -4,25 +4,21 @@ MYGOBIN = $(shell go env GOPATH)/bin
 endif
 
 # Perform a local build.
-# To build a release, use the release target.
+# To build an actual release, use the release target.
 $(MYGOBIN)/mdrip:
 	releasing/buildWorkspace.sh
 
-# Create a draft release and push it to github.
-# Requires go, git, zip, tar, gh (github cli) and env var GH_TOKEN.
-# Complains if workspace is dirty, tests fail, tags don't make sense, etc.
-.PHONY: release
-release: testClean
-	(cd releasing; go run . `realpath ..`)
+# Run an end-to-end test.
+.PHONY: testE2E
+testE2E: $(MYGOBIN)/mdrip
+	./releasing/testE2E.sh $(MYGOBIN)/mdrip
 
-.PHONY: testClean
-testClean: clean
+# Run unit tests without a clean (allow reliance on the test cache).
+.PHONY: testUnit
+testUnit:
 	go test ./...
 
-.PHONY: test
-test:
-	go test ./...
-
+# There's a wee bit of code to generate for enums.
 .PHONY: generate
 generate:
 	go generate ./...
@@ -33,3 +29,14 @@ clean:
 	rm -f ./internal/webapp/widget/*/widget.html
 	go clean
 	go clean -testcache
+
+# Force serial execution of dependencies.
+# This only really matters in the release target.
+.NOTPARALLEL:
+
+# Create a draft release and push it to github.
+# Requires go, git, zip, tar, gh (github cli) and env var GH_TOKEN.
+# Complains if workspace is dirty, tests fail, tags don't make sense, etc.
+.PHONY: release
+release: clean testUnit testE2E
+	(cd releasing; go run . `realpath ..`)

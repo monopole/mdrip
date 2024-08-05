@@ -8,7 +8,6 @@ import (
 
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren"
-	"github.com/monopole/mdrip/v2/internal/utils"
 	"github.com/monopole/shexec"
 	"github.com/monopole/shexec/channeler"
 	"github.com/spf13/cobra"
@@ -31,16 +30,22 @@ type myFlags struct {
 	blockTimeOut time.Duration
 }
 
+const shortHelp = "Tests the code blocks extracted from markdown."
+
 func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command {
 	flags := myFlags{}
 	c := &cobra.Command{
-		Use:   cmdName,
-		Short: "Tests an extracted shell script",
-		Long: `Tests an extracted shell script.
-This is experimental, to see if we can get a better exerience
-than simply piping into "bash -e".
+		Use:   cmdName + " [{path}]",
+		Short: shortHelp,
+		Long: shortHelp + `
+
+This silently runs extracted code blocks, optionally selected by label.
+
+This command fails (non-zero exit code) only if an extracted code block fails.
+
+Output is constrained to show only the content of the failing code block
+and its output and error streams.
 `,
-		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fld, err := ldr.LoadTrees(args)
 			if err != nil {

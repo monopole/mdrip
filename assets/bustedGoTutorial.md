@@ -21,7 +21,6 @@ EOF
 
 Write a _main program_ to call it:
 
-<!-- @makeMain -->
 ```
 cat - <<EOF >main.go
 package main
@@ -58,7 +57,6 @@ Copy/paste the above into a shell to build and run your program.
 
 Clean up with this command:
 
-<!-- @cleanup -->
 ```
 popd
 /bin/rm -rf ${workDir}

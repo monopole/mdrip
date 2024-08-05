@@ -19,12 +19,24 @@ type myFlags struct {
 	debug bool
 }
 
+const shortHelp = "Prints extracted, annotated code blocks as a shell script."
+
 func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command {
 	flags := myFlags{}
 	c := &cobra.Command{
-		Use:     cmdName,
-		Short:   "Prints extracted, annotated code blocks as a shell script",
-		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
+		Use:   cmdName + " [{path}]",
+		Short: shortHelp,
+		Long: shortHelp + `
+
+To have the effect of a test, pipe the output of this
+command into a shell, e.g.
+
+  ` + utils.PgmName + ` ` + cmdName + ` --label foo . | /bin/bash -e
+
+The entire pipe succeeds only if all the extracted blocks succeed.
+If your intention is to test, the command '` + utils.PgmName + ` test' yields
+cleaner output, showing only the failing block and its output streams.
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fld, err := ldr.LoadTrees(args)
 			if err != nil {

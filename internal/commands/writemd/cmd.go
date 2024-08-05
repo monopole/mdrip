@@ -1,20 +1,21 @@
-package gentestdata
+package writemd
 
 import (
 	"fmt"
+	"log"
+	"log/slog"
+	"os"
+
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/utils"
 	"github.com/monopole/mdrip/v2/internal/web/app/widget/testutil"
 	"github.com/spf13/cobra"
-	"log"
-	"log/slog"
-	"os"
 )
 
 const (
 	defaultDirName = "testdata"
-	cmdName        = "gen" + defaultDirName
-	shortHelp      = "Creates a disposable folder containing markdown files for use in tests."
+	cmdName        = "writemd"
+	shortHelp      = "Create a disposable folder containing markdown for use in tests."
 )
 
 func NewCommand() *cobra.Command {
@@ -23,13 +24,21 @@ func NewCommand() *cobra.Command {
 		Use:   cmdName,
 		Short: shortHelp,
 		Long: shortHelp + `
-The folder should not exist; this command wants to write
+
+The folder name provided should not exist; this command wants to write
 to an empty folder to create known state for testing.
+
+The default folder name is '` + defaultDirName + `'.
+
+Having ` + utils.PgmName + ` contain a means to generate test data eliminates
+the need to download anything other than the binary to perform tests on a
+particular target.
 `,
-		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
+		Example: utils.PgmName + " " + cmdName + " {nameOfNewFolder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				return fmt.Errorf("specify only one argument, the path to a folder")
+				return fmt.Errorf(
+					"specify only the name of the folder to create")
 			}
 			path := defaultDirName
 			if len(args) == 1 {
@@ -42,7 +51,7 @@ to an empty folder to create known state for testing.
 			if stat == utils.PathIsAFile {
 				return fmt.Errorf("%q is a file; not removing", path)
 			}
-			// TODO: Be paranoid?
+			// TODO: Should we be paranoid?
 			//  if filepath.IsAbs(path) {
 			// 	  return fmt.Errorf("not allowing absolute paths at this time")
 			//  }
