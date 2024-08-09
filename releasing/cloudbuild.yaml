@@ -1,3 +1,4 @@
+# Warning - This isn't being maintained and likely doesn't work.
 steps:
 - name: 'gcr.io/cloud-builders/go'
   args: ['install', '-a', '-ldflags', "'-s'", '-installsuffix', 'cgo', '.']

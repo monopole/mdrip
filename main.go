@@ -3,12 +3,12 @@ package main
 import (
 	"os"
 
+	"github.com/monopole/mdrip/v2/internal/commands/generatetestdata"
 	"github.com/monopole/mdrip/v2/internal/commands/print"
 	"github.com/monopole/mdrip/v2/internal/commands/raw"
 	"github.com/monopole/mdrip/v2/internal/commands/serve"
 	"github.com/monopole/mdrip/v2/internal/commands/test"
 	"github.com/monopole/mdrip/v2/internal/commands/version"
-	"github.com/monopole/mdrip/v2/internal/commands/writemd"
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren/usegold"
 	"github.com/monopole/mdrip/v2/internal/provenance"
@@ -35,7 +35,7 @@ func newCommand() *cobra.Command {
 		serve.NewCommand(ldr, p),
 		test.NewCommand(ldr, p),
 		version.NewCommand(),
-		writemd.NewCommand(),
+		generatetestdata.NewCommand(),
 		// "tmux" websocket service disabled until a reasonable use case found.
 		// the concept works fine on localhost without a websocket.
 		// tmux.NewCommand(ldr),

@@ -41,11 +41,10 @@ func makeTitle(t string, args []string) string {
 	if len(t) > 0 {
 		return t
 	}
-	title := "markdown from "
 	if len(args) > 0 {
-		return title + strings.Join(args, ",")
+		return strings.Join(args, ",")
 	}
-	return title + "test data"
+	return "markdown from test data"
 }
 
 func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command {

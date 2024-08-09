@@ -4,7 +4,7 @@ mdrip=$1
 mdDir=testdata
 
 echo "Creating ${mdDir}"
-${mdrip} writemd ${mdDir}
+${mdrip} generatetestdata ${mdDir}
 
 ${mdrip} test ${mdDir}
 

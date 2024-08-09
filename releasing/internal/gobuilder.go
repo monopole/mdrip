@@ -61,7 +61,7 @@ func (gb *GoBuilder) Build(myOs EnumOs, myArch EnumArch) (string, error) {
 	if err := gb.goRun.run(NoHarmDone,
 		"build",
 		"-o", binary,
-		"-ldflags", gb.ldVars.makeLdFlags(),
+		"-ldflags", gb.ldVars.MakeLdFlags(),
 		".", // Using the "." is why we need HOME defined.
 	); err != nil {
 		return name, err
@@ -82,7 +82,7 @@ func (gb *GoBuilder) packageIt(
 	myOs EnumOs, myArch EnumArch, fileName string) (string, error) {
 	base := strings.Join([]string{
 		gb.pgmName,
-		gb.ldVars.version(),
+		gb.ldVars.Version(),
 		myOs.String(),
 		myArch.String(),
 	}, "_")
@@ -119,7 +119,7 @@ func (ldv *LdVars) makeDefinitions() []string {
 	return result
 }
 
-func (ldv *LdVars) makeLdFlags() string {
+func (ldv *LdVars) MakeLdFlags() string {
 	result := []string{
 		"-s", // disable symbol table (small binary)
 		"-w", // disable DWARF generation (ditto)
@@ -131,7 +131,7 @@ func (ldv *LdVars) makeLdFlags() string {
 	return strings.Join(result, " ")
 }
 
-func (ldv *LdVars) version() string {
+func (ldv *LdVars) Version() string {
 	v, ok := ldv.Kvs["version"]
 	if !ok {
 		panic("version not in ldFlags!")

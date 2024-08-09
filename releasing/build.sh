@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Build the current workspace, injecting loader flag values
-# so that the version command works.
+# Build the current workspace, i.e. whatever exists on local disk
+# in whatever state, injecting loader flag values so that the 'version'
+# command works and shows a dirty, modified state.
 
 ldPath=github.com/monopole/mdrip/v2/internal/provenance
 
@@ -15,6 +16,7 @@ version=$(git describe --tags --always --dirty)
 gitCommit="$(git branch --show-current)-modified"
 
 out=$(go env GOPATH)/bin/mdrip
+
 /bin/rm -f $out
 
 go build \

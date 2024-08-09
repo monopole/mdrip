@@ -10,12 +10,13 @@
 [block quote]: https://github.github.com/gfm/#block-quotes
 [label]: #labels
 [labels]: #labels
-[release page]: https://github.com/monopole/mdrip/releases
 
 <!-- [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip) -->
 [![Go Report Card](https://goreportcard.com/badge/github.com/monopole/mdrip/v2)](https://goreportcard.com/report/github.com/monopole/mdrip/v2)
 
 `mdrip` is a markdown code block extractor.
+
+To install, see [INSTALL](./assets/INSTALL.md).
 
 To extract and print all code blocks below your current directory:
 
@@ -23,8 +24,8 @@ To extract and print all code blocks below your current directory:
 > mdrip print .
 > ```
 
-Pipe that into `/bin/bash -e` to have the effect of a test, or better yet
-try the `test` command:
+Pipe that into `/bin/bash -e` to have the effect of a test, or for 
+cleaner output try the `test` command:
 
 > ```
 > mdrip test .
@@ -34,7 +35,7 @@ This fails only if an extracted markdown code block fails.
 Use a [label] to be selective about which blocks to run.
 
 To give demos with [`tmux`], or generally use your browser and `tmux`
-as a markdown code block IDE, try:
+as a markdown code block development environment, try:
 
 > ```
 > mdrip serve --port 8080 .
@@ -46,18 +47,10 @@ the corresponding code block to `tmux` via its api.
 
 <a href="assets/mdripDemo.png" target="_blank">
 <img src="assets/mdripDemo.png"
-  alt="mdrip screenshot" width="95%" height="auto">
+  alt="mdrip screenshot" width="100%" height="auto">
 </a>
 
 
-## Installation
-
-Install via the [Go](https://golang.org/dl) tool:
-<!-- @installation -->
-```
-go install github.com/monopole/mdrip/v2@latest
-```
-or download a build from the [release page].
 
 ## Basic Extraction and Testing
 
@@ -164,7 +157,7 @@ the markdown code block execution path determined by that label.
 
 
 The `{filepath}` argument defaults to your current directory (`.`),
-but it can be 
+but it can be
 
 * a path to a file,
 * a path to a directory,
@@ -220,15 +213,16 @@ mdrip serve gh:monopole/mdrip/README.md
 ```
 
 To see what using a full tree of markdown looks like,
-generate some content with:
+generate some markdown content with:
 <!-- @createTestData -->
 ```
-mdrip writemd /tmp/mdTestData
+tmpdir=$(mktemp -d)
+mdrip generatetestdata ${tmpdir}/mdTestData
 ```
 then serve it:
 <!-- @serveTestData -->
 ```
-mdrip serve /tmp/mdTestData
+mdrip serve ${tmpdir}/mdTestData
 ```
 
 

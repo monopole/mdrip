@@ -1,4 +1,4 @@
-package writemd
+package generatetestdata
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 
 const (
 	defaultDirName = "testdata"
-	cmdName        = "writemd"
+	cmdName        = "generatetestdata"
 	shortHelp      = "Create a disposable folder containing markdown for use in tests."
 )
 
@@ -30,9 +30,9 @@ to an empty folder to create known state for testing.
 
 The default folder name is '` + defaultDirName + `'.
 
-Having ` + utils.PgmName + ` contain a means to generate test data eliminates
-the need to download anything other than the binary to perform tests on a
-particular target.
+Having ` + utils.PgmName + ` contain a means to generate test data
+removes the need to download anything other than the binary to perform
+tests on a particular os/architecture.
 `,
 		Example: utils.PgmName + " " + cmdName + " {nameOfNewFolder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
