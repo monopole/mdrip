@@ -11,11 +11,18 @@ import (
 	"github.com/monopole/mdrip/releasing/internal"
 )
 
-// This builds and releases a module to github.
-//   - While running, the process's working directory must be the
-//     same as the repo from which code is being released.
-//   - The repo should have one go.mod at the top; that's what's being released.
-//   - The desired release tag should have already been applied.
+// This builds and releases a Go module to GitHub and dockerhub.
+//
+// In the old days I'd have hacked this up in unreadable bash code.
+// Here I'm using Go to make it more readable and robust.
+//
+// While running, the process's working directory must be the
+// same as the top of the repo from which code is being released.
+// Further, the repo should have one go.mod at the top; that's what's
+// being released.
+//
+// The desired release tag should have already been applied
+// to the local repo.
 func main() {
 	if os.Getenv("GH_TOKEN") == "" {
 		log.Fatal("GH_TOKEN not defined, so the gh tool won't work.")
@@ -30,6 +37,10 @@ func main() {
 	if !filepath.IsAbs(dirSrc) {
 		log.Fatal(dirSrc + " is not an absolute path.")
 	}
+	doIt(dirSrc)
+}
+
+func doIt(dirSrc string) {
 	var (
 		tag, commit, dirOut string
 		err                 error
@@ -56,7 +67,21 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	assets, err = buildReleaseAssets(dirSrc, dirOut, tag, commit)
+	buildDate := time.Now().UTC()
+
+	ldVars := &internal.LdVars{
+		ImportPath: "github.com/monopole/mdrip/v2/internal/provenance",
+		Kvs: map[string]string{
+			"version":   tag,
+			"gitCommit": commit,
+			"buildDate": buildDate.Format(time.RFC3339),
+		},
+	}
+	err = buildAndPushDockerImage(dirSrc, dirOut, ldVars)
+	if err != nil {
+		log.Fatal(err)
+	}
+	assets, err = buildReleaseAssetsForGitHub(dirSrc, dirOut, ldVars)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,18 +120,9 @@ func findTag(git *internal.GitRunner) (string, string, error) {
 	return tag, commitHead, err
 }
 
-func buildReleaseAssets(
-	dirSrc, dirOut, tag, commitHash string) ([]string, error) {
-	goBuilder := internal.NewGoBuilder(
-		dirSrc, dirOut,
-		&internal.LdVars{
-			ImportPath: "github.com/monopole/mdrip/v2/internal/provenance",
-			Kvs: map[string]string{
-				"version":   tag,
-				"gitCommit": commitHash,
-				"buildDate": time.Now().UTC().Format(time.RFC3339),
-			},
-		})
+func buildReleaseAssetsForGitHub(
+	dirSrc, dirOut string, ldVars *internal.LdVars) ([]string, error) {
+	goBuilder := internal.NewGoBuilder(dirSrc, dirOut, ldVars)
 	var assetPaths []string
 	for _, pair := range []struct {
 		myOs   internal.EnumOs
@@ -126,4 +142,16 @@ func buildReleaseAssets(
 		assetPaths = append(assetPaths, n)
 	}
 	return assetPaths, nil
+}
+
+func buildAndPushDockerImage(
+	dirSrc, dirOut string, ldVars *internal.LdVars) error {
+	docker := internal.NewDockerRunner(dirSrc, dirOut, ldVars)
+	if err := docker.Login(); err != nil {
+		return err
+	}
+	if err := docker.Build(); err != nil {
+		return err
+	}
+	return docker.Push()
 }

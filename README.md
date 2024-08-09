@@ -46,18 +46,29 @@ the corresponding code block to `tmux` via its api.
 
 <a href="assets/mdripDemo.png" target="_blank">
 <img src="assets/mdripDemo.png"
-  alt="mdrip screenshot" width="95%" height="auto">
+  alt="mdrip screenshot" width="100%" height="auto">
 </a>
 
 
-## Installation
+## Installation options
 
-Install via the [Go](https://golang.org/dl) tool:
-<!-- @installation -->
-```
-go install github.com/monopole/mdrip/v2@latest
-```
-or download a build from the [release page].
+* Download a build from the [release page].
+
+* Install via the [Go](https://golang.org/dl) tool:
+  <!-- @installation -->
+  ```
+  go install github.com/monopole/mdrip/v2@latest
+  ```
+
+* Run via `docker`:
+  ```
+  image=monopole/mdrip:latest
+  docker run $image version # try 'help' instead of 'version' to see options.
+  docker run \
+    --publish 8080:8080 \
+    --mount type=bind,source=`pwd`,target=/mnt \
+    $image serve /mnt
+  ```
 
 ## Basic Extraction and Testing
 

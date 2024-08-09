@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// GithubRunner runs some the "gh" commands.
+// GithubRunner runs some "gh" commands.
 type GithubRunner struct {
 	rn *MyRunner
 }
