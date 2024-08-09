@@ -31,9 +31,10 @@ clean:
 	go clean -testcache
 
 # Force serial execution of dependencies.
-# This only really matters in the release target.
+# This only matters for build targets that declare multiple dependencies,
+# and it forces those dependencies to be built serially in the order that
+# they appear in the dependencies list.
 .NOTPARALLEL:
-
 # Create a draft release and push it to github.
 # Requires go, git, zip, tar, gh (github cli) and env var GH_TOKEN.
 # Complains if workspace is dirty, tests fail, tags don't make sense, etc.
