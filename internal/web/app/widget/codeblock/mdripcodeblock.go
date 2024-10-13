@@ -11,23 +11,23 @@ import (
 )
 
 var (
-	// kindMyFencedCodeBlock is a NodeKind of the MyFencedCodeBlock node.
-	kindMyFencedCodeBlock = ast.NewNodeKind("MyFencedCodeBlock")
+	// kindMdRipCodeBlock is a NodeKind of the MdRipCodeBlock node.
+	kindMdRipCodeBlock = ast.NewNodeKind("MdRipCodeBlock")
 
 	codeBlockTemplate = common.MustHtmlTemplate(AsTmpl())
 )
 
-// A MyFencedCodeBlock struct represents a fenced code block of Markdown text.
+// A MdRipCodeBlock struct represents a fenced code block of Markdown text.
 //
 // Sometimes we want to render a fenced code block using the normal default
 // fenced code block rendered, e.g. when a code block is "protected" inside a
 // blockquote.
 //
-// But more often we want to do a special rendering, that encourages copy/paste,
+// But sometimes we want to do a special rendering, that encourages copy/paste,
 // execution, etc.
 //
 // When we do want a special rendering, we replace the AST node instance of a
-// native FencedCodeBlock with an instance of MyFencedCodeBlock.  The latter
+// native FencedCodeBlock with an instance of MdRipCodeBlock.  The latter
 // must register its own Kind and renderer with the goldmark infrastructure.
 //
 // FWIW, in goldMark's interfaces, there doesn't seem to be a way to call a
@@ -39,21 +39,32 @@ var (
 //     held inside the encapsulating renderer
 //   - the private "renderFencedCodeBlock" function
 //     near goldmark/renderer/html/html.go:L386
-type MyFencedCodeBlock struct {
+//
+// Annoyingly, since we replace the FencedCodeBlock with MdRipCodeBlock,
+// the goldmark code highlighter won't be invoked.
+//
+// TODO: rebuild the AST so that instead of replacing a FencedCodeBLock
+//
+//	with a MdRipCodeBlock, we nest the FencedCodeBlock inside the
+//	MdRipCodeBlock.
+type MdRipCodeBlock struct {
 	ast.FencedCodeBlock
 }
 
-// NewMyFencedCodeBlock return a new MyFencedCodeBlock node.
-func NewMyFencedCodeBlock(fcb *ast.FencedCodeBlock) *MyFencedCodeBlock {
-	return &MyFencedCodeBlock{*fcb}
+// NewMdRipCodeBlock return a new MdRipCodeBlock AST node.
+func NewMdRipCodeBlock(fcb *ast.FencedCodeBlock) *MdRipCodeBlock {
+	return &MdRipCodeBlock{*fcb}
 }
 
 // Kind implements Node.Kind.
-func (n *MyFencedCodeBlock) Kind() ast.NodeKind {
-	return kindMyFencedCodeBlock
+func (n *MdRipCodeBlock) Kind() ast.NodeKind {
+	return kindMdRipCodeBlock
 }
 
-func (n *MyFencedCodeBlock) render(w util.BufWriter, source []byte) {
+// render renders a MdRipCodeBlock with the id and styling elements needed
+// get something that both looks like a terminal and is properly
+// hooked up to the "copy and post for execution" javascript.
+func (n *MdRipCodeBlock) render(w util.BufWriter, source []byte) {
 	id, err := n.GetBlockIndex()
 	if err != nil {
 		_, _ = w.WriteString(err.Error())
@@ -81,7 +92,7 @@ func (n *MyFencedCodeBlock) render(w util.BufWriter, source []byte) {
 	}
 }
 
-func (n *MyFencedCodeBlock) grabNodeText(source []byte) string {
+func (n *MdRipCodeBlock) grabNodeText(source []byte) string {
 	var buff strings.Builder
 	numLines := n.Lines().Len()
 	for i := 0; i < numLines; i++ {
@@ -100,27 +111,27 @@ const (
 	attrBlockTitle = "attrBlockTitle"
 )
 
-func (n *MyFencedCodeBlock) SetFileIndex(i int) {
+func (n *MdRipCodeBlock) SetFileIndex(i int) {
 	n.SetAttributeString(attrFileIdx, i)
 }
 
-func (n *MyFencedCodeBlock) SetBlockIndex(i int) {
+func (n *MdRipCodeBlock) SetBlockIndex(i int) {
 	n.SetAttributeString(attrBlockIdx, i)
 }
 
-func (n *MyFencedCodeBlock) GetBlockIndex() (int, error) {
+func (n *MdRipCodeBlock) GetBlockIndex() (int, error) {
 	return n.getIntAttribute(attrBlockIdx)
 }
 
-func (n *MyFencedCodeBlock) SetTitle(s string) {
+func (n *MdRipCodeBlock) SetTitle(s string) {
 	n.SetAttributeString(attrBlockTitle, s)
 }
 
-func (n *MyFencedCodeBlock) GetTitle() (string, error) {
+func (n *MdRipCodeBlock) GetTitle() (string, error) {
 	return n.getStrAttribute(attrBlockTitle)
 }
 
-func (n *MyFencedCodeBlock) getIntAttribute(name string) (int, error) {
+func (n *MdRipCodeBlock) getIntAttribute(name string) (int, error) {
 	tmp, err := n.getRawAttribute(name)
 	if err != nil {
 		return 0, err
@@ -133,7 +144,7 @@ func (n *MyFencedCodeBlock) getIntAttribute(name string) (int, error) {
 	return result, nil
 }
 
-func (n *MyFencedCodeBlock) getStrAttribute(name string) (string, error) {
+func (n *MdRipCodeBlock) getStrAttribute(name string) (string, error) {
 	tmp, err := n.getRawAttribute(name)
 	if err != nil {
 		return "", err
@@ -146,7 +157,7 @@ func (n *MyFencedCodeBlock) getStrAttribute(name string) (string, error) {
 	return result, nil
 }
 
-func (n *MyFencedCodeBlock) getRawAttribute(name string) (any, error) {
+func (n *MdRipCodeBlock) getRawAttribute(name string) (any, error) {
 	tmp, ok := n.AttributeString(name)
 	if !ok {
 		return "", fmt.Errorf(

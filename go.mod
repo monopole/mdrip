@@ -12,12 +12,15 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tdewolff/minify/v2 v2.20.37
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
-	github.com/yuin/goldmark v1.6.0
+	github.com/yuin/goldmark v1.7.6
+	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	go.abhg.dev/goldmark/mermaid v0.5.0
 )
 
 require (
+	github.com/alecthomas/chroma/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect

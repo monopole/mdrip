@@ -27,7 +27,7 @@ type DataLoader struct {
 	appState    *appstate.AppState
 }
 
-const maxAge = 5 * time.Minute
+const maxAge = 30 * time.Second
 
 func NewDataLoader(
 	ldr *loader.FsLoader, paths []string,

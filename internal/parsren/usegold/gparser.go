@@ -1,5 +1,12 @@
 package usegold
 
+// For a table of contents (inserted before title)
+//   "go.abhg.dev/goldmark/toc"
+// For code highlighting, we'd like to use
+// 	highlighting "github.com/yuin/goldmark-highlighting/v2"
+//  chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
+// But see the comment on codeblock.MdRipCodeBlock
+
 import (
 	"bytes"
 	"fmt"
@@ -7,12 +14,11 @@ import (
 	"log/slog"
 	"strings"
 
-	"go.abhg.dev/goldmark/mermaid"
-
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/web/app/widget/codeblock"
 	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -20,6 +26,7 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 	"github.com/yuin/goldmark/text"
 	"github.com/yuin/goldmark/util"
+	"go.abhg.dev/goldmark/mermaid"
 )
 
 // GParser implements MdParserRenderer
@@ -48,12 +55,22 @@ type GParser struct {
 
 func NewGParser() *GParser {
 	gp := goldmark.New(
-		goldmark.WithExtensions(
-			extension.GFM,
-			&mermaid.Extender{},
-		),
 		goldmark.WithParserOptions(
 			parser.WithAutoHeadingID(),
+		),
+		goldmark.WithExtensions(
+			extension.GFM,
+			extension.DefinitionList,
+
+			// These done'nt work r.n. because mermaid diagrams
+			// appear in fencedcodeblocks; see codeblock.MdRipCodeBlock
+			highlighting.Highlighting,
+			&mermaid.Extender{},
+
+			// This works, but slaps the toc above the title (ugly).
+			//&toc.Extender{
+			//	Title: "Contents",
+			//},
 		),
 		goldmark.WithRendererOptions(
 			// html.WithHardWraps(),
@@ -63,8 +80,9 @@ func NewGParser() *GParser {
 	)
 	const priority = 100
 	gp.Renderer().AddOptions(
+		// See comment on the codeblock.MdRipCodeBlock type.
 		renderer.WithNodeRenderers(
-			util.Prioritized(&codeblock.MyFcbRenderer{}, priority)),
+			util.Prioritized(&codeblock.MdRipCbRenderer{}, priority)),
 	)
 	return &GParser{
 		p: gp,
@@ -114,7 +132,7 @@ func (v *GParser) VisitFile(fi *loader.MyFile) {
 	// of the bytes.
 	node := v.p.Parser().Parse(text.NewReader(fi.C()))
 
-	fencedBlocks, err := gatherMyFencedCodeBlocks(node)
+	fencedBlocks, err := gatherMdRipCodeBlocks(node)
 	if err != nil && v.err == nil {
 		v.err = err
 	}
@@ -141,8 +159,8 @@ func (v *GParser) VisitFile(fi *loader.MyFile) {
 	v.renderMdFiles = append(v.renderMdFiles, rf)
 }
 
-func gatherMyFencedCodeBlocks(n ast.Node) (
-	result []*codeblock.MyFencedCodeBlock, err error) {
+func gatherMdRipCodeBlocks(n ast.Node) (
+	result []*codeblock.MdRipCodeBlock, err error) {
 	var originals []*ast.FencedCodeBlock
 	err = ast.Walk(
 		n,
@@ -162,7 +180,7 @@ func gatherMyFencedCodeBlocks(n ast.Node) (
 			}
 			return ast.WalkContinue, nil
 		})
-	result = make([]*codeblock.MyFencedCodeBlock, len(originals))
+	result = make([]*codeblock.MdRipCodeBlock, len(originals))
 	for i := range originals {
 		// The following messes with the AST, so we don't want to
 		// do it *during* the Walk, only *after* the Walk.
@@ -171,8 +189,8 @@ func gatherMyFencedCodeBlocks(n ast.Node) (
 	return
 }
 
-func swapOutTheirCodeBlockForMine(n *ast.FencedCodeBlock) *codeblock.MyFencedCodeBlock {
-	mine := codeblock.NewMyFencedCodeBlock(n)
+func swapOutTheirCodeBlockForMine(n *ast.FencedCodeBlock) *codeblock.MdRipCodeBlock {
+	mine := codeblock.NewMdRipCodeBlock(n)
 	n.Parent().ReplaceChild(n.Parent(), n, mine)
 	return mine
 }
@@ -195,7 +213,7 @@ func (v *GParser) renderMdFile(
 }
 
 func (v *GParser) convertFcbToCb(
-	fcb *codeblock.MyFencedCodeBlock, index int) *loader.CodeBlock {
+	fcb *codeblock.MdRipCodeBlock, index int) *loader.CodeBlock {
 	cb := loader.NewCodeBlock(
 		v.currentFile, v.nodeText(fcb), index,
 		string(fcb.Language(v.currentFile.C())))
