@@ -2,7 +2,6 @@ package serve
 
 import (
 	"fmt"
-	"github.com/monopole/mdrip/v2/internal/tmux"
 	"io"
 	"log/slog"
 	"os"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/monopole/mdrip/v2/internal/parsren"
+	"github.com/monopole/mdrip/v2/internal/tmux"
 	"github.com/monopole/mdrip/v2/internal/utils"
 	"github.com/monopole/mdrip/v2/internal/web/server"
 	"github.com/spf13/cobra"
@@ -31,7 +31,7 @@ func (fl *myFlags) hostAndPort() string {
 		var err error
 		hostname, err = os.Hostname()
 		if err != nil {
-			slog.Error("Trouble with hostname: %v", err)
+			slog.Error("trouble with hostname", "err", err)
 		}
 	}
 	return hostname + ":" + strconv.Itoa(fl.port)

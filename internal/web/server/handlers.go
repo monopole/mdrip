@@ -3,8 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/monopole/mdrip/v2/internal/web/config"
-	"github.com/monopole/mdrip/v2/internal/web/server/minify"
 	htmlTmpl "html/template"
 	"log/slog"
 	"net/http"
@@ -16,6 +14,8 @@ import (
 	"github.com/monopole/mdrip/v2/internal/web/app/widget/common"
 	"github.com/monopole/mdrip/v2/internal/web/app/widget/mdrip"
 	"github.com/monopole/mdrip/v2/internal/web/app/widget/session"
+	"github.com/monopole/mdrip/v2/internal/web/config"
+	"github.com/monopole/mdrip/v2/internal/web/server/minify"
 )
 
 // handleRenderWebApp sends a full "single-page" web app.
@@ -61,7 +61,7 @@ func (ws *Server) handleSaveSession(w http.ResponseWriter, r *http.Request) {
 	s.Values[config.KeyMdFileIndex] = getIntParam(config.KeyMdFileIndex, r, 0)
 	s.Values[config.KeyBlockIndex] = getIntParam(config.KeyBlockIndex, r, 0)
 	if err = s.Save(r, w); err != nil {
-		slog.Error("Unable to save session: %v", err)
+		slog.Error("unable to save session", "err", err)
 	}
 	_, _ = fmt.Fprintln(w, "Ok")
 	slog.Info("Saved session.")

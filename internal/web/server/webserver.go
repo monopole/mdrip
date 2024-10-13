@@ -75,7 +75,7 @@ func (ws *Server) Serve(hostAndPort string) (err error) {
 
 	slog.Info("Serving at " + hostAndPort)
 	if err = http.ListenAndServe(hostAndPort, nil); err != nil {
-		slog.Error("unable to start server", err)
+		slog.Error("unable to start server", "err", err)
 	}
 	return err
 }

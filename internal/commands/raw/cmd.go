@@ -26,7 +26,7 @@ func (fl *myFlags) hostAndPort() string {
 		var err error
 		hostname, err = os.Hostname()
 		if err != nil {
-			slog.Error("Trouble with hostname: %v", err)
+			slog.Error("trouble with hostname", "err", err)
 		}
 	}
 	return hostname + ":" + strconv.Itoa(fl.port)
