@@ -132,15 +132,15 @@ class MdFilesController {
                         me.runActiveCodeBlock();
                         me.appState.goNextCodeBlock();
                         break;
+                    // case 'ArrowUp': Leave this to merely scroll text.
                     case 'w':
                     case 'k':
-                    case 'ArrowUp':
                         event.preventDefault();
                         me.appState.goPrevCodeBlock();
                         break;
+                    // case 'ArrowDown': Leave this to merely scroll text.
                     case 'j':
                     case 's':
-                    case 'ArrowDown':
                         event.preventDefault();
                         me.appState.goNextCodeBlock();
                         break;
