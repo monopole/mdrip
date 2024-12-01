@@ -17,7 +17,7 @@ const (
 	blockIdx = 3
 
 	// noLang means no language specified in code block.
-	noLang = ""
+	noLang = UnknownLang
 	// Authoring markdown in Go constants isn't fun; will use files for
 	// bigger tests.
 
@@ -91,16 +91,14 @@ func TestRenderingHtmlFromStringConstants(t *testing.T) {
 <h1 id="header">header</h1>
 <p>Some text before a code block.</p>
 <div class='codeBlockContainer' id='codeBlockId0'>
-  <div class='codeBlockControl'>
-    <span class='codeBlockTitle'> codeBlock000 </span>
-  </div>
-  <div class='codeBlockPrompt'> ` + prompt + ` </div>
-  <div class='codeBlockArea'>
-echo alpha
+<div class='codeBlockControl'>
+<span class='codeBlockTitle'> codeBlock000 </span>
+</div>
+<div class='codeBlockPrompt'> ` + prompt + ` </div>
+<div class='codeBlockArea'><pre><code>echo alpha
 which find
-</div>
-</div>
-<p>The end.</p>
+</code></pre>
+</div></div><p>The end.</p>
 `)[1:],
 		},
 		"smallWithLabels": {
@@ -112,16 +110,14 @@ which find
 <p>Some text before a code block.</p>
 <!-- @theOne  @two  @three -->
 <div class='codeBlockContainer' id='codeBlockId0'>
-  <div class='codeBlockControl'>
-    <span class='codeBlockTitle'> theOne </span>
-  </div>
-  <div class='codeBlockPrompt'> ` + prompt + ` </div>
-  <div class='codeBlockArea'>
-echo alpha
+<div class='codeBlockControl'>
+<span class='codeBlockTitle'> theOne </span>
+</div>
+<div class='codeBlockPrompt'> ` + prompt + ` </div>
+<div class='codeBlockArea'><pre><code>echo alpha
 which find
-</div>
-</div>
-<p>An indented code block should be not be recognized as a code block.</p>
+</code></pre>
+</div></div><p>An indented code block should be not be recognized as a code block.</p>
 <blockquote>
 <pre><code>echo beta
 which ls
@@ -130,27 +126,23 @@ which ls
 <p>A comment between the code blocks.</p>
 <!-- @myFour @leFive -->
 <div class='codeBlockContainer' id='codeBlockId1'>
-  <div class='codeBlockControl'>
-    <span class='codeBlockTitle'> myFour </span>
-  </div>
-  <div class='codeBlockPrompt'> ` + prompt + ` </div>
-  <div class='codeBlockArea'>
-echo beta
+<div class='codeBlockControl'>
+<span class='codeBlockTitle'> myFour </span>
+</div>
+<div class='codeBlockPrompt'> ` + prompt + ` </div>
+<div class='codeBlockArea'><pre><code>echo beta
 which ls
-</div>
-</div>
-<p>The next block has no labels.</p>
+</code></pre>
+</div></div><p>The next block has no labels.</p>
 <div class='codeBlockContainer' id='codeBlockId2'>
-  <div class='codeBlockControl'>
-    <span class='codeBlockTitle'> codeBlock002 </span>
-  </div>
-  <div class='codeBlockPrompt'> ` + prompt + ` </div>
-  <div class='codeBlockArea'>
-echo gamma
+<div class='codeBlockControl'>
+<span class='codeBlockTitle'> codeBlock002 </span>
+</div>
+<div class='codeBlockPrompt'> ` + prompt + ` </div>
+<div class='codeBlockArea'><pre><code>echo gamma
 which cat
-</div>
-</div>
-<p>The end.</p>
+</code></pre>
+</div></div><p>The end.</p>
 `)[1:],
 		},
 	}

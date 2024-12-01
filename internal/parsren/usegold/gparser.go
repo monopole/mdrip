@@ -52,7 +52,10 @@ type GParser struct {
 	renderMdFiles []*parsren.RenderedMdFile
 }
 
-const oldWay = false
+const (
+	oldWay      = false
+	UnknownLang = "unknownLang"
+)
 
 func NewGParser() *GParser {
 	gp := goldmark.New(
@@ -278,9 +281,10 @@ func (v *GParser) convertMdCbToLCb(
 func (v *GParser) convertJeffCbToLCb(
 	jCb *codeblock.JeffCodeBlock, index int) *loader.CodeBlock {
 	lCb := loader.NewCodeBlock(
-		v.currentFile, v.nodeText(jCb), index,
+		v.currentFile, v.nodeText(jCb.FirstChild()), index,
 		// string(mdCb.Language(v.currentFile.C())))
-		"unknownLang")
+		// TODO: fix the language?  do we need it?
+		UnknownLang)
 	v.maybeAddLabels(lCb, jCb.PreviousSibling())
 	return lCb
 }

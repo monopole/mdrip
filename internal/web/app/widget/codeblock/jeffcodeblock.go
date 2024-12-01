@@ -46,11 +46,11 @@ func (n *JeffCodeBlock) render(
 	if entering {
 		_, _ = w.WriteString(
 			fmt.Sprintf(`<div class='codeBlockContainer' id='codeBlockId%d'>
-		<div class='codeBlockControl'>
-		<span class='codeBlockTitle'> %s </span>
-		</div>
-		<div class='codeBlockPrompt'> %s </div>
-		<div class='codeBlockArea'>`, n.BlockIndex, n.Title, CbPrompt))
+<div class='codeBlockControl'>
+<span class='codeBlockTitle'> %s </span>
+</div>
+<div class='codeBlockPrompt'> %s </div>
+<div class='codeBlockArea'>`, n.BlockIndex, n.Title, CbPrompt))
 		return ast.WalkContinue, nil
 	}
 	_, _ = w.WriteString(`</div></div>`)
