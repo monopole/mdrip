@@ -22,8 +22,8 @@
     --color-md-text: #c9c9c9; /* light grey */
     --color-md-background: #010409; /* grey 03 */
     --color-anchor: #2f81f7;
-
-    --color-code-background: black;
+    /*--color-code-background: black;*/
+    --color-code-background: #0d1117;
     --color-code-active: #23ff56; /* terminal green */
     --color-code-inactive: #10aa10; /* terminal green */
     --color-code-checkmark: #00b7eb; /* powder blue */

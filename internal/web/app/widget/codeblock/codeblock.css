@@ -48,8 +48,9 @@
     font-family: "Lucida Console", monospace;
     color: var(--color-code-inactive);
     background-color: var(--color-code-background);
-    padding-bottom: 1em;
+    /*padding-bottom: 1em;*/
     padding-left: 1em;
+    padding-right: 1em;
     width: 95%;
     overflow-x: auto;
     border: solid 1px #555;

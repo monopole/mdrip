@@ -58,7 +58,7 @@ For something to work with,
 download this [busted Go tutorial]:
 
 <!-- @downloadBusted -->
-```
+```shell
 repo=https://raw.githubusercontent.com/monopole/mdrip
 curl -O $repo/master/assets/bustedGoTutorial.md
 ```
@@ -69,7 +69,7 @@ and run a Go program in your `TMPDIR`.
 Extract the blocks to `stdout`:
 
 <!-- @lookAtBlocks -->
-```
+```shell
 mdrip print bustedGoTutorial.md
 ```
 
@@ -78,14 +78,14 @@ HTML comments preceding the blocks in the [raw] markdown.
 
 Use a label to extract a subset of blocks:
 <!-- @useLabel -->
-```
+```shell
 mdrip print --label goCommand bustedGoTutorial.md
 ```
 
 Test the code from the markdown in a subshell:
 
 <!-- @testTheBlocks -->
-```
+```shell
 mdrip test bustedGoTutorial.md
 echo $?
 ```
@@ -96,19 +96,19 @@ because the tutorial has errors.
 Fix the error:
 
 <!-- @copyTheTutorial -->
-```
+```shell
 cp bustedGoTutorial.md goTutorial.md
 ```
 
 <!-- @fixError1 -->
-```
+```shell
 sed -i 's|badecho |echo |' goTutorial.md
 ```
 
 Try the fix:
 
 <!-- @tryFix1 -->
-```
+```shell
 mdrip test goTutorial.md
 echo $?
 ```
@@ -116,21 +116,21 @@ echo $?
 There's another error.  Fix it:
 
 <!-- @fixError2 -->
-```
+```shell
 sed -i 's|comment this|// comment this|' goTutorial.md
 ```
 
 There are now two changes:
 
 <!-- @observeDiffs -->
-```
+```shell
 diff bustedGoTutorial.md goTutorial.md
 ```
 
 Test the new file:
 
 <!-- @testAgain -->
-```
+```shell
 mdrip test goTutorial.md
 echo $?
 ```
@@ -141,14 +141,14 @@ You can run a block in your _current_ shell to, say, set
 current environment variables as specified in the markdown:
 
 <!-- @evalInShell -->
-```
+```shell
 eval "$(mdrip print --label setEnv goTutorial.md)"
 echo $greeting
 ```
 
 The upshot is that adding a line like
 
-> ```
+> ```shell
 > mdrip test --label {someLabel} {filePath}
 > ```
 
@@ -193,7 +193,7 @@ command line procedures.
 
 Render a markdown web app like this:
 <!-- @serveTutorial -->
-```
+```shell
 mdrip serve --port 8000 goTutorial.md
 ```
 Visit it at [localhost:8000]([http://localhost:8000].).
@@ -208,20 +208,20 @@ will send code blocks to it when you hit `Enter`.
 Fire up `tmux`, then try this `README` directly:
 
 <!-- @serveMdripReadme -->
-```
+```shell
 mdrip serve gh:monopole/mdrip/README.md
 ```
 
 To see what using a full tree of markdown looks like,
 generate some markdown content with:
 <!-- @createTestData -->
-```
+```shell
 tmpdir=$(mktemp -d)
 mdrip generatetestdata ${tmpdir}/mdTestData
 ```
 then serve it:
 <!-- @serveTestData -->
-```
+```shell
 mdrip serve ${tmpdir}/mdTestData
 ```
 
