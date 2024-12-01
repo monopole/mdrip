@@ -21,8 +21,8 @@ out=$(go env GOPATH)/bin/mdrip
 
 go build \
   -o $out \
-	-ldflags \
+  -ldflags \
   "-X ${ldPath}.version=${version} \
-	 -X ${ldPath}.gitCommit=${gitCommit} \
-	 -X ${ldPath}.buildDate=${buildDate}" \
+   -X ${ldPath}.gitCommit=${gitCommit} \
+   -X ${ldPath}.buildDate=${buildDate}" \
   .

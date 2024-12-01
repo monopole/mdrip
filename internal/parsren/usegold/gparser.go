@@ -125,6 +125,7 @@ func (v *GParser) VisitFolder(fl *loader.MyFolder) {
 
 func (v *GParser) VisitFile(fi *loader.MyFile) {
 	v.currentFile = fi
+
 	// node is the root of an abstract syntax tree discovered by
 	// parsing the file content.
 	// node cannot be used alone; it holds pointers into the
@@ -132,21 +133,35 @@ func (v *GParser) VisitFile(fi *loader.MyFile) {
 	// of the bytes.
 	node := v.p.Parser().Parse(text.NewReader(fi.C()))
 
-	fencedBlocks, err := gatherMdRipCodeBlocks(node)
-	if err != nil && v.err == nil {
-		v.err = err
+	fencedBlocks, err := gatherFencedCodeBlocks(node)
+	if err != nil {
+		if v.err == nil {
+			v.err = err
+		}
+		return
 	}
 
-	var blocks []*loader.CodeBlock
-	for i, fcb := range fencedBlocks {
-		cb := v.convertFcbToCb(fcb, i)
-		// Store the zero-relatives index as node attributes
+	mdCodeBlocks := make([]*codeblock.MdRipCodeBlock, len(fencedBlocks))
+	for i := range fencedBlocks {
+		// The following messes with the AST, so it can only be done
+		// after an AST code walk, not during the walk.
+		mdCodeBlocks[i] = swapOutFcbForMdCb(fencedBlocks[i])
+	}
+
+	// This loop does two things:
+	// - add title and indices to each mdCodeBlock
+	// - build a distinct inventory of all code blocks for other purposes,
+	//   e.g. rendering in a left nav.
+	var inventory []*loader.CodeBlock
+	for i, mdCb := range mdCodeBlocks {
+		lCb := v.convertMdCbToLCb(mdCb, i)
+		inventory = append(inventory, lCb)
+		// Store zero-relative indices as node attributes
 		// in the syntax tree for later use in rendering
 		// div 'id' or 'data-' attributes.
-		fcb.SetFileIndex(len(v.renderMdFiles))
-		fcb.SetBlockIndex(len(blocks))
-		fcb.SetTitle(string(cb.FirstLabel()))
-		blocks = append(blocks, cb)
+		mdCb.SetFileIndex(len(v.renderMdFiles))
+		mdCb.SetBlockIndex(i)
+		mdCb.SetTitle(string(lCb.FirstLabel()))
 	}
 	rf := &parsren.RenderedMdFile{
 		Index: len(v.renderMdFiles),
@@ -154,14 +169,13 @@ func (v *GParser) VisitFile(fi *loader.MyFile) {
 		// sets attributes on the fenced code blocks.
 		Html:   v.renderMdFile(fi, node),
 		Path:   fi.Path(),
-		Blocks: blocks,
+		Blocks: inventory,
 	}
 	v.renderMdFiles = append(v.renderMdFiles, rf)
 }
 
-func gatherMdRipCodeBlocks(n ast.Node) (
-	result []*codeblock.MdRipCodeBlock, err error) {
-	var originals []*ast.FencedCodeBlock
+func gatherFencedCodeBlocks(n ast.Node) (
+	result []*ast.FencedCodeBlock, err error) {
 	err = ast.Walk(
 		n,
 		func(n ast.Node, entering bool) (ast.WalkStatus, error) {
@@ -175,21 +189,15 @@ func gatherMdRipCodeBlocks(n ast.Node) (
 						"ast.Kind() appears to be confused")
 				}
 				if !parentIsBlockQuote(n) {
-					originals = append(originals, fcb)
+					result = append(result, fcb)
 				}
 			}
 			return ast.WalkContinue, nil
 		})
-	result = make([]*codeblock.MdRipCodeBlock, len(originals))
-	for i := range originals {
-		// The following messes with the AST, so we don't want to
-		// do it *during* the Walk, only *after* the Walk.
-		result[i] = swapOutTheirCodeBlockForMine(originals[i])
-	}
 	return
 }
 
-func swapOutTheirCodeBlockForMine(n *ast.FencedCodeBlock) *codeblock.MdRipCodeBlock {
+func swapOutFcbForMdCb(n *ast.FencedCodeBlock) *codeblock.MdRipCodeBlock {
 	mine := codeblock.NewMdRipCodeBlock(n)
 	n.Parent().ReplaceChild(n.Parent(), n, mine)
 	return mine
@@ -212,22 +220,26 @@ func (v *GParser) renderMdFile(
 	return template.HTML(buf.String())
 }
 
-func (v *GParser) convertFcbToCb(
-	fcb *codeblock.MdRipCodeBlock, index int) *loader.CodeBlock {
+func (v *GParser) convertMdCbToLCb(
+	mdCb *codeblock.MdRipCodeBlock, index int) *loader.CodeBlock {
 	cb := loader.NewCodeBlock(
-		v.currentFile, v.nodeText(fcb), index,
-		string(fcb.Language(v.currentFile.C())))
-	if prev := fcb.PreviousSibling(); prev != nil && prev.Kind() == ast.KindHTMLBlock {
-		if block, ok := prev.(*ast.HTMLBlock); ok {
+		v.currentFile, v.nodeText(mdCb), index,
+		string(mdCb.Language(v.currentFile.C())))
+	v.maybeAddLabels(cb, mdCb.PreviousSibling())
+	return cb
+}
+
+func (v *GParser) maybeAddLabels(cb *loader.CodeBlock, prev ast.Node) {
+	if prev != nil && prev.Kind() == ast.KindHTMLBlock {
+		if htmlBlock, ok := prev.(*ast.HTMLBlock); ok {
 			// We have a preceding HTML block.
 			// If it's an HTML comment, try to extract labels.
 			// If no labels found, the label array remains empty,
 			// i.e. no label defaults are actually stored here.
 			cb.AddLabels(
-				loader.ParseLabels(loader.CommentBody(v.nodeText(block))))
+				loader.ParseLabels(loader.CommentBody(v.nodeText(htmlBlock))))
 		}
 	}
-	return cb
 }
 
 // TODO: Could change this to preserve lines?

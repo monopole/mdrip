@@ -12,7 +12,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tdewolff/minify/v2 v2.20.37
 	github.com/yosssi/gohtml v0.0.0-20201013000340-ee4748c638f4
-	github.com/yuin/goldmark v1.7.6
+	github.com/yuin/goldmark v1.7.8
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	go.abhg.dev/goldmark/mermaid v0.5.0
 )
