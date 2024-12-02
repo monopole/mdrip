@@ -16,8 +16,6 @@ import (
 const (
 	blockIdx = 3
 
-	// noLang means no language specified in code block.
-	noLang = UnknownLang
 	// Authoring markdown in Go constants isn't fun; will use files for
 	// bigger tests.
 
@@ -176,7 +174,7 @@ func TestParsingBlocksFromStringConstants(t *testing.T) {
 				loader.NewCodeBlock(nil, `
 echo alpha
 which find
-`[1:], blockIdx, noLang, "theOne", "two", "three"),
+`[1:], blockIdx, "theOne", "two", "three"),
 			},
 		},
 		"five": {
@@ -187,7 +185,7 @@ which find
 				loader.NewCodeBlock(nil, `
 echo beta
 which ls
-`[1:], blockIdx, noLang, "myFour", "leFive"),
+`[1:], blockIdx, "myFour", "leFive"),
 			},
 		},
 		"nope": {
@@ -211,6 +209,9 @@ which ls
 				t.FailNow()
 			}
 			for i := range blocks {
+				fmt.Printf("%T: %v\n--- \n", tc.filteredBlocks[i], tc.filteredBlocks[i])
+				fmt.Printf("%T: %v\n--- \n", blocks[i], blocks[i])
+				fmt.Println()
 				assert.True(t, tc.filteredBlocks[i].Equals(blocks[i]))
 			}
 		})

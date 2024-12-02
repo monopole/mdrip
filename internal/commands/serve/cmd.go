@@ -60,7 +60,6 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 			if len(args) == 0 {
 				args = []string{string(loader.CurrentDir)}
 			}
-
 			dl := server.NewDataLoader(
 				ldr, args, p, makeTitle(flags.title, args))
 			// Heat up the cache, and see if the args are okay.

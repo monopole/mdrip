@@ -16,17 +16,15 @@ by one or both of these:
   * https://github.com/yuin/goldmark
   * https://github.com/gomarkdown/markdown
 
-Some code was written to allow picking either
-of these at runtime via a flag.
-
-The  `MdParserRenderer` interface was defined, 
-an `mdrip`-specific
-interface.  Then one just slaps an adapter over
-the two packages.
+The  `MdParserRenderer` interface was defined - an `mdrip`-specific
+interface.  The idea was to slap an adapter over each of these two
+packages allowing them to implement this interface.  Then provide
+an `mdrip` command line flag to pick one of the two implementations
+at run time and inject it.
 
 Work began on adapting `gomarkdown/markdown` to the interface,
 but paused when it became clear that `yuin/goldmark` was working fine.
 Keeping this arrangement for a while, just in case it becomes
-desirable to try gomarkdown again.
+desirable to try `gomarkdown/markdown` again.
 
 

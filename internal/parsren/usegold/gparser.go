@@ -1,12 +1,5 @@
 package usegold
 
-// For a table of contents (inserted before title)
-//   "go.abhg.dev/goldmark/toc"
-// For code highlighting, we'd like to use
-// 	highlighting "github.com/yuin/goldmark-highlighting/v2"
-//  chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
-// But see the comment on codeblock.MdRipCodeBlock
-
 import (
 	"bytes"
 	"fmt"
@@ -53,7 +46,6 @@ type GParser struct {
 }
 
 const (
-	oldWay      = false
 	UnknownLang = "unknownLang"
 )
 
@@ -67,20 +59,22 @@ func NewGParser() *GParser {
 			extension.DefinitionList,
 
 			highlighting.NewHighlighting(
-				//highlighting.WithStyle("modus-vivendi"),
-				//highlighting.WithStyle("native"),
-				highlighting.WithStyle("github-dark"),
+				// highlighting.WithStyle("modus-vivendi"),
+				// highlighting.WithStyle("native"),
 				// highlighting.WithStyle("catppuccin-mocha"),
-				//highlighting.WithFormatOptions(
+				highlighting.WithStyle("github-dark"),
+				// highlighting.WithFormatOptions(
 				//	chromahtml.WithLineNumbers(true),
 				//),
 			),
 			&mermaid.Extender{},
 
-			// This works, but slaps the toc above the title (ugly).
-			//&toc.Extender{
-			//	Title: "Contents",
-			//},
+			// To get a TOC,
+			// import "go.abhg.dev/goldmark/toc"
+			// but beware that it inserts the toc above the title (ugly).
+			// &toc.Extender{
+			//   Title: "Contents",
+			// },
 		),
 		goldmark.WithRendererOptions(
 			// html.WithHardWraps(),
@@ -89,18 +83,10 @@ func NewGParser() *GParser {
 		),
 	)
 	const priority = 100
-	if oldWay {
-		gp.Renderer().AddOptions(
-			// See comment on the codeblock.MdRipCodeBlock type.
-			renderer.WithNodeRenderers(
-				util.Prioritized(&codeblock.MdRipCbRenderer{}, priority)),
-		)
-	} else {
-		gp.Renderer().AddOptions(
-			renderer.WithNodeRenderers(
-				util.Prioritized(&codeblock.JeffCbRenderer{}, priority)),
-		)
-	}
+	gp.Renderer().AddOptions(
+		renderer.WithNodeRenderers(
+			util.Prioritized(&codeblock.HighlightedCbRenderer{}, priority)),
+	)
 	return &GParser{
 		p: gp,
 	}
@@ -158,51 +144,27 @@ func (v *GParser) VisitFile(fi *loader.MyFile) {
 		return
 	}
 	var inventory []*loader.CodeBlock
-	if oldWay {
-		mdCodeBlocks := make([]*codeblock.MdRipCodeBlock, len(fencedBlocks))
-		for i := range fencedBlocks {
-			// The following messes with the AST, so it can only be done
-			// after an AST code walk, not during the walk.
-			mdCodeBlocks[i] = swapOutFcbForMdCb(fencedBlocks[i])
-		}
+	hBlocks := make([]*codeblock.HighlightedCodeBlock, len(fencedBlocks))
+	for i := range fencedBlocks {
+		// The following messes with the AST, so it can only be done
+		// after an AST code walk, not during the walk.
+		hBlocks[i] = v.swapOutFcbForHcb(fencedBlocks[i])
+	}
 
-		// This loop does two things:
-		// - add title and indices to each mdCodeBlock
-		// - build a distinct inventory of all code blocks for other purposes,
-		//   e.g. rendering in a left nav.
-		for i, mdCb := range mdCodeBlocks {
-			lCb := v.convertMdCbToLCb(mdCb, i)
-			inventory = append(inventory, lCb)
-			// Store zero-relative indices as node attributes
-			// in the syntax tree for later use in rendering
-			// div 'id' or 'data-' attributes.
-			mdCb.SetFileIndex(len(v.renderMdFiles))
-			mdCb.SetBlockIndex(i)
-			mdCb.SetTitle(string(lCb.FirstLabel()))
-		}
-	} else {
-		mdCodeBlocks := make([]*codeblock.JeffCodeBlock, len(fencedBlocks))
-		for i := range fencedBlocks {
-			// The following messes with the AST, so it can only be done
-			// after an AST code walk, not during the walk.
-			mdCodeBlocks[i] = swapOutFcbForJCb(fencedBlocks[i])
-		}
-
-		// This loop does two things:
-		// - add title and indices to each mdCodeBlock
-		// - build a distinct inventory of all code blocks for other purposes,
-		//   e.g. rendering in a left nav.
-		for i, mdCb := range mdCodeBlocks {
-			lCb := v.convertJeffCbToLCb(mdCb, i)
-			inventory = append(inventory, lCb)
-			// Store zero-relative indices as node attributes
-			// in the syntax tree for later use in rendering
-			// div 'id' or 'data-' attributes.
-			mdCb.FileIndex = len(v.renderMdFiles)
-			mdCb.BlockIndex = i
-			mdCb.Title = string(lCb.FirstLabel())
-			// mdCb.Dump(v.currentFile.C(), 0)
-		}
+	// This loop does two things:
+	// - add title and indices to each HighlightedCodeBlock
+	// - build a distinct inventory of all code blocks for other purposes,
+	//   e.g. rendering in a left nav.
+	for i, hcb := range hBlocks {
+		lCb := v.convertHighlightedToLoaderCodeBlock(hcb, i)
+		inventory = append(inventory, lCb)
+		// Store zero-relative indices as node attributes
+		// in the syntax tree for later use in rendering
+		// div 'id' or 'data-' attributes.
+		hcb.FileIndex = len(v.renderMdFiles)
+		hcb.BlockIndex = i
+		hcb.Title = string(lCb.FirstLabel())
+		// hcb.Dump(v.currentFile.C(), 0)
 	}
 
 	rf := &parsren.RenderedMdFile{
@@ -239,17 +201,12 @@ func gatherFencedCodeBlocks(n ast.Node) (
 	return
 }
 
-func swapOutFcbForMdCb(n *ast.FencedCodeBlock) *codeblock.MdRipCodeBlock {
-	mine := codeblock.NewMdRipCodeBlock(n)
-	n.Parent().ReplaceChild(n.Parent(), n, mine)
-	return mine
-}
-
-func swapOutFcbForJCb(n *ast.FencedCodeBlock) *codeblock.JeffCodeBlock {
-	mine := codeblock.NewJeffCodeBlock()
-	n.Parent().ReplaceChild(n.Parent(), n, mine)
-	mine.AppendChild(mine, n)
-	return mine
+func (v *GParser) swapOutFcbForHcb(
+	n *ast.FencedCodeBlock) *codeblock.HighlightedCodeBlock {
+	node := &codeblock.HighlightedCodeBlock{}
+	n.Parent().ReplaceChild(n.Parent(), n, node)
+	node.AppendChild(node, n)
+	return node
 }
 
 func parentIsBlockQuote(n ast.Node) bool {
@@ -269,22 +226,10 @@ func (v *GParser) renderMdFile(
 	return template.HTML(buf.String())
 }
 
-func (v *GParser) convertMdCbToLCb(
-	mdCb *codeblock.MdRipCodeBlock, index int) *loader.CodeBlock {
-	cb := loader.NewCodeBlock(
-		v.currentFile, v.nodeText(mdCb), index,
-		string(mdCb.Language(v.currentFile.C())))
-	v.maybeAddLabels(cb, mdCb.PreviousSibling())
-	return cb
-}
-
-func (v *GParser) convertJeffCbToLCb(
-	jCb *codeblock.JeffCodeBlock, index int) *loader.CodeBlock {
+func (v *GParser) convertHighlightedToLoaderCodeBlock(
+	jCb *codeblock.HighlightedCodeBlock, index int) *loader.CodeBlock {
 	lCb := loader.NewCodeBlock(
-		v.currentFile, v.nodeText(jCb.FirstChild()), index,
-		// string(mdCb.Language(v.currentFile.C())))
-		// TODO: fix the language?  do we need it?
-		UnknownLang)
+		v.currentFile, v.nodeText(jCb.FirstChild()), index)
 	v.maybeAddLabels(lCb, jCb.PreviousSibling())
 	return lCb
 }

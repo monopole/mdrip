@@ -9,16 +9,15 @@ import (
 type CodeBlock struct {
 	// Labels on a block.  This is a list, rather than a set, because
 	// the _first_ label is considered the name of the block.
-	labels   LabelList
-	code     string
-	language string
-	index    int
-	parent   *MyFile
+	labels LabelList
+	code   string
+	index  int
+	parent *MyFile
 }
 
 func NewCodeBlock(
-	fi *MyFile, code string, index int, language string, labels ...Label) *CodeBlock {
-	b := &CodeBlock{code: code, index: index, language: language, parent: fi}
+	fi *MyFile, code string, index int, labels ...Label) *CodeBlock {
+	b := &CodeBlock{code: code, index: index, parent: fi}
 	b.AddLabels(labels)
 	return b
 }
@@ -26,9 +25,7 @@ func NewCodeBlock(
 // Equals is true if the block have the same content,
 // ignoring the parent.
 func (cb *CodeBlock) Equals(other *CodeBlock) bool {
-	return cb.code == other.code &&
-		cb.language == other.language &&
-		cb.labels.Equals(other.labels)
+	return cb.code == other.code && cb.labels.Equals(other.labels)
 }
 
 func (cb *CodeBlock) AddLabels(labels []Label) {
@@ -62,9 +59,6 @@ func (cb *CodeBlock) Dump(wr io.Writer, index int) {
 	_, _ = fmt.Fprintf(wr, "# ----- BLOCK%4d: ", index)
 	for _, l := range cb.labels {
 		_, _ = fmt.Fprint(wr, " ", l)
-	}
-	if cb.language != "" {
-		_, _ = fmt.Fprintf(wr, " (lang=%s)", cb.language)
 	}
 	_, _ = fmt.Fprintln(wr)
 	_, _ = fmt.Fprint(wr, cb.code)
