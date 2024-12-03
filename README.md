@@ -1,6 +1,5 @@
 # mdrip
 
-[literate programming]: http://en.wikipedia.org/wiki/Literate_programming
 [_here_ documents]: http://tldp.org/LDP/abs/html/here-docs.html
 [busted Go tutorial]: assets/bustedGoTutorial.md
 [raw]: https://github.com/monopole/mdrip/blob/master/assets/bustedGoTutorial.md?plain=1
@@ -10,52 +9,29 @@
 [block quote]: https://github.github.com/gfm/#block-quotes
 [label]: #labels
 [labels]: #labels
+[install]: ./assets/INSTALL.md
+[Install `mdrip`]: ./assets/INSTALL.md
 
 <!-- [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip) -->
 [![Go Report Card](https://goreportcard.com/badge/github.com/monopole/mdrip/v2)](https://goreportcard.com/report/github.com/monopole/mdrip/v2)
 
-`mdrip` is a markdown code block extractor.
+`mdrip` serves rendered markdown to a browser, and allows one to 
+paste code blocks directly to [`tmux`] for execution without use of a mouse.
 
-To install, see [INSTALL](./assets/INSTALL.md).
+It's a tool for markdown-based [literate programming](#literate-programming),
+and allows one to place markdown-based instructions under end-to-end testing.
 
-To extract and print all code blocks below your current directory:
-
-> ```
-> mdrip print .
-> ```
-
-Pipe that into `/bin/bash -e` to have the effect of a test, or for 
-cleaner output try the `test` command:
-
-> ```
-> mdrip test .
-> ```
-
-This fails only if an extracted markdown code block fails.
-Use a [label] to be selective about which blocks to run.
-
-To give demos with [`tmux`], or generally use your browser and `tmux`
-as a markdown code block development environment, try:
-
-> ```
-> mdrip serve --port 8080 .
-> ```
-
-In the browser, while focused on a code block, hit the `Enter` key.
-The app posts the block's ID to the server, and the server sends
-the corresponding code block to `tmux` via its api.
+`mdrip`, being a single-file Go-based executable, is easy to [install].
 
 <a href="assets/mdripDemo.png" target="_blank">
 <img src="assets/mdripDemo.png"
   alt="mdrip screenshot" width="100%" height="auto">
 </a>
 
+## Use it for Testing
 
-
-## Basic Extraction and Testing
-
-For something to work with,
-download this [busted Go tutorial]:
+For something to work with, use the following commands to
+download a [busted Go tutorial]:
 
 <!-- @downloadBusted -->
 ```shell
@@ -66,7 +42,7 @@ curl -O $repo/master/assets/bustedGoTutorial.md
 This markdown has code blocks showing how to write, compile
 and run a Go program in your `TMPDIR`.
 
-Extract the blocks to `stdout`:
+[Install `mdrip`], then extract blocks to `stdout`:
 
 <!-- @lookAtBlocks -->
 ```shell
@@ -82,7 +58,8 @@ Use a label to extract a subset of blocks:
 mdrip print --label goCommand bustedGoTutorial.md
 ```
 
-Test the code from the markdown in a subshell:
+Pipe the output of the above into `/bin/bash -e` to have the effect of a test,
+or for cleaner output try the `test` command:
 
 <!-- @testTheBlocks -->
 ```shell
@@ -186,7 +163,7 @@ is treated as the block's _name_ for various purposes.
 If no labels are present, a block name is generated for these
 purposes.
 
-## Demonstrations and Tutorial Development
+## Use it for Tutorials
 
 `mdrip` and [`tmux`] provide a handy way to develop and demonstrate
 command line procedures.
@@ -196,7 +173,7 @@ Render a markdown web app like this:
 ```shell
 mdrip serve --port 8000 goTutorial.md
 ```
-Visit it at [localhost:8000]([http://localhost:8000].).
+Visit it at [localhost:8000](http://localhost:8000).
 
 Hit the `n` key for navigation tools.
 Hit `?` to see all key controls.
@@ -226,14 +203,14 @@ mdrip serve ${tmpdir}/mdTestData
 ```
 
 
-## Tips
+## Literate Programming
 
-`mdrip` encourages [literate programming] via markdown.
+[_literate programming_]: http://en.wikipedia.org/wiki/Literate_programming
 
-It lets one run or test code (shell commands) that is otherwise
-embedded in explanatory content (markdown).
+`mdrip` encourages [_literate programming_] via markdown.
+It lets one run code that is embedded in explanatory content.
 
-One can use [_here_ documents] to incorporate _any_ programming
+One can use [_here_ documents] to incorporate any programming
 language into tested markdown - as in the [busted Go tutorial]
 discussed above.  That tutorial could have covered C, C++, Rust, etc.
 
@@ -245,14 +222,3 @@ e.g. alternative commands with fake arguments or example output,
 should be in a fenced code block indented via a
 [block quote]. Block quotes are ignored by `mdrip`.
 
-Eschew adding prompts to code blocks.
-The following code snippet is easy to copy/paste:
-> ```
-> echo hello
-> du -sk
-> ```
-But this is not:
-> ```
-> $ echo hello
-> $ du -sk
-> ```
