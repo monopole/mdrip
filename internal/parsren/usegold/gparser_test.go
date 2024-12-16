@@ -221,7 +221,9 @@ which ls
 func TestParsingTree(t *testing.T) {
 	var p parsren.MdParserRenderer
 	{ // TODO: try embedding the file system
-		folder, err := loader.New(afero.NewOsFs()).LoadFolder("testdata")
+		folder, err := loader.New(afero.NewOsFs(),
+			loader.IsMarkDownFile,
+			loader.InNotIgnorableFolder).LoadFolder("testdata")
 		assert.NoError(t, err)
 		p = NewGParser()
 		folder.Accept(p)

@@ -27,7 +27,8 @@ func newCommand() *cobra.Command {
 		Short: shortHelp,
 		Long:  shortHelp + " (" + provenance.GetProvenance().Version + ")",
 	}
-	ldr := loader.New(afero.NewOsFs())
+	ldr := loader.New(
+		afero.NewOsFs(), loader.IsMarkDownFile, loader.InNotIgnorableFolder)
 	p := usegold.NewGParser()
 	c.AddCommand(
 		print.NewCommand(ldr, p),

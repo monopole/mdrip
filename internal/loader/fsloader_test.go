@@ -320,7 +320,7 @@ func TestLoadFolderFromMemoryHappy(t *testing.T) {
 		t.Run(n, func(t *testing.T) {
 			fs := afero.NewMemMapFs() // afero.NewOsFs()
 			tc.fillFs(t, fs)
-			ldr := New(fs)
+			ldr := New(fs, IsMarkDownFile, IsWhatever)
 			fld, err := ldr.LoadFolder(tc.pathToLoad)
 			if tc.errMsg != "" {
 				assert.Error(t, err)
@@ -374,7 +374,7 @@ func TestLoadOneTree(t *testing.T) {
 		},
 	} {
 		t.Run(n, func(t *testing.T) {
-			fsl := New(afero.NewOsFs())
+			fsl := New(afero.NewOsFs(), IsMarkDownFile, InNotIgnorableFolder)
 			f, err := fsl.LoadOneTree(tc.arg)
 			if tc.errMsg != "" {
 				assert.Error(t, err)
@@ -421,7 +421,7 @@ func TestLoadOneTreeFromRepo(t *testing.T) {
 	} {
 		t.Run(n, func(t *testing.T) {
 			// Must use a real FS, since the git command is used and it clones to real FS.
-			fsl := New(afero.NewOsFs())
+			fsl := New(afero.NewOsFs(), IsMarkDownFile, InNotIgnorableFolder)
 			f, err := fsl.LoadOneTree(tc.arg)
 			assert.NoError(t, err)
 			if debugging {

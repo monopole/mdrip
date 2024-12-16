@@ -11,17 +11,17 @@ import (
 
 // FsLoader navigates and reads a file system.
 type FsLoader struct {
-	IsAllowedFile, IsAllowedFolder filter
+	IsAllowedFile, IsAllowedFolder FsFilter
 	fs                             *afero.Afero
 }
 
 // New returns a file system (FS) loader with default filters.
 // For an in-memory FS, inject afero.NewMemMapFs().
 // For a "real" disk-based system, inject afero.NewOsFs().
-func New(fs afero.Fs) *FsLoader {
+func New(fs afero.Fs, allowedFile FsFilter, allowedFolder FsFilter) *FsLoader {
 	return &FsLoader{
-		IsAllowedFile:   IsMarkDownFile,
-		IsAllowedFolder: IsNotADotDir,
+		IsAllowedFile:   allowedFile,
+		IsAllowedFolder: allowedFolder,
 		fs:              &afero.Afero{Fs: fs},
 	}
 }

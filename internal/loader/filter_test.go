@@ -63,7 +63,7 @@ func TestIsMarkDownFile(t *testing.T) {
 	}
 }
 
-func TestIsNotADotDir(t *testing.T) {
+func TestInNotIgnorableFolder(t *testing.T) {
 	for n, tc := range map[string]tCase{
 		"t1": {
 			fi: &mockFileInfo{
@@ -81,9 +81,15 @@ func TestIsNotADotDir(t *testing.T) {
 				name: "..",
 			},
 		},
+		"iHateNode": {
+			fi: &mockFileInfo{
+				name: "node_modules",
+			},
+			err: IsANodeCache,
+		},
 	} {
 		t.Run(n, func(t *testing.T) {
-			assert.Equal(t, tc.err, IsNotADotDir(tc.fi))
+			assert.Equal(t, tc.err, InNotIgnorableFolder(tc.fi))
 		})
 	}
 }

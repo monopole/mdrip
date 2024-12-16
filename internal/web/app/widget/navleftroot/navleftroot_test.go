@@ -28,7 +28,10 @@ func TestWidget2(t *testing.T) {
 	if !runTheUnportableLocalFileSystemDependentTests {
 		t.Skip("skipping non-portable tests")
 	}
-	f, err := loader.New(afero.NewOsFs()).LoadOneTree(
+	f, err := loader.New(
+		afero.NewOsFs(),
+		loader.IsMarkDownFile,
+		loader.InNotIgnorableFolder).LoadOneTree(
 		loader.FilePath(
 			"/home/" + os.Getenv("USER") + "/myrepos/github.com/sigs.k8s.io/kustomize"))
 	if err != nil {

@@ -204,7 +204,9 @@ func TestFromDiskRenderer(t *testing.T) {
 	if !runTheUnportableLocalFileSystemDependentTests {
 		t.Skip("skipping non-portable tests")
 	}
-	f, err := loader.New(afero.NewOsFs()).LoadOneTree(
+	f, err := loader.New(afero.NewOsFs(),
+		loader.IsMarkDownFile,
+		loader.InNotIgnorableFolder).LoadOneTree(
 		"/home/yadayada/myrepos/github.com/sigs.k8s.io/kustomize")
 	if err != nil {
 		t.Fatal(err)
