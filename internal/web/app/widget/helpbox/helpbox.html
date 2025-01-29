@@ -55,7 +55,7 @@
 
     <pre>
   GOBIN=$TMPDIR go install github.com/monopole/mdrip@latest
-  $TMPDIR/mdrip serve {{.AppState.DataSource}}
+  $TMPDIR/mdrip serve {{.AppState.DataSource}} &
 </pre>
 
     <p>

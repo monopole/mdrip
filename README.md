@@ -171,7 +171,7 @@ command line procedures.
 Render a markdown web app like this:
 <!-- @serveTutorial -->
 ```shell
-mdrip serve --port 8000 goTutorial.md
+mdrip serve --port 8000 goTutorial.md &
 ```
 Visit it at [localhost:8000](http://localhost:8000).
 
@@ -186,7 +186,7 @@ Fire up `tmux`, then try this `README` directly:
 
 <!-- @serveMdripReadme -->
 ```shell
-mdrip serve gh:monopole/mdrip/README.md
+mdrip serve gh:monopole/mdrip/README.md &
 ```
 
 To see what using a full tree of markdown looks like,
@@ -199,7 +199,7 @@ mdrip generatetestdata ${tmpdir}/mdTestData
 then serve it:
 <!-- @serveTestData -->
 ```shell
-mdrip serve ${tmpdir}/mdTestData
+mdrip serve ${tmpdir}/mdTestData &
 ```
 
 
