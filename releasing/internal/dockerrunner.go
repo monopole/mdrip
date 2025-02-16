@@ -22,7 +22,7 @@ const (
 
 	dockerTemplate = `
 # This file is generated; DO NOT EDIT.
-FROM golang:1.22.5-bullseye
+FROM golang:1.24.0-bullseye
 WORKDIR /go/src/github.com/monopole/{{PGMNAME}}
 COPY go.mod .
 COPY go.sum .
