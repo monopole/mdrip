@@ -2,7 +2,7 @@ package provenance
 
 import (
 	"fmt"
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"runtime"
 	"runtime/debug"
 	"strings"
