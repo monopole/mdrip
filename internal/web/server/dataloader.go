@@ -42,6 +42,10 @@ func NewDataLoader(
 	}
 }
 
+func (dl *DataLoader) Title() string {
+	return dl.title
+}
+
 func (dl *DataLoader) RenderedFiles() []*parsren.RenderedMdFile {
 	return dl.pRen.RenderedMdFiles()
 }
@@ -55,13 +59,13 @@ func (dl *DataLoader) LoadAndRender() (err error) {
 		return fmt.Errorf("specify some paths to load")
 	}
 	if time.Since(dl.loadTime) < maxAge {
-		slog.Info(
+		slog.Debug(
 			"Data not old enough to reload",
 			"age", time.Since(dl.loadTime))
 		return
 	}
 	dl.pRen.Reset()
-	slog.Info("Loading", "paths", dl.paths)
+	slog.Debug("Loading", "paths", dl.paths)
 	dl.folder, err = dl.ldr.LoadTrees(dl.paths)
 	if err != nil {
 		return
@@ -73,7 +77,7 @@ func (dl *DataLoader) LoadAndRender() (err error) {
 	{
 		vc := loader.NewVisitorCounter()
 		dl.folder.Accept(vc)
-		slog.Info("Loaded",
+		slog.Debug("Loaded",
 			"top", dl.folder.Path(),
 			"numFolders", vc.NumFolders,
 			"numFiles", vc.NumFiles)

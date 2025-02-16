@@ -21,7 +21,7 @@ func attemptToParseGallery(data []byte) (*Gallery, []byte, int) {
 	if !bytes.HasPrefix(data, gallery) {
 		return nil, nil, 0
 	}
-	slog.Info("Found a gallery!")
+	slog.Debug("Found a gallery!")
 	i := len(gallery)
 	// find empty line
 	// TODO: should also consider end of document

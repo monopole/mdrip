@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -68,12 +69,11 @@ func (ws *Server) Serve(hostAndPort string) (err error) {
 	http.HandleFunc(config.Dynamic(config.RouteSave), ws.handleSaveSession)
 
 	// In server mode, the dLoader.paths slice has exactly one entry,
-	// so we only need the [0] entry and we know it is there.
+	// since in server mode we allow only one *relative* path argument
+	// to simplify how the URL in the browser works.
 	dir := strings.TrimSuffix(ws.dLoader.paths[0], "/")
-	slog.Info("Serving static content from ", "dir", dir)
 	http.Handle("/", ws.makeMetaHandler(http.FileServer(http.Dir(dir))))
-
-	slog.Info("Serving at " + hostAndPort)
+	fmt.Println(utils.PgmName + " serving " + dir + " at " + hostAndPort)
 	if err = http.ListenAndServe(hostAndPort, nil); err != nil {
 		slog.Error("unable to start server", "err", err)
 	}
@@ -82,7 +82,7 @@ func (ws *Server) Serve(hostAndPort string) (err error) {
 
 func (ws *Server) makeMetaHandler(fsHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		slog.Info("got request for", "url", req.URL)
+		slog.Debug("got request for", "url", req.URL)
 		if strings.HasSuffix(req.URL.Path, "/") ||
 			// trigger markdown rendering
 			strings.HasSuffix(req.URL.Path, ".md") {

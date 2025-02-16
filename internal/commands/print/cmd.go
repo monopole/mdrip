@@ -19,7 +19,7 @@ type myFlags struct {
 	debug bool
 }
 
-const shortHelp = "Prints extracted, annotated code blocks as a shell script."
+const shortHelp = "Prints extracted, annotated code blocks as a shell script"
 
 func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command {
 	flags := myFlags{}

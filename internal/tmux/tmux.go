@@ -43,7 +43,7 @@ func (tx Tmux) IsUp() bool {
 		return true
 	}
 	out := string(bs)
-	slog.Info("info output", "out", out)
+	slog.Debug("info output", "out", out)
 	// The following might not be reliable.  See
 	// https://github.com/tmuxinator/tmuxinator/issues/536
 	return strings.TrimSpace(out) == "no current client"
@@ -98,21 +98,21 @@ func (tx Tmux) Write(bytes []byte) (n int, err error) {
 func (tx Tmux) Start() error {
 	cmd := exec.Command(tx.path, "new-session", "-s", SessionName, "-d")
 	out, err := cmd.Output()
-	slog.Info("start", "out", out)
-	slog.Info("start", "err", err)
+	slog.Debug("start", "out", out)
+	slog.Debug("start", "err", err)
 	return err
 }
 
 func (tx Tmux) Stop() error {
 	cmd := exec.Command(tx.path, "kill-session", "-t", SessionName)
 	out, err := cmd.Output()
-	slog.Info("stop", "out", out)
+	slog.Debug("stop", "out", out)
 	return err
 }
 
 func (tx Tmux) ListSessions() (string, error) {
 	cmd := exec.Command(tx.path, "list-sessions")
 	raw, err := cmd.Output()
-	slog.Info("List", "raw", string(raw))
+	slog.Debug("List", "raw", string(raw))
 	return string(raw), err
 }

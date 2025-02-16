@@ -112,7 +112,7 @@ func cloneRepo(domain, repoName string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to create tmp dir (%w)", err)
 	}
-	slog.Info("Cloning", "tmpDir", tmpDir, "domain", domain, "repoName", repoName)
+	slog.Debug("Cloning", "tmpDir", tmpDir, "domain", domain, "repoName", repoName)
 	cmd := exec.Command(
 		gitPath, "clone", domain+repoName+dotGit, tmpDir)
 	var out bytes.Buffer
@@ -120,6 +120,6 @@ func cloneRepo(domain, repoName string) (string, error) {
 	if err = cmd.Run(); err != nil {
 		return "", fmt.Errorf("git clone failure (%w)", err)
 	}
-	slog.Info("Clone complete.")
+	slog.Debug("Clone complete.")
 	return tmpDir, nil
 }

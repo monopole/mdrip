@@ -2,7 +2,6 @@ package generatetestdata
 
 import (
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 
@@ -15,7 +14,7 @@ import (
 const (
 	defaultDirName = "testdata"
 	cmdName        = "generatetestdata"
-	shortHelp      = "Create a disposable folder containing markdown for use in tests."
+	shortHelp      = "Create a disposable folder containing markdown for use in tests"
 )
 
 func NewCommand() *cobra.Command {
@@ -67,7 +66,7 @@ tests on a particular os/architecture.
 			// and write files into it.
 			f := testutil.MakeNamedFolderTreeOfMarkdown(loader.NewFolder(path))
 			f.Accept(&treeWriter{})
-			slog.Info("Created folder " + path)
+			slog.Debug("Created folder " + path)
 			return nil
 		},
 	}
@@ -87,7 +86,7 @@ type treeWriter struct{}
 
 func mkDirOrDie(fp loader.FilePath) {
 	if err := os.MkdirAll(string(fp), os.ModePerm); err != nil {
-		log.Fatal(err)
+		slog.Error("mkdir failure", "err", err)
 	}
 }
 
@@ -103,7 +102,7 @@ func (v *treeWriter) VisitFolder(fl *loader.MyFolder) {
 
 func (v *treeWriter) VisitFile(fi *loader.MyFile) {
 	if err := os.WriteFile(string(fi.Path()), fi.C(), 0666); err != nil {
-		log.Fatal(err)
+		slog.Error("unable to visit file", "file", fi.Path(), "err", err)
 	}
 }
 

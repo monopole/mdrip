@@ -29,7 +29,7 @@ func Test_codeBlock_HasLabel(t *testing.T) {
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			cb := NewCodeBlock(nil, "code", 2, "language")
+			cb := NewCodeBlock(nil, "code", 2)
 			cb.AddLabels(tc.labels)
 			if got := cb.HasLabel(tc.label); got != tc.found {
 				t.Errorf("HasLabel(%s) = %v, want %v", tc.label, got, tc.found)

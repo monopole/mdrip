@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	shortHelp = "Extract and manipulate code blocks from a markdown tree."
+	shortHelp = "Extract and manipulate code blocks from markdown."
 )
 
 func newCommand() *cobra.Command {

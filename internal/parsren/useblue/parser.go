@@ -69,9 +69,9 @@ func parserHook(data []byte) (ast.Node, []byte, int) {
 }
 
 func myWalk(doc ast.Node) {
-	slog.Info("Walking...")
+	slog.Debug("Walking...")
 	ast.Walk(doc, &nodeVisitor{})
-	slog.Info("Done Walking.")
+	slog.Debug("Done Walking.")
 }
 
 type nodeVisitor struct {
@@ -89,7 +89,7 @@ func (v *nodeVisitor) Visit(n ast.Node, entering bool) ast.WalkStatus {
 	if n.AsLeaf() != nil {
 		leafLiteral = string(n.AsLeaf().Literal)
 	}
-	slog.Info("visit", "nodeType", nodeType(n), "literal", leafLiteral)
+	slog.Debug("visit", "nodeType", nodeType(n), "literal", leafLiteral)
 	return ast.GoToNext
 }
 

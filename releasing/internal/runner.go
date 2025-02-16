@@ -79,21 +79,21 @@ func (rn *MyRunner) comment(f string) {
 	if rn.vb == Low {
 		return
 	}
-	slog.Info(indent + f)
+	slog.Debug(indent + f)
 }
 
 func (rn *MyRunner) doing(s string) {
 	if rn.vb == Low {
 		return
 	}
-	slog.Info(indent + doing + s)
+	slog.Debug(indent + doing + s)
 }
 
 func (rn *MyRunner) faking(s string) {
 	if rn.vb == Low {
 		return
 	}
-	slog.Info(indent + faking + s)
+	slog.Debug(indent + faking + s)
 }
 
 func (rn *MyRunner) setEnv(m map[string]string) {

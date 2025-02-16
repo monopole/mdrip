@@ -21,7 +21,7 @@ import (
 // handleRenderWebApp sends a full "single-page" web app.
 // The app does XHRs as you click around or use keys.
 func (ws *Server) handleRenderWebApp(wr http.ResponseWriter, req *http.Request) {
-	slog.Info("Rendering web app", "req", req.URL)
+	slog.Debug("Rendering web app", "req", req.URL)
 	var err error
 	mySess, _ := ws.store.Get(req, cookieName)
 	session.AssureDefaults(mySess)
@@ -50,7 +50,7 @@ func (ws *Server) handleRenderWebApp(wr http.ResponseWriter, req *http.Request) 
 }
 
 func (ws *Server) handleSaveSession(w http.ResponseWriter, r *http.Request) {
-	slog.Info("Saving session", "req", r.URL)
+	slog.Debug("Saving session", "req", r.URL)
 	s, err := ws.store.Get(r, cookieName)
 	if err != nil {
 		write500(w, err)
@@ -64,11 +64,11 @@ func (ws *Server) handleSaveSession(w http.ResponseWriter, r *http.Request) {
 		slog.Error("unable to save session", "err", err)
 	}
 	_, _ = fmt.Fprintln(w, "Ok")
-	slog.Info("Saved session.")
+	slog.Debug("Saved session.")
 }
 
 func (ws *Server) handleGetHtmlForFile(wr http.ResponseWriter, req *http.Request) {
-	slog.Info("handleGetHtmlForFile ", "req", req.URL)
+	slog.Debug("handleGetHtmlForFile ", "req", req.URL)
 	f, err := ws.getRenderedMdFile(req)
 	if err != nil {
 		write500(wr, fmt.Errorf("handleGetHtmlForFile render; %w", err))
@@ -79,11 +79,11 @@ func (ws *Server) handleGetHtmlForFile(wr http.ResponseWriter, req *http.Request
 		write500(wr, fmt.Errorf("handleGetHtmlForFile write; %w", err))
 		return
 	}
-	slog.Info("handleGetHtmlForFile success")
+	slog.Debug("handleGetHtmlForFile success")
 }
 
 func (ws *Server) handleGetLabelsForFile(wr http.ResponseWriter, req *http.Request) {
-	slog.Info("handleGetLabelsForFile ", "req", req.URL)
+	slog.Debug("handleGetLabelsForFile ", "req", req.URL)
 	f, err := ws.getRenderedMdFile(req)
 	if err != nil {
 		write500(wr, fmt.Errorf("handleGetLabelsForFile render; %w", err))
@@ -99,11 +99,11 @@ func (ws *Server) handleGetLabelsForFile(wr http.ResponseWriter, req *http.Reque
 		write500(wr, fmt.Errorf("handleGetLabelsForFile write; %w", err))
 		return
 	}
-	slog.Info("handleGetLabelsForFile success")
+	slog.Debug("handleGetLabelsForFile success")
 }
 
 func (ws *Server) handleGetJs(wr http.ResponseWriter, req *http.Request) {
-	slog.Info("handleGetJs", "req", req.URL)
+	slog.Debug("handleGetJs", "req", req.URL)
 	ws.minifier.Write(wr, &minify.Args{
 		MimeType: app.MimeJs,
 		Tmpl: minify.TmplArgs{
@@ -116,7 +116,7 @@ func (ws *Server) handleGetJs(wr http.ResponseWriter, req *http.Request) {
 }
 
 func (ws *Server) handleGetCss(wr http.ResponseWriter, req *http.Request) {
-	slog.Info("handleGetCss", "req", req.URL)
+	slog.Debug("handleGetCss", "req", req.URL)
 	ws.minifier.Write(wr, &minify.Args{
 		MimeType: app.MimeCss,
 		Tmpl: minify.TmplArgs{
@@ -142,7 +142,7 @@ func (ws *Server) handleLissajous(w http.ResponseWriter, r *http.Request) {
 
 // handleReload forces a data reload.
 func (ws *Server) handleReload(wr http.ResponseWriter, req *http.Request) {
-	slog.Info("Handling data reload", "url", req.URL)
+	slog.Debug("Handling data reload", "url", req.URL)
 	if err := ws.reload(wr, req); err != nil {
 		write500(wr, fmt.Errorf("handleReload; %w", err))
 		return
@@ -151,7 +151,7 @@ func (ws *Server) handleReload(wr http.ResponseWriter, req *http.Request) {
 
 // handleDebugPage forces a data reload and shows a debug page.
 func (ws *Server) handleDebugPage(wr http.ResponseWriter, req *http.Request) {
-	slog.Info("Rendering debug page", "url", req.URL)
+	slog.Debug("Rendering debug page", "url", req.URL)
 	if err := ws.reload(wr, req); err != nil {
 		write500(wr, fmt.Errorf("handleDebugPage; %w", err))
 		return
@@ -161,7 +161,7 @@ func (ws *Server) handleDebugPage(wr http.ResponseWriter, req *http.Request) {
 }
 
 func (ws *Server) handleQuit(w http.ResponseWriter, _ *http.Request) {
-	slog.Info("Received quit.")
+	slog.Debug("Received quit.")
 	_, _ = fmt.Fprint(w, "\nbye bye\n")
 	go func() {
 		time.Sleep(2 * time.Second)
@@ -170,8 +170,8 @@ func (ws *Server) handleQuit(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (ws *Server) handleRunCodeBlock(wr http.ResponseWriter, req *http.Request) {
-	slog.Info(" ")
-	slog.Info("Running code block", "url", req.URL)
+	slog.Debug(" ")
+	slog.Debug("Running code block", "url", req.URL)
 	arg := req.URL.Query().Get(config.KeyMdSessID)
 	if len(arg) == 0 {
 		http.Error(wr, "No session id for block codeWriter", http.StatusBadRequest)
@@ -180,7 +180,7 @@ func (ws *Server) handleRunCodeBlock(wr http.ResponseWriter, req *http.Request) 
 	sessID := session.TypeSessID(arg)
 	mdFileIndex := getIntParam(config.KeyMdFileIndex, req, -1)
 	blockIndex := getIntParam(config.KeyBlockIndex, req, -1)
-	slog.Info("args:",
+	slog.Debug("args:",
 		config.KeyMdSessID, sessID,
 		config.KeyMdFileIndex, mdFileIndex,
 		config.KeyBlockIndex, blockIndex,

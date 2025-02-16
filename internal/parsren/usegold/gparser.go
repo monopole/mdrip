@@ -129,14 +129,14 @@ func (v *GParser) VisitFolder(fl *loader.MyFolder) {
 func (v *GParser) VisitFile(fi *loader.MyFile) {
 	v.currentFile = fi
 
-	// node is the root of an abstract syntax tree discovered by
+	// fileRootNode is the root of an abstract syntax tree discovered by
 	// parsing the file content.
-	// node cannot be used alone; it holds pointers into the
+	// fileRootNode cannot be used alone; it holds pointers into the
 	// file's byte array, rather than actually holding a copy
 	// of the bytes.
-	node := v.p.Parser().Parse(text.NewReader(fi.C()))
+	fileRootNode := v.p.Parser().Parse(text.NewReader(fi.C()))
 
-	fencedBlocks, err := gatherFencedCodeBlocks(node)
+	fencedBlocks, err := gatherFencedCodeBlocks(fileRootNode)
 	if err != nil {
 		if v.err == nil {
 			v.err = err
@@ -171,7 +171,7 @@ func (v *GParser) VisitFile(fi *loader.MyFile) {
 		Index: len(v.renderMdFiles),
 		// One cannot render the file until _after_ the above loop that
 		// sets attributes on the fenced code blocks.
-		Html:   v.renderMdFile(fi, node),
+		Html:   v.renderMdFile(fi, fileRootNode),
 		Path:   fi.Path(),
 		Blocks: inventory,
 	}
@@ -201,11 +201,13 @@ func gatherFencedCodeBlocks(n ast.Node) (
 	return
 }
 
+// swapOutFcbForHcb rejiggers the AST, inserting a new parent for a
+// FencedCodeBlock.
 func (v *GParser) swapOutFcbForHcb(
-	n *ast.FencedCodeBlock) *codeblock.HighlightedCodeBlock {
+	fcb *ast.FencedCodeBlock) *codeblock.HighlightedCodeBlock {
 	node := &codeblock.HighlightedCodeBlock{}
-	n.Parent().ReplaceChild(n.Parent(), n, node)
-	node.AppendChild(node, n)
+	fcb.Parent().ReplaceChild(fcb.Parent(), fcb, node)
+	node.AppendChild(node, fcb)
 	return node
 }
 
@@ -227,10 +229,10 @@ func (v *GParser) renderMdFile(
 }
 
 func (v *GParser) convertHighlightedToLoaderCodeBlock(
-	jCb *codeblock.HighlightedCodeBlock, index int) *loader.CodeBlock {
+	hCb *codeblock.HighlightedCodeBlock, index int) *loader.CodeBlock {
 	lCb := loader.NewCodeBlock(
-		v.currentFile, v.nodeText(jCb.FirstChild()), index)
-	v.maybeAddLabels(lCb, jCb.PreviousSibling())
+		v.currentFile, v.nodeText(hCb.FirstChild()), index)
+	v.maybeAddLabels(lCb, hCb.PreviousSibling())
 	return lCb
 }
 

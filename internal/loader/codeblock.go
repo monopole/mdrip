@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-// CodeBlock groups an ast.FencedCodeBlock with a set of labels.
+// CodeBlock groups code from a FencedCodeBlock with a set of labels.
 type CodeBlock struct {
 	// Labels on a block.  This is a list, rather than a set, because
 	// the _first_ label is considered the name of the block.

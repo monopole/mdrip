@@ -22,7 +22,8 @@ type HighlightedCbRenderer struct {
 var _ renderer.NodeRenderer = &HighlightedCbRenderer{}
 
 // RegisterFuncs implements NodeRenderer.RegisterFuncs.
-func (r *HighlightedCbRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
+func (r *HighlightedCbRenderer) RegisterFuncs(
+	reg renderer.NodeRendererFuncRegisterer) {
 	reg.Register(kindHighlightedCodeBlock, renderHighlightedCodeBlock)
 }
 

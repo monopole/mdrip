@@ -44,7 +44,7 @@ func makeTitle(t string, args []string) string {
 	if len(args) > 0 {
 		return strings.Join(args, ",")
 	}
-	return "markdown from test data"
+	return "{test data}"
 }
 
 func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command {
@@ -55,7 +55,10 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
-				return fmt.Errorf("specify a single relative path")
+				// Serving is more restrictive than testing because the
+				// file path being rendered is shown in the URL
+				return fmt.Errorf(
+					"specify a single relative path so that URL paths work correctly")
 			}
 			if len(args) == 0 {
 				args = []string{string(loader.CurrentDir)}
@@ -108,6 +111,6 @@ func getCommandRunner() io.Writer {
 type fakeTmux struct{}
 
 func (tx *fakeTmux) Write(bytes []byte) (int, error) {
-	slog.Info("Would run", "codeSnip", utils.Summarize(bytes))
+	slog.Debug("Would run", "codeSnip", utils.Summarize(bytes))
 	return 0, nil
 }

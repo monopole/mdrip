@@ -60,7 +60,7 @@ func (mn *Minifier) Write(wr http.ResponseWriter, args *Args) {
 			write500(wr, err)
 			return
 		}
-		slog.Info(args.Tmpl.Name + " minified success")
+		slog.Debug(args.Tmpl.Name + " minified success")
 		return
 	}
 	err = tmpl.ExecuteTemplate(wr, args.Tmpl.Name, args.Tmpl.Params)
@@ -68,7 +68,7 @@ func (mn *Minifier) Write(wr http.ResponseWriter, args *Args) {
 		write500(wr, fmt.Errorf("failed to inflate %s; %w", args.Tmpl.Name, err))
 		return
 	}
-	slog.Info(args.Tmpl.Name + " success")
+	slog.Debug(args.Tmpl.Name + " success")
 }
 
 func (mn *Minifier) minify(

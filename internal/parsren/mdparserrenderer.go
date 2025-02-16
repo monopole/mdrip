@@ -22,7 +22,7 @@ type MdParserRenderer interface {
 	// from all files in the tree.
 	FilteredBlocks(loader.Label) []*loader.CodeBlock
 	// Reset resets the parser.  Handy if you want to run another visitation,
-	// and don't data to accumulate.
+	// and don't want data to accumulate.
 	Reset()
 }
 
