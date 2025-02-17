@@ -105,12 +105,11 @@ func (v *GParser) RenderedMdFiles() []*parsren.RenderedMdFile {
 	return v.renderMdFiles
 }
 
-// FilteredBlocks returns a slice of filtered code blocks from the entire tree.
-func (v *GParser) FilteredBlocks(
-	l loader.Label) (result []*loader.CodeBlock) {
+// Filter returns a slice of filtered code blocks from the entire tree.
+func (v *GParser) Filter(f parsren.BlockFilter) (result []*loader.CodeBlock) {
 	for _, file := range v.renderMdFiles {
 		for _, b := range file.Blocks {
-			if b.HasLabel(l) {
+			if f(b) {
 				result = append(result, b)
 			}
 		}

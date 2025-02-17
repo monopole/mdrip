@@ -39,9 +39,11 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 		Short: shortHelp,
 		Long: shortHelp + `
 
-This silently runs extracted code blocks, optionally selected by label.
+This command silently runs extracted code blocks, optionally selected by label.
 
-This command fails (non-zero exit code) only if an extracted code block fails.
+Any block labelled with @` + string(loader.SkipLabel) + ` will be ignored.
+
+The command fails (non-zero exit code) if an extracted code block fails.
 
 Output is constrained to show only the content of the failing code block
 and its output and error streams.
@@ -51,12 +53,16 @@ and its output and error streams.
 			if err != nil {
 				return err
 			}
+			fld.Accept(p)
 			label := loader.WildCardLabel
 			if flags.label != "" {
 				label = loader.Label(flags.label)
 			}
-			fld.Accept(p)
-			return runTheBlocks(p.FilteredBlocks(label), flags.blockTimeOut)
+			return runTheBlocks(
+				p.Filter(func(b *loader.CodeBlock) bool {
+					return b.HasLabel(label) && !b.HasLabel(loader.SkipLabel)
+				}),
+				flags.blockTimeOut)
 		},
 		SilenceUsage: true,
 	}

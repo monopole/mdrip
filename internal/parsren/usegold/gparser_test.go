@@ -204,7 +204,9 @@ which ls
 			}
 			blocks := p.RenderedMdFiles()[0].Blocks
 			assert.Equal(t, tc.totBlocks, len(blocks))
-			blocks = p.FilteredBlocks(tc.label)
+			blocks = p.Filter(func(b *loader.CodeBlock) bool {
+				return b.HasLabel(tc.label)
+			})
 			if !assert.Equal(t, len(tc.filteredBlocks), len(blocks)) {
 				t.FailNow()
 			}
@@ -231,7 +233,8 @@ func TestParsingTree(t *testing.T) {
 	if !assert.Equal(t, 2, len(p.RenderedMdFiles())) {
 		t.FailNow()
 	}
-	if !assert.Equal(t, 6, len(p.FilteredBlocks(loader.WildCardLabel))) {
+	if !assert.Equal(t, 6, len(p.Filter(
+		func(b *loader.CodeBlock) bool { return true }))) {
 		t.FailNow()
 	}
 	// For debugging.

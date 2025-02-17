@@ -5,6 +5,10 @@ import (
 	"html/template"
 )
 
+// BlockFilter is a function that returns true or false based on the
+// incoming CodeBlock.
+type BlockFilter func(*loader.CodeBlock) bool
+
 // MdParserRenderer is a tree visitor that parses and renders markdown.
 // The two operations are closely coupled by a shared abstract syntax tree
 // and shared raw bytes from the source markdown.
@@ -12,15 +16,14 @@ import (
 //   - Load markdown files into a tree of treeNode.
 //   - Accept this visitor into the tree.
 //   - After the call to Accept finishes, consult
-//     RenderMdFiles() and/or FilteredBlocks() for whatever purpose.
+//     RenderMdFiles() and/or Filter() for whatever purpose.
 type MdParserRenderer interface {
 	loader.TreeVisitor
 	// RenderedMdFiles is a slice of rendered markdown files
 	// in depth-first order.
 	RenderedMdFiles() []*RenderedMdFile
-	// FilteredBlocks returns all blocks with the given label,
-	// from all files in the tree.
-	FilteredBlocks(loader.Label) []*loader.CodeBlock
+	// Filter returns all blocks that pass the filter.
+	Filter(BlockFilter) []*loader.CodeBlock
 	// Reset resets the parser.  Handy if you want to run another visitation,
 	// and don't want data to accumulate.
 	Reset()

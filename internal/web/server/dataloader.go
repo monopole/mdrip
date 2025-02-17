@@ -50,8 +50,8 @@ func (dl *DataLoader) RenderedFiles() []*parsren.RenderedMdFile {
 	return dl.pRen.RenderedMdFiles()
 }
 
-func (dl *DataLoader) FilteredBlocks() []*loader.CodeBlock {
-	return dl.pRen.FilteredBlocks(loader.WildCardLabel)
+func (dl *DataLoader) AllBlocks() []*loader.CodeBlock {
+	return dl.pRen.Filter(func(b *loader.CodeBlock) bool { return true })
 }
 
 func (dl *DataLoader) LoadAndRender() (err error) {

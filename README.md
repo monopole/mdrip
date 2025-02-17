@@ -9,7 +9,7 @@
 [block quote]: https://github.github.com/gfm/#block-quotes
 [label]: #labels
 [labels]: #labels
-[install]: ./assets/INSTALL.md
+[standalone]: ./assets/INSTALL.md
 [Install `mdrip`]: ./assets/INSTALL.md
 
 <!-- [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip) -->
@@ -21,7 +21,7 @@ paste code blocks directly to [`tmux`] for execution without use of a mouse.
 It's a tool for markdown-based [literate programming](#literate-programming),
 and allows one to place markdown-based instructions under end-to-end testing.
 
-`mdrip`, being a single-file Go-based executable, is easy to [install].
+`mdrip` is a [standalone] executable.
 
 <a href="assets/mdripDemo.png" target="_blank">
 <img src="assets/mdripDemo.png"
@@ -30,7 +30,10 @@ and allows one to place markdown-based instructions under end-to-end testing.
 
 ## Use it for Testing
 
-For something to work with, use the following commands to
+Use `mdrip` to assure that your markdown-based instructions
+actually work.
+
+To quickly demo this, use the following commands to
 download a [busted Go tutorial]:
 
 <!-- @downloadBusted -->
@@ -126,14 +129,14 @@ echo $greeting
 The upshot is that adding a line like
 
 > ```shell
-> mdrip test --label {someLabel} {filePath}
+> mdrip test --label {someLabel} {path}
 > ```
 
 to your CI/CD test framework covers
 the markdown code block execution path determined by that label.
 
 
-The `{filepath}` argument defaults to your current directory (`.`),
+The `{path}` argument defaults to your current directory (`.`),
 but it can be
 
 * a path to a file,
@@ -221,4 +224,3 @@ In contrast, code-style text that is not intended for copy/paste execution,
 e.g. alternative commands with fake arguments or example output,
 should be in a fenced code block indented via a
 [block quote]. Block quotes are ignored by `mdrip`.
-

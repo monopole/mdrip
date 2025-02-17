@@ -28,12 +28,15 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 		Short: shortHelp,
 		Long: shortHelp + `
 
+Any block labelled with @` + string(loader.SkipLabel) + ` will be ignored.
+
 To have the effect of a test, pipe the output of this
 command into a shell, e.g.
 
   ` + utils.PgmName + ` ` + cmdName + ` --label foo . | /bin/bash -e
 
 The entire pipe succeeds only if all the extracted blocks succeed.
+
 If your intention is to test, the command '` + utils.PgmName + ` test' yields
 cleaner output, showing only the failing block and its output streams.
 `,
@@ -54,7 +57,11 @@ cleaner output, showing only the failing block and its output streams.
 			if flags.label != "" {
 				label = loader.Label(flags.label)
 			}
-			loader.DumpBlocks(os.Stdout, p.FilteredBlocks(label))
+			loader.DumpBlocks(
+				os.Stdout, p.Filter(
+					func(b *loader.CodeBlock) bool {
+						return b.HasLabel(label) && !b.HasLabel(loader.SkipLabel)
+					}))
 			return nil
 		},
 		SilenceUsage: true,

@@ -149,7 +149,8 @@ func RenderFolder(rArgs *RenderingArgs) (
 		appState = appstate.New(
 			rArgs.DataSource, rArgs.Pr.RenderedMdFiles(), rArgs.Title)
 		maxLabelLen := 0
-		for _, b := range rArgs.Pr.FilteredBlocks(loader.WildCardLabel) {
+		for _, b := range rArgs.Pr.Filter(
+			func(b *loader.CodeBlock) bool { return true }) {
 			if l := len(b.FirstLabel()); l > maxLabelLen {
 				maxLabelLen = l
 			}
