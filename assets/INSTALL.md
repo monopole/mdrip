@@ -14,16 +14,21 @@ go install github.com/monopole/mdrip/v2@latest
 
 In a linux or darwin bash shell:
 ```
-tag=v2.0.0-rc12     # or some other release tag
+tag=v2.0.2          # or some other release tag
 os=linux            # or darwin
 arch=amd64          # or arm64
-
+```
+Download and unpack
+```
 file=mdrip_${tag}_${os}_${arch}.tar.gz
 wget -q https://github.com/monopole/mdrip/releases/download/${tag}/${file}
 tar -xf $file
 rm $file
-
-./mdrip version     # Visually confirm the release tag.
+./mdrip version     # confirm the release tag
+```
+Put it on your `PATH`, e.g.
+```
+mv ./mdrip ~/go/bin
 ```
 
 On Windows, basic code block extraction works via the `print` command.
