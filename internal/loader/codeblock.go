@@ -43,19 +43,14 @@ func (cb *CodeBlock) Code() string {
 
 // HasLabel is true if the block has the given label argument.
 func (cb *CodeBlock) HasLabel(label Label) bool {
-	if label == WildCardLabel {
-		return true
-	}
 	return cb.labels.Contains(label)
 }
 
 // FirstLabel attempts to return the first human-authored label,
 // and failing that makes up a label using the index.
 func (cb *CodeBlock) FirstLabel() Label {
-	for _, l := range cb.labels {
-		if l != WildCardLabel && l != AnonLabel {
-			return l
-		}
+	if len(cb.labels) > 0 {
+		return cb.labels[0]
 	}
 	return Label(fmt.Sprintf("codeBlock%03d", cb.index))
 }

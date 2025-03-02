@@ -23,7 +23,7 @@ func Test_codeBlock_HasLabel(t *testing.T) {
 		},
 		"t3": {
 			labels: []Label{"protein", SleepLabel},
-			label:  WildCardLabel,
+			label:  SleepLabel,
 			found:  true,
 		},
 	}

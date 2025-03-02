@@ -9,6 +9,12 @@ import (
 // incoming CodeBlock.
 type BlockFilter func(*loader.CodeBlock) bool
 
+var AllBlocks = func(b *loader.CodeBlock) bool { return true }
+
+var AllBlocksButSkip = func(b *loader.CodeBlock) bool {
+	return !b.HasLabel(loader.SkipLabel)
+}
+
 // MdParserRenderer is a tree visitor that parses and renders markdown.
 // The two operations are closely coupled by a shared abstract syntax tree
 // and shared raw bytes from the source markdown.

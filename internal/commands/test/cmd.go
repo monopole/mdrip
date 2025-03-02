@@ -48,16 +48,14 @@ and its output and error streams.
 				return err
 			}
 			fld.Accept(p)
-			label := loader.WildCardLabel
+			filter := parsren.AllBlocks
 			if flags.label != "" {
-				label = loader.Label(flags.label)
+				filter = func(b *loader.CodeBlock) bool {
+					return b.HasLabel(loader.Label(flags.label))
+				}
 			}
 			return runTheBlocks(
-				p.Filter(func(b *loader.CodeBlock) bool {
-					return b.HasLabel(label) && !b.HasLabel(loader.SkipLabel)
-				}),
-				flags.quiet,
-				flags.blockTimeOut)
+				p.Filter(filter), flags.quiet, flags.blockTimeOut)
 		},
 		SilenceUsage: true,
 	}
@@ -103,6 +101,10 @@ func runTheBlocks(
 	r := makeReporter(quiet, blocks)
 	for _, b := range blocks {
 		r.header(b)
+		if b.HasLabel(loader.SkipLabel) {
+			r.skip()
+			continue
+		}
 		c := shexec.NewRecallCommander(b.Code())
 		if err := sh.Run(timeout, c); err != nil {
 			r.fail(err, b, c)

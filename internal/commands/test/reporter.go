@@ -15,6 +15,7 @@ const (
 	colRed   = "\033[31m"
 	colGreen = "\033[32m"
 	colCyan  = "\033[36m"
+	colGray  = "\033[90m"
 	colWhite = "\033[97m"
 )
 
@@ -55,6 +56,16 @@ func (r *reporter) header(b *loader.CodeBlock) {
 	}
 	r.count++
 	fmt.Printf(r.f, r.count, r.size, b.Path(), b.FirstLabel())
+}
+
+func (r *reporter) skip() {
+	if r.quiet {
+		return
+	}
+	fmt.Print(colGray)
+	fmt.Print("SKIP")
+	fmt.Print(colReset)
+	fmt.Println()
 }
 
 func (r *reporter) pass() {

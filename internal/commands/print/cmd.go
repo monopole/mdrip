@@ -53,15 +53,14 @@ cleaner output, showing only the failing block and its output streams.
 				loader.NewVisitorDump(os.Stdout).VisitFolder(fld)
 			}
 			fld.Accept(p)
-			label := loader.WildCardLabel
+			filter := parsren.AllBlocksButSkip
 			if flags.label != "" {
-				label = loader.Label(flags.label)
+				filter = func(b *loader.CodeBlock) bool {
+					return b.HasLabel(loader.Label(flags.label)) &&
+						!b.HasLabel(loader.SkipLabel)
+				}
 			}
-			loader.DumpBlocks(
-				os.Stdout, p.Filter(
-					func(b *loader.CodeBlock) bool {
-						return b.HasLabel(label) && !b.HasLabel(loader.SkipLabel)
-					}))
+			loader.DumpBlocks(os.Stdout, p.Filter(filter))
 			return nil
 		},
 		SilenceUsage: true,
