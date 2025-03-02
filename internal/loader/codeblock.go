@@ -22,6 +22,11 @@ func NewCodeBlock(
 	return b
 }
 
+// Path is the path to the file holding the block.
+func (cb *CodeBlock) Path() FilePath {
+	return cb.parent.Path()
+}
+
 // Equals is true if the block have the same content,
 // ignoring the parent.
 func (cb *CodeBlock) Equals(other *CodeBlock) bool {

@@ -9,19 +9,22 @@
 [block quote]: https://github.github.com/gfm/#block-quotes
 [label]: #labels
 [labels]: #labels
-[standalone]: ./assets/INSTALL.md
+[installation options]: ./assets/INSTALL.md
 [Install `mdrip`]: ./assets/INSTALL.md
 
 <!-- [![Build Status](https://travis-ci.org/monopole/mdrip.svg?branch=master)](https://travis-ci.org/monopole/mdrip) -->
 [![Go Report Card](https://goreportcard.com/badge/github.com/monopole/mdrip/v2)](https://goreportcard.com/report/github.com/monopole/mdrip/v2)
 
-`mdrip` serves rendered markdown to a browser, and allows one to 
-paste code blocks directly to [`tmux`] for execution without use of a mouse.
 
-It's a tool for markdown-based [literate programming](#literate-programming),
-and allows one to place markdown-based instructions under end-to-end testing.
+`mdrip` is a tool for markdown-based [literate programming](#literate-programming).
 
-`mdrip` is a [standalone] executable.
+* It allows one to place your fenced code blocks under test.
+
+* It serves a keyboard-driven app with the rendered markdown to a browser,
+  allowing one to navigate through the blocks and send them directly
+  to [`tmux`] for execution.
+
+See [installation options].
 
 <a href="assets/mdripDemo.png" target="_blank">
 <img src="assets/mdripDemo.png"
@@ -64,7 +67,7 @@ mdrip print --label goCommand bustedGoTutorial.md
 Pipe the output of the above into `/bin/bash -e` to have the effect of a test,
 or for cleaner output try the `test` command:
 
-<!-- @testTheBlocks -->
+<!-- @testTheBlocks @skip -->
 ```shell
 mdrip test bustedGoTutorial.md
 echo $?
@@ -87,7 +90,7 @@ sed -i 's|badecho |echo |' goTutorial.md
 
 Try the fix:
 
-<!-- @tryFix1 -->
+<!-- @tryFix1 @skip -->
 ```shell
 mdrip test goTutorial.md
 echo $?
@@ -104,7 +107,7 @@ There are now two changes:
 
 <!-- @observeDiffs -->
 ```shell
-diff bustedGoTutorial.md goTutorial.md
+diff bustedGoTutorial.md goTutorial.md || echo files differ
 ```
 
 Test the new file:
@@ -162,48 +165,37 @@ echo hello
 Labels are just words beginning with `@` in the comment.
 
 The first label on a block is slightly special in that it
-is treated as the block's _name_ for various purposes.
-If no labels are present, a block name is generated for these
-purposes.
+is treated as the block's _name_ for reporting.
+If no labels are present, a block name is generated.
+
+A `@skip` label tells `mdrip` to ignore the block
+for testing.
 
 ## Use it for Tutorials
 
-`mdrip` and [`tmux`] provide a handy way to develop and demonstrate
+`mdrip` works with [`tmux`] to help develop and run
 command line procedures.
 
-Render a markdown web app like this:
-<!-- @serveTutorial -->
-```shell
-mdrip serve --port 8000 goTutorial.md &
-```
-Visit it at [localhost:8000](http://localhost:8000).
-
-Hit the `n` key for navigation tools.
-Hit `?` to see all key controls.
-
-The handy aspect is provided by [`tmux`].
-If there's a running instance of `tmux`, the server
-will send code blocks to it when you hit `Enter`.
-
-Fire up `tmux`, then try this `README` directly:
-
-<!-- @serveMdripReadme -->
-```shell
-mdrip serve gh:monopole/mdrip/README.md &
-```
-
-To see what using a full tree of markdown looks like,
-generate some markdown content with:
+Generate some markdown content with:
 <!-- @createTestData -->
 ```shell
 tmpdir=$(mktemp -d)
 mdrip generatetestdata ${tmpdir}/mdTestData
 ```
-then serve it:
-<!-- @serveTestData -->
+
+then enter `tmux`, and start a server:
+<!-- @serveTestData @skip -->
 ```shell
+tmux
 mdrip serve ${tmpdir}/mdTestData &
 ```
+Visit [localhost](http://localhost:8080).
+
+-  `j` and `k` move among blocks
+
+-  `Enter` sends the current block to `tmux`
+
+-  `?` shows all key controls
 
 
 ## Literate Programming

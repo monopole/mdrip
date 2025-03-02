@@ -186,17 +186,17 @@ func mdBytes(id int) []byte {
 			buff.WriteString(randomLabel())
 			buff.WriteString(" @test -->\n")
 		}
-		buff.WriteString("```sh\n")
+		buff.WriteString("```bash\n")
 		buff.WriteString(randomCodeBlock())
 		buff.WriteString("```\n")
 		if !often() {
-			buff.WriteString("\n```\n")
+			buff.WriteString("\n```bash\n")
 			buff.WriteString(randomCodeBlock())
 			buff.WriteString("```\n")
 		}
 		if !often() {
 			buff.WriteString("\n<!-- @mississippi -->\n")
-			buff.WriteString("\n```\n")
+			buff.WriteString("\n```bash\n")
 			buff.WriteString(randomCodeBlock())
 			buff.WriteString("```\n")
 		}
