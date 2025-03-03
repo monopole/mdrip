@@ -18,10 +18,10 @@ const (
 
 type LabelList []Label
 
-func NewLabelList(cbs []*CodeBlock) LabelList {
-	labels := make([]Label, len(cbs))
+func NewBlockNameList(cbs []*CodeBlock) []string {
+	labels := make([]string, len(cbs))
 	for j, block := range cbs {
-		labels[j] = block.FirstLabel()
+		labels[j] = block.Name()
 	}
 	return labels
 }

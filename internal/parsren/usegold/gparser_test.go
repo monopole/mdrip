@@ -90,7 +90,7 @@ func TestRenderingHtmlFromStringConstants(t *testing.T) {
 <p>Some text before a code block.</p>
 <div class='codeBlockContainer' id='codeBlockId0'>
 <div class='codeBlockControl'>
-<span class='codeBlockTitle'> codeBlock000 </span>
+<span class='codeBlockTitle'> echoAlphaWhich00 </span>
 </div>
 <div class='codeBlockPrompt'> ` + prompt + ` </div>
 <div class='codeBlockArea'><pre><code>echo alpha
@@ -134,7 +134,7 @@ which ls
 </div></div><p>The next block has no labels.</p>
 <div class='codeBlockContainer' id='codeBlockId2'>
 <div class='codeBlockControl'>
-<span class='codeBlockTitle'> codeBlock002 </span>
+<span class='codeBlockTitle'> echoGammaWhich02 </span>
 </div>
 <div class='codeBlockPrompt'> ` + prompt + ` </div>
 <div class='codeBlockArea'><pre><code>echo gamma

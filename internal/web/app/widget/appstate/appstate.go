@@ -38,8 +38,8 @@ type InitialRender struct {
 // a list of code labels, one label (the main label) for each
 // code block in the file.
 type HtmlAndLabels struct {
-	Html            template.HTML
-	CodeBlockLabels loader.LabelList
+	Html           template.HTML
+	CodeBlockNames []string
 }
 
 type AppState struct {
@@ -84,8 +84,8 @@ func New(
 			maxCodeBlocksInOneFile = len(f.Blocks)
 		}
 		as.RenderedFiles[i] = HtmlAndLabels{
-			Html:            f.Html,
-			CodeBlockLabels: loader.NewLabelList(f.Blocks),
+			Html:           f.Html,
+			CodeBlockNames: loader.NewBlockNameList(f.Blocks),
 		}
 	}
 	as.Facts.IsNavVisible = false

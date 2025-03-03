@@ -90,7 +90,7 @@ func (ws *Server) handleGetLabelsForFile(wr http.ResponseWriter, req *http.Reque
 		return
 	}
 	var jsn []byte
-	jsn, err = json.Marshal(loader.NewLabelList(f.Blocks))
+	jsn, err = json.Marshal(loader.NewBlockNameList(f.Blocks))
 	if err != nil {
 		write500(wr, fmt.Errorf("handleGetLabelsForFile marshal; %w", err))
 		return

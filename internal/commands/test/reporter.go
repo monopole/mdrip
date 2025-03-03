@@ -43,8 +43,8 @@ func fieldSizes(
 		if len(b.Path()) > maxPathLen {
 			maxPathLen = len(b.Path())
 		}
-		if len(b.FirstLabel()) > maxBlockNameLen {
-			maxBlockNameLen = len(b.FirstLabel())
+		if len(b.Name()) > maxBlockNameLen {
+			maxBlockNameLen = len(b.Name())
 		}
 	}
 	return
@@ -55,7 +55,7 @@ func (r *reporter) header(b *loader.CodeBlock) {
 		return
 	}
 	r.count++
-	fmt.Printf(r.f, r.count, r.size, b.Path(), b.FirstLabel())
+	fmt.Printf(r.f, r.count, r.size, b.Path(), b.Name())
 }
 
 func (r *reporter) skip() {
@@ -91,7 +91,7 @@ func (r *reporter) fail(
 		fmt.Println()
 	}
 
-	_, _ = fmt.Fprintf(os.Stderr, "%s %s:\n", b.Path(), b.FirstLabel())
+	_, _ = fmt.Fprintf(os.Stderr, "%s %s:\n", b.Path(), b.Name())
 	_, _ = fmt.Fprint(os.Stderr, colCyan)
 	for _, line := range strings.Split(b.Code(), "\n") {
 		if len(line) > 0 {

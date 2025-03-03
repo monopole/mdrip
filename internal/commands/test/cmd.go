@@ -108,7 +108,7 @@ func runTheBlocks(
 		c := shexec.NewRecallCommander(b.Code())
 		if err := sh.Run(timeout, c); err != nil {
 			r.fail(err, b, c)
-			return fmt.Errorf("code block %q failed", b.FirstLabel())
+			return fmt.Errorf("code block %q failed", b.Name())
 		}
 		r.pass()
 	}

@@ -162,7 +162,7 @@ func (v *GParser) VisitFile(fi *loader.MyFile) {
 		// div 'id' or 'data-' attributes.
 		hcb.FileIndex = len(v.renderMdFiles)
 		hcb.BlockIndex = i
-		hcb.Title = string(lCb.FirstLabel())
+		hcb.Title = lCb.Name()
 		// hcb.Dump(v.currentFile.C(), 0)
 	}
 

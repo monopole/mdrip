@@ -2,14 +2,16 @@ package loader
 
 import (
 	"fmt"
+	"github.com/monopole/mdrip/v2/internal/loader/lexer"
 	"io"
 )
 
 // CodeBlock groups code from a FencedCodeBlock with a set of labels.
 type CodeBlock struct {
 	// Labels on a block.  This is a list, rather than a set, because
-	// the _first_ label is considered the name of the block.
+	// the first label is considered the name of the block.
 	labels LabelList
+	name   string
 	code   string
 	index  int
 	parent *MyFile
@@ -19,7 +21,25 @@ func NewCodeBlock(
 	fi *MyFile, code string, index int, labels ...Label) *CodeBlock {
 	b := &CodeBlock{code: code, index: index, parent: fi}
 	b.AddLabels(labels)
+	b.name = computeName(code, index, labels...)
 	return b
+}
+
+func computeName(code string, index int, labels ...Label) string {
+	candidates := removeSpecialLabels(labels)
+	if len(candidates) > 0 {
+		return string(candidates[0])
+	}
+	return fmt.Sprintf("%s%02d", lexer.MakeIdentifier(code, 3), index)
+}
+
+func removeSpecialLabels(l []Label) (result []Label) {
+	for i := range l {
+		if l[i] != SleepLabel && l[i] != SkipLabel {
+			result = append(result, l[i])
+		}
+	}
+	return
 }
 
 // Path is the path to the file holding the block.
@@ -35,6 +55,7 @@ func (cb *CodeBlock) Equals(other *CodeBlock) bool {
 
 func (cb *CodeBlock) AddLabels(labels []Label) {
 	cb.labels = append(cb.labels, labels...)
+	cb.name = computeName(cb.code, cb.index, cb.labels...)
 }
 
 func (cb *CodeBlock) Code() string {
@@ -46,13 +67,9 @@ func (cb *CodeBlock) HasLabel(label Label) bool {
 	return cb.labels.Contains(label)
 }
 
-// FirstLabel attempts to return the first human-authored label,
-// and failing that makes up a label using the index.
-func (cb *CodeBlock) FirstLabel() Label {
-	if len(cb.labels) > 0 {
-		return cb.labels[0]
-	}
-	return Label(fmt.Sprintf("codeBlock%03d", cb.index))
+// Name returns the name of the code block.
+func (cb *CodeBlock) Name() string {
+	return cb.name
 }
 
 func (cb *CodeBlock) Dump(wr io.Writer, index int) {

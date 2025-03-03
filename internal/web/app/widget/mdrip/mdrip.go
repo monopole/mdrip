@@ -151,7 +151,7 @@ func RenderFolder(rArgs *RenderingArgs) (
 		maxLabelLen := 0
 		for _, b := range rArgs.Pr.Filter(
 			func(b *loader.CodeBlock) bool { return true }) {
-			if l := len(b.FirstLabel()); l > maxLabelLen {
+			if l := len(b.Name()); l > maxLabelLen {
 				maxLabelLen = l
 			}
 		}
