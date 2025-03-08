@@ -150,19 +150,23 @@ func (v *GParser) VisitFile(fi *loader.MyFile) {
 		hBlocks[i] = v.swapOutFcbForHcb(fencedBlocks[i])
 	}
 
+	// To assure no two titles in the same file match.
+	titleDisambiguate := make(map[string]int)
+
 	// This loop does two things:
 	// - add title and indices to each HighlightedCodeBlock
 	// - build a distinct inventory of all code blocks for other purposes,
 	//   e.g. rendering in a left nav.
 	for i, hcb := range hBlocks {
 		lCb := v.convertHighlightedToLoaderCodeBlock(hcb, i)
+		lCb.ResetTitle(titleDisambiguate)
 		inventory = append(inventory, lCb)
 		// Store zero-relative indices as node attributes
 		// in the syntax tree for later use in rendering
 		// div 'id' or 'data-' attributes.
 		hcb.FileIndex = len(v.renderMdFiles)
 		hcb.BlockIndex = i
-		hcb.Title = lCb.Name()
+		hcb.Title = lCb.Title()
 		// hcb.Dump(v.currentFile.C(), 0)
 	}
 

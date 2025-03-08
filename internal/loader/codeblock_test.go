@@ -1,51 +1,79 @@
 package loader_test
 
 import (
+	"testing"
+
 	. "github.com/monopole/mdrip/v2/internal/loader"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_codeBlock_HasLabel(t *testing.T) {
-	tests := map[string]struct {
-		labels []Label
-		label  Label
-		name   string
-		found  bool
+	tests := []struct {
+		tn           string
+		labels       []Label
+		code         string
+		labToCheck   Label
+		expectedName string
+		found        bool
 	}{
-		"t1": {
-			labels: nil,
-			label:  "sss",
-			found:  false,
-			name:   "someNiceCode02",
+		{
+			tn:           "t1",
+			labels:       nil,
+			code:         "apt get meat ball",
+			labToCheck:   "sss",
+			found:        false,
+			expectedName: "aptGetMeatBall",
 		},
-		"t2": {
-			labels: []Label{"protein", SleepLabel},
-			label:  "protein",
-			found:  true,
-			name:   "protein",
+		{
+			tn:           "t2",
+			labels:       []Label{"protein", SleepLabel},
+			code:         "sudo apt get meat ball",
+			labToCheck:   "protein",
+			found:        true,
+			expectedName: "protein",
 		},
-		"t3": {
-			labels: []Label{"protein", SleepLabel},
-			label:  SleepLabel,
-			found:  true,
-			name:   "protein",
+		{
+			tn:           "t3",
+			labels:       []Label{"protein", SleepLabel},
+			code:         "apt get meat ball",
+			labToCheck:   SleepLabel,
+			found:        true,
+			expectedName: "protein2",
 		},
-		"t4": {
-			labels: []Label{SkipLabel, SleepLabel},
-			label:  "protein",
-			found:  false,
-			name:   "someNiceCode02",
+		{
+			tn:           "t4",
+			labels:       []Label{SkipLabel, SleepLabel},
+			code:         "apt get meat ball",
+			labToCheck:   "protein",
+			found:        false,
+			expectedName: "aptGetMeatBall2",
+		},
+		{
+			tn:           "t5",
+			code:         "apt get meat ball",
+			labToCheck:   "protein",
+			found:        false,
+			expectedName: "aptGetMeatBall3",
+		},
+		{
+			tn:           "t6",
+			code:         "apt get meat balloon",
+			labToCheck:   "protein",
+			found:        false,
+			expectedName: "aptGetMeatBalloon",
 		},
 	}
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
+	disAmbig := make(map[string]int)
+	for _, tc := range tests {
+		t.Run(tc.tn, func(t *testing.T) {
 			cb := NewCodeBlock(
-				nil, "some nice code in your face", 2, tc.labels...)
-			if got := cb.HasLabel(tc.label); got != tc.found {
-				t.Errorf("HasLabel(%s) = %v, want %v", tc.label, got, tc.found)
+				nil, tc.code, 2, tc.labels...)
+			if got := cb.HasLabel(tc.labToCheck); got != tc.found {
+				t.Errorf("HasLabel(%s) = %v, want %v",
+					tc.labToCheck, got, tc.found)
 			}
-			assert.Equal(t, tc.name, cb.Name())
+			cb.ResetTitle(disAmbig)
+			assert.Equal(t, tc.expectedName, cb.UniqName())
 		})
 	}
 }

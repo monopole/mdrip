@@ -21,7 +21,7 @@ type LabelList []Label
 func NewBlockNameList(cbs []*CodeBlock) []string {
 	labels := make([]string, len(cbs))
 	for j, block := range cbs {
-		labels[j] = block.Name()
+		labels[j] = block.UniqName()
 	}
 	return labels
 }
@@ -33,6 +33,10 @@ func (lst LabelList) Contains(l Label) bool {
 		}
 	}
 	return false
+}
+
+func (l Label) IsSpecial() bool {
+	return l == SleepLabel || l == SkipLabel
 }
 
 // Equals is true if the slices have the same contents, ordering irrelevant.

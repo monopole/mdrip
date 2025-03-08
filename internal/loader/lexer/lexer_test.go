@@ -22,11 +22,11 @@ var lexTests = map[string]lexTest{
 	"spaces": {" \t\n", []string{}, ""},
 	"comment1": {"<!-- cheese wHIz summer ocean-->",
 		[]string{"cheese", "whiz", "summer", "ocean"},
-		"cheeseWhizSummer"},
+		"cheesWhizSummer"},
 	"command": {
 		"sudo export FOOD=\"$meat\"",
 		[]string{"sudo", "export", "food", "meat"},
-		"exportFoodMeat",
+		"exporFoodMeat",
 	},
 }
 
@@ -62,7 +62,7 @@ func TestGather(t *testing.T) {
 func TestMakeIdentifier(t *testing.T) {
 	for n, tc := range lexTests {
 		t.Run(n, func(t *testing.T) {
-			got := MakeIdentifier(tc.input, 3)
+			got := MakeIdentifier(tc.input, 3, 5)
 			assert.Equal(t, tc.id, got)
 		})
 	}

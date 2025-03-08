@@ -110,8 +110,8 @@ func gatherAsLowerCase(input string) (res []string) {
 	return
 }
 
-func MakeIdentifier(input string, limit int) string {
-	if limit < 1 {
+func MakeIdentifier(input string, maxWordsInId, maxWordSize int) string {
+	if maxWordsInId < 1 {
 		return ""
 	}
 	words := gatherAsLowerCase(input)
@@ -120,26 +120,30 @@ func MakeIdentifier(input string, limit int) string {
 		return ""
 	}
 	var b strings.Builder
-	b.WriteString(shorten(words[0]))
-	if len(words) == 1 || limit == 1 {
+	b.WriteString(shorten(words[0], maxWordSize))
+	if len(words) == 1 || maxWordsInId == 1 {
 		return b.String()
 	}
-	limit = limit - 1
+	maxWordsInId--
 	words = words[1:]
 	c := 0
 	for _, w := range words {
 		c++
-		b.WriteString(capitalized(shorten(w)))
-		if c == limit {
+		if c == maxWordsInId {
+			// Last word, let it be longer
+			w = shorten(w, maxWordSize+3)
+		} else {
+			w = shorten(w, maxWordSize)
+		}
+		b.WriteString(capitalized(w))
+		if c == maxWordsInId {
 			break
 		}
 	}
 	return b.String()
 }
 
-const maxWordSize = 6
-
-func shorten(word string) string {
+func shorten(word string, maxWordSize int) string {
 	if len(word) <= maxWordSize {
 		return word
 	}
@@ -156,7 +160,7 @@ func dropBadWords(words []string) (res []string) {
 				res = append(res, w)
 			}
 		} else {
-			if len(w) > 2 {
+			if len(w) > 1 {
 				res = append(res, w)
 			}
 		}
@@ -164,8 +168,9 @@ func dropBadWords(words []string) (res []string) {
 	return
 }
 
+// Take off first words that add little value in disambiguation
 func isBadFirst(word string) bool {
-	return word == "sudo"
+	return word == "sudo" // || word == "docker"
 }
 
 // capitalized only works on english ascii, which is fine here.

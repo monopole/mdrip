@@ -44,7 +44,7 @@ func (v *TxtPrinter) P(s string, a ...interface{}) {
 
 //// VisitBlockTut prints a BlockTut.
 //func (v *TxtPrinter) VisitBlockTut(b *BlockTut) {
-//	v.P("%s --- %s...", b.Name(), utils.SampleString(string(b.Code()), 60))
+//	v.P("%s --- %s...", b.UniqName(), utils.SampleString(string(b.Code()), 60))
 //}
 
 func (v *TxtPrinter) VisitTopFolder(fl *MyTopFolder) {

@@ -90,7 +90,7 @@ func TestRenderingHtmlFromStringConstants(t *testing.T) {
 <p>Some text before a code block.</p>
 <div class='codeBlockContainer' id='codeBlockId0'>
 <div class='codeBlockControl'>
-<span class='codeBlockTitle'> echoAlphaWhich00 </span>
+<span class='codeBlockTitle'> echoAlphaWhichFind </span>
 </div>
 <div class='codeBlockPrompt'> ` + prompt + ` </div>
 <div class='codeBlockArea'><pre><code>echo alpha
@@ -109,7 +109,7 @@ which find
 <!-- @theOne  @two  @three -->
 <div class='codeBlockContainer' id='codeBlockId0'>
 <div class='codeBlockControl'>
-<span class='codeBlockTitle'> theOne </span>
+<span class='codeBlockTitle'> theOne two three </span>
 </div>
 <div class='codeBlockPrompt'> ` + prompt + ` </div>
 <div class='codeBlockArea'><pre><code>echo alpha
@@ -125,7 +125,7 @@ which ls
 <!-- @myFour @leFive -->
 <div class='codeBlockContainer' id='codeBlockId1'>
 <div class='codeBlockControl'>
-<span class='codeBlockTitle'> myFour </span>
+<span class='codeBlockTitle'> myFour leFive </span>
 </div>
 <div class='codeBlockPrompt'> ` + prompt + ` </div>
 <div class='codeBlockArea'><pre><code>echo beta
@@ -134,7 +134,7 @@ which ls
 </div></div><p>The next block has no labels.</p>
 <div class='codeBlockContainer' id='codeBlockId2'>
 <div class='codeBlockControl'>
-<span class='codeBlockTitle'> echoGammaWhich02 </span>
+<span class='codeBlockTitle'> echoGammaWhichCat </span>
 </div>
 <div class='codeBlockPrompt'> ` + prompt + ` </div>
 <div class='codeBlockArea'><pre><code>echo gamma
