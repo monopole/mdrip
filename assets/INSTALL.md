@@ -14,9 +14,9 @@ go install github.com/monopole/mdrip/v2@latest
 
 In a linux or darwin bash shell:
 ```
-tag=v2.0.2          # or some other release tag
 os=linux            # or darwin
 arch=amd64          # or arm64
+tag=v2.0.5          # or some other release tag
 ```
 Download and unpack
 ```
