@@ -8,6 +8,7 @@ import (
 	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/utils"
 	"github.com/spf13/cobra"
+	"errors"
 )
 
 const (
@@ -41,6 +42,10 @@ If your intention is to test, the command '` + utils.PgmName + ` test' yields
 cleaner output, showing only the failing block and its output streams.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return errors.New("path is required")
+			}
+			
 			fld, err := ldr.LoadTrees(args)
 			if err != nil {
 				return err
