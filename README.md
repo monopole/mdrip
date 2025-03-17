@@ -197,6 +197,14 @@ Visit [localhost](http://localhost:8080).
 
 -  `?` shows all key controls
 
+## Contributing
+
+Please contribute fixes to obvious quirks if you find them.
+
+1. File an issue
+2. Update the code
+3. Run `make clean ; make` to confirm it builds
+4. Submit a PR
 
 ## Literate Programming
 
