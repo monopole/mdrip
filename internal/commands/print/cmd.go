@@ -8,6 +8,7 @@ import (
 	"github.com/monopole/mdrip/v2/internal/parsren"
 	"github.com/monopole/mdrip/v2/internal/utils"
 	"github.com/spf13/cobra"
+	"errors"
 )
 
 const (
