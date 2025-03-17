@@ -38,10 +38,11 @@ const (
 // LoadTrees loads several paths, wrapping them all in virtual folder.
 func (fsl *FsLoader) LoadTrees(args []string) (*MyFolder, error) {
 	if len(args) < 2 {
-		slog.Warn("Warning, processing ALL directories because no input provided")
 		arg := CurrentDir // By default, read the current directory.
 		if len(args) == 1 {
 			arg = FilePath(args[0])
+		} else {
+			slog.Warn("Warning, processing ALL directories because no input provided")
 		}
 		return fsl.LoadOneTree(arg)
 	}
