@@ -43,7 +43,7 @@ cleaner output, showing only the failing block and its output streams.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				return errors.New("path is required")
+				return errors.New("path is required, if you really want to do this directory, provide './'")
 			}
 			
 			fld, err := ldr.LoadTrees(args)
