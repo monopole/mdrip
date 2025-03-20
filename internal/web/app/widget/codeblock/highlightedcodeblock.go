@@ -30,7 +30,7 @@ type HighlightedCodeBlock struct {
 	Title      string
 }
 
-// Dump implements Node.Dump.
+// Dump implements Node.dump.
 func (n *HighlightedCodeBlock) Dump(source []byte, level int) {
 	m := map[string]string{
 		"FileIndex":  fmt.Sprintf("%d", n.FileIndex),

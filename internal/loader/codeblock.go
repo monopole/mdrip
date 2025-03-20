@@ -66,12 +66,13 @@ func (cb *CodeBlock) ResetTitle(disAmbig map[string]int) {
 	cb.titleWords = append(append([]string{first}, normal...), special...)
 }
 
-// UniqName returns the name of the code block.
+// UniqName returns the name of the code block, assured to be
+// unique within the file it came from.
 func (cb *CodeBlock) UniqName() string {
 	return cb.titleWords[0]
 }
 
-// Title returns the title of the code block.
+// Title returns the multi-word title of the code block.
 func (cb *CodeBlock) Title() string {
 	return strings.Join(cb.titleWords, " ")
 }
@@ -95,17 +96,30 @@ func (cb *CodeBlock) HasLabel(label Label) bool {
 	return cb.labels.Contains(label)
 }
 
-func (cb *CodeBlock) Dump(wr io.Writer, index int) {
-	_, _ = fmt.Fprintf(wr, "# ----- BLOCK%4d: ", index)
-	for _, l := range cb.labels {
-		_, _ = fmt.Fprint(wr, " ", l)
+func PrintBlocks(wr io.Writer, blocks []*CodeBlock) {
+	f := fmt.Sprintf("%%d/%d %%s %%s\n", len(blocks))
+	for i, b := range blocks {
+		_, _ = fmt.Fprint(wr, "# ")
+		b.printTitle(wr, f, i+1)
+		_, _ = fmt.Fprintln(wr, "# ----------")
+		_, _ = fmt.Fprint(wr, b.code)
+		_, _ = fmt.Fprintln(wr, "# ----------")
+		_, _ = fmt.Fprintln(wr)
 	}
-	_, _ = fmt.Fprintln(wr)
-	_, _ = fmt.Fprint(wr, cb.code)
 }
 
-func DumpBlocks(wr io.Writer, blocks []*CodeBlock) {
+func PrintTitles(wr io.Writer, blocks []*CodeBlock) {
+	f := mkFormatTitleOnly(len(blocks))
 	for i, b := range blocks {
-		b.Dump(wr, i)
+		b.printTitle(wr, f, i+1)
 	}
+}
+
+func mkFormatTitleOnly(n int) string {
+	width := len(strconv.Itoa(n))
+	return fmt.Sprintf("%%%dd/%d %%s %%s\n", width, n)
+}
+
+func (cb *CodeBlock) printTitle(wr io.Writer, f string, i int) {
+	_, _ = fmt.Fprintf(wr, f, i, cb.Path(), cb.Title())
 }

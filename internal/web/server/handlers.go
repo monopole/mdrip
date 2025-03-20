@@ -157,7 +157,7 @@ func (ws *Server) handleDebugPage(wr http.ResponseWriter, req *http.Request) {
 		return
 	}
 	ws.dLoader.folder.Accept(loader.NewVisitorDump(wr))
-	loader.DumpBlocks(wr, ws.dLoader.AllBlocks())
+	loader.PrintBlocks(wr, ws.dLoader.AllBlocks())
 }
 
 func (ws *Server) handleQuit(w http.ResponseWriter, _ *http.Request) {

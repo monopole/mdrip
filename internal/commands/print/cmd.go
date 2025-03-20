@@ -1,6 +1,7 @@
 package print
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -16,6 +17,8 @@ const (
 
 type myFlags struct {
 	label string
+	upTo  int
+	list  bool
 	debug bool
 }
 
@@ -60,11 +63,32 @@ cleaner output, showing only the failing block and its output streams.
 						!b.HasLabel(loader.SkipLabel)
 				}
 			}
-			loader.DumpBlocks(os.Stdout, p.Filter(filter))
+			blocks := p.Filter(filter)
+			if flags.upTo > len(blocks) {
+				return fmt.Errorf("only %d blocks passed the filter", len(blocks))
+			}
+			if flags.upTo > 0 {
+				blocks = blocks[:flags.upTo]
+			}
+			if flags.list {
+				loader.PrintTitles(os.Stdout, blocks)
+			} else {
+				loader.PrintBlocks(os.Stdout, blocks)
+			}
 			return nil
 		},
 		SilenceUsage: true,
 	}
+	c.Flags().IntVar(
+		&flags.upTo,
+		"upto",
+		0,
+		"Print blocks up to and including the given index, omit remaining blocks.")
+	c.Flags().BoolVar(
+		&flags.list,
+		"list",
+		false,
+		"Just list file names and code block titles.")
 	c.Flags().StringVar(
 		&flags.label,
 		"label",

@@ -167,7 +167,7 @@ func (v *GParser) VisitFile(fi *loader.MyFile) {
 		hcb.FileIndex = len(v.renderMdFiles)
 		hcb.BlockIndex = i
 		hcb.Title = lCb.Title()
-		// hcb.Dump(v.currentFile.C(), 0)
+		// hcb.dump(v.currentFile.C(), 0)
 	}
 
 	rf := &parsren.RenderedMdFile{
