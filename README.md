@@ -156,7 +156,7 @@ with a one-line HTML comment, e.g:
 <blockquote>
 <pre>
 &lt;&#33;-- @sayHello @mississippi @tutorial01 --&gt;
-&#96;&#96;&#96;
+&#96;&#96;&#96;shell
 echo hello
 &#96;&#96;&#96;
 </pre>
