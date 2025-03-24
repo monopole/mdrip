@@ -24,7 +24,7 @@ type myFlags struct {
 	blockTimeOut time.Duration
 }
 
-const shortHelp = "Test code blocks extracted from markdown"
+const shortHelp = "Test code blocks below the given path"
 
 func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command {
 	flags := myFlags{}

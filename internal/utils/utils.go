@@ -10,6 +10,9 @@ import (
 
 const (
 	PgmName = "mdrip"
+
+	// AllowDebug is a global flag to hide or expose debugging tricks.
+	AllowDebug = false
 )
 
 var leading = regexp.MustCompile("^[0-9]+_")

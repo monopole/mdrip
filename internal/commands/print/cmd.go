@@ -18,16 +18,15 @@ const (
 type myFlags struct {
 	label string
 	upTo  int
-	list  bool
 	debug bool
 }
 
-const shortHelp = "Print extracted code blocks as a shell script"
+const shortHelp = "Print code blocks below the given path as a shell script"
 
 func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command {
 	flags := myFlags{}
 	c := &cobra.Command{
-		Use:   cmdName + " [{path}]",
+		Use:   cmdName + " {path}",
 		Short: shortHelp,
 		Long: shortHelp + `
 
@@ -44,6 +43,9 @@ If your intention is to test, the command '` + utils.PgmName + ` test' yields
 cleaner output, showing only the failing block and its output streams.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return fmt.Errorf("specify a path")
+			}
 			fld, err := ldr.LoadTrees(args)
 			if err != nil {
 				return err
@@ -70,35 +72,26 @@ cleaner output, showing only the failing block and its output streams.
 			if flags.upTo > 0 {
 				blocks = blocks[:flags.upTo]
 			}
-			if flags.list {
-				loader.PrintTitles(os.Stdout, blocks)
-			} else {
-				loader.PrintBlocks(os.Stdout, blocks)
-			}
+			loader.PrintBlocks(os.Stdout, blocks)
 			return nil
 		},
-		SilenceUsage: true,
 	}
 	c.Flags().IntVar(
 		&flags.upTo,
 		"upto",
 		0,
-		"Print blocks up to and including the given index, omit remaining blocks.")
-	c.Flags().BoolVar(
-		&flags.list,
-		"list",
-		false,
-		"Just list file names and code block titles.")
+		"Print blocks up to and including the given index; omit remaining blocks. Use 'list' command to see indices.")
 	c.Flags().StringVar(
 		&flags.label,
 		"label",
 		"",
-		"Extract only code blocks with this label.")
-	c.Flags().BoolVar(
-		&flags.debug,
-		"debug",
-		false,
-		"Use hard coded markdown test data instead of reading from current directory.")
-
+		"Print only the code blocks that have this label")
+	if utils.AllowDebug {
+		c.Flags().BoolVar(
+			&flags.debug,
+			"debug",
+			false,
+			"Use hard-coded markdown test data instead of reading from current directory")
+	}
 	return c
 }

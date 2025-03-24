@@ -51,7 +51,7 @@ func NewCommand(ldr *loader.FsLoader, p parsren.MdParserRenderer) *cobra.Command
 	flags := myFlags{}
 	c := &cobra.Command{
 		Use:     cmdName,
-		Short:   "Serve a markdown / code-running application",
+		Short:   "Serve a web app that runs code blocks in tmux",
 		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {

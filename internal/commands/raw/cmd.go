@@ -36,7 +36,7 @@ func NewCommand() *cobra.Command {
 	flags := myFlags{}
 	c := &cobra.Command{
 		Use:     cmdName,
-		Short:   "Serve raw markdown from the given path (debugging)",
+		Short:   "Serve raw (un-rendered) markdown from the given path (debugging)",
 		Example: utils.PgmName + " " + cmdName + " {path/to/folder}",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {

@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/monopole/mdrip/v2/internal/commands/list"
+
 	"github.com/monopole/mdrip/v2/internal/commands/generatetestdata"
 	"github.com/monopole/mdrip/v2/internal/commands/print"
 	"github.com/monopole/mdrip/v2/internal/commands/raw"
@@ -32,7 +34,7 @@ func newCommand() *cobra.Command {
 	p := usegold.NewGParser()
 	c.AddCommand(
 		print.NewCommand(ldr, p),
-		raw.NewCommand(),
+		list.NewCommand(ldr, p),
 		serve.NewCommand(ldr, p),
 		test.NewCommand(ldr, p),
 		version.NewCommand(),
@@ -41,6 +43,9 @@ func newCommand() *cobra.Command {
 		// the concept works fine on localhost without a websocket.
 		// tmux.NewCommand(ldr),
 	)
+	if utils.AllowDebug {
+		c.AddCommand(raw.NewCommand())
+	}
 	return c
 }
 
